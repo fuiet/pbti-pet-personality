@@ -3,100 +3,216 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Evergreen Lawn & Landscape</title>
+  <meta name="description" content="Premium lawn care, landscaping, and outdoor maintenance demo website for Evergreen Lawn & Landscape in Concord, NC." />
+  <title>Evergreen Lawn & Landscape | Concord, NC</title>
+  <link rel="preconnect" href="https://images.unsplash.com" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="site-shell">
+    <header class="header" id="top">
+      <a class="brand" href="#top" aria-label="Evergreen Lawn home">
+        <span class="brand-mark">E</span>
+        <span>
+          <strong>Evergreen Lawn</strong>
+          <small>Concord, NC</small>
+        </span>
+      </a>
 
-<header class="header">
-  <div class="logo">Evergreen Lawn</div>
-  <nav>
-    <a href="#services">Services</a>
-    <a href="#work">Our Work</a>
-    <a href="#reviews">Reviews</a>
-    <a href="#contact" class="nav-btn">Get Quote</a>
-  </nav>
-</header>
+      <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
 
-<section class="hero">
-  <div class="hero-content">
-    <p class="tag">Landscaping in Concord, NC</p>
-    <h1>Beautiful lawns. Clean outdoor spaces. Done right.</h1>
-    <p class="sub">
-      We help homeowners keep their yards healthy, clean, and ready to enjoy all year round.
-    </p>
-    <div class="hero-buttons">
-      <a href="#contact" class="btn primary">Get a Free Quote</a>
-      <a href="tel:+17045551234" class="btn secondary">Call Now</a>
-    </div>
+      <nav class="nav">
+        <a href="#services">Services</a>
+        <a href="#work">Work</a>
+        <a href="#reviews">Reviews</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact" class="nav-cta">Get Quote</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero reveal">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+          <p class="pill">Premium landscaping in Concord, NC</p>
+          <h1>Transform your yard into a space you love.</h1>
+          <p class="hero-text">Premium lawn care, landscaping, seasonal cleanups, and outdoor maintenance for homeowners who want their property to look sharp year-round.</p>
+
+          <div class="hero-actions">
+            <a href="#contact" class="btn btn-primary">Get a Free Quote</a>
+            <a href="tel:+17045551234" class="btn btn-light">Call (704) 555-1234</a>
+          </div>
+
+          <div class="trust-row" aria-label="Business trust indicators">
+            <div><strong>4.9★</strong><span>Google Rating</span></div>
+            <div><strong>120+</strong><span>Local Projects</span></div>
+            <div><strong>24hr</strong><span>Fast Estimates</span></div>
+          </div>
+        </div>
+
+        <aside class="hero-card" aria-label="Quote card">
+          <div class="card-topline">This week</div>
+          <h2>Spring cleanup slots are open</h2>
+          <p>Get beds cleaned, mulch refreshed, edges sharpened, and curb appeal restored before the weekend.</p>
+          <a href="#contact">Reserve a quote →</a>
+        </aside>
+      </section>
+
+      <section class="section logos reveal" aria-label="Service highlights">
+        <span>Licensed & insured</span>
+        <span>Local Concord crews</span>
+        <span>Clear written estimates</span>
+        <span>Residential specialists</span>
+      </section>
+
+      <section class="section split reveal" id="services">
+        <div class="section-heading sticky-heading">
+          <p class="eyebrow">Services</p>
+          <h2>Everything your yard needs to look clean, healthy, and ready to enjoy.</h2>
+          <p>Built for homeowners who want professional crews, clean communication, and dependable scheduling.</p>
+        </div>
+
+        <div class="service-grid">
+          <article class="service-card">
+            <span class="icon">✦</span>
+            <h3>Lawn Care & Maintenance</h3>
+            <p>Mowing, edging, trimming, weed control, and recurring maintenance that keeps your lawn looking consistent.</p>
+          </article>
+          <article class="service-card">
+            <span class="icon">◐</span>
+            <h3>Mulch & Flower Beds</h3>
+            <p>Fresh mulch, bed reshaping, seasonal planting, weed removal, and clean curb appeal upgrades.</p>
+          </article>
+          <article class="service-card">
+            <span class="icon">▣</span>
+            <h3>Hardscaping</h3>
+            <p>Stone borders, walkways, patios, and functional outdoor details that make the yard feel finished.</p>
+          </article>
+          <article class="service-card">
+            <span class="icon">☼</span>
+            <h3>Seasonal Cleanup</h3>
+            <p>Leaf removal, pruning, debris haul-away, spring prep, and end-of-season cleanup for busy homeowners.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section work reveal" id="work">
+        <div class="section-heading center">
+          <p class="eyebrow">Before & after</p>
+          <h2>Yard transformations that feel obvious in one glance.</h2>
+          <p>For a real client demo, these cards would use the business owner’s actual project photos.</p>
+        </div>
+
+        <div class="project-grid">
+          <article class="project-card">
+            <img src="https://images.unsplash.com/photo-1598902108854-10e335adac99?auto=format&fit=crop&w=900&q=80" alt="Fresh green lawn and landscaping" />
+            <div class="project-copy">
+              <span>Front yard refresh</span>
+              <h3>Clean edges, fresh mulch, better curb appeal.</h3>
+            </div>
+          </article>
+          <article class="project-card featured">
+            <img src="https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=900&q=80" alt="Professional gardening and yard work" />
+            <div class="project-copy">
+              <span>Seasonal cleanup</span>
+              <h3>Overgrown beds turned into a polished outdoor space.</h3>
+            </div>
+          </article>
+          <article class="project-card">
+            <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=80" alt="Garden pathway and landscaping" />
+            <div class="project-copy">
+              <span>Backyard upgrade</span>
+              <h3>A more usable yard for weekends and family time.</h3>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section why reveal">
+        <div class="why-image">
+          <img src="https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?auto=format&fit=crop&w=1000&q=80" alt="Landscaping crew trimming plants" />
+        </div>
+        <div class="why-copy">
+          <p class="eyebrow">Why choose us</p>
+          <h2>Professional crews, simple estimates, and work that looks finished.</h2>
+          <div class="check-list">
+            <p><span>✓</span> Fast estimates without confusing upsells</p>
+            <p><span>✓</span> Clean crews who respect your property</p>
+            <p><span>✓</span> On-time scheduling and clear communication</p>
+            <p><span>✓</span> Local service for Concord and nearby communities</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section process reveal">
+        <div class="section-heading center">
+          <p class="eyebrow">Simple process</p>
+          <h2>From quote request to a yard you are proud of.</h2>
+        </div>
+        <div class="steps">
+          <article><span>01</span><h3>Request a Quote</h3><p>Tell us what needs attention and share a few details about the property.</p></article>
+          <article><span>02</span><h3>Get a Simple Plan</h3><p>We recommend the right service, timeline, and clear pricing before work begins.</p></article>
+          <article><span>03</span><h3>Enjoy Your Yard</h3><p>Our crew completes the work and leaves the outdoor space clean and ready.</p></article>
+        </div>
+      </section>
+
+      <section class="section reviews reveal" id="reviews">
+        <div class="section-heading center">
+          <p class="eyebrow">Google-style reviews</p>
+          <h2>Homeowners notice the difference.</h2>
+        </div>
+        <div class="review-grid">
+          <article class="review-card"><div class="stars">★★★★★</div><p>“They made our front yard look better in one afternoon than it had in years. The quote was clear and the crew was professional.”</p><strong>Sarah Mitchell</strong></article>
+          <article class="review-card"><div class="stars">★★★★★</div><p>“Great communication, showed up on time, and cleaned everything before leaving. I already booked recurring lawn care.”</p><strong>James R.</strong></article>
+          <article class="review-card"><div class="stars">★★★★★</div><p>“The mulch and bed cleanup changed the whole look of our house. Easy to work with and worth every dollar.”</p><strong>Monica Lee</strong></article>
+        </div>
+      </section>
+
+      <section class="section faq reveal" id="faq">
+        <div class="section-heading center">
+          <p class="eyebrow">FAQ</p>
+          <h2>Questions homeowners ask before booking.</h2>
+        </div>
+        <div class="faq-list">
+          <button class="faq-item"><span>How fast can I get a quote?</span><strong>+</strong><p>Most quote requests receive a response within one business day.</p></button>
+          <button class="faq-item"><span>Do you serve my area?</span><strong>+</strong><p>This demo focuses on Concord, NC and nearby neighborhoods.</p></button>
+          <button class="faq-item"><span>Do you offer recurring lawn care?</span><strong>+</strong><p>Yes. Weekly, bi-weekly, and seasonal maintenance plans can be offered.</p></button>
+          <button class="faq-item"><span>Are you licensed and insured?</span><strong>+</strong><p>Yes. This trust signal is important for local service businesses.</p></button>
+        </div>
+      </section>
+
+      <section class="section contact reveal" id="contact">
+        <div class="contact-card">
+          <div class="contact-copy">
+            <p class="eyebrow">Get your free quote</p>
+            <h2>Ready for a cleaner, better-looking yard?</h2>
+            <p>Send a few details and we’ll follow up with the next available estimate window.</p>
+            <div class="contact-details">
+              <p><strong>Phone:</strong> (704) 555-1234</p>
+              <p><strong>Service area:</strong> Concord, Kannapolis, Huntersville</p>
+              <p><strong>Hours:</strong> Mon–Sat, 8am–6pm</p>
+            </div>
+          </div>
+
+          <form class="quote-form">
+            <label>Name<input type="text" placeholder="Your name" /></label>
+            <label>Phone<input type="tel" placeholder="Phone number" /></label>
+            <label>Email<input type="email" placeholder="Email address" /></label>
+            <label>Service Needed<select><option>Lawn care</option><option>Mulch & flower beds</option><option>Hardscaping</option><option>Seasonal cleanup</option></select></label>
+            <label>Message<textarea placeholder="Tell us about your yard"></textarea></label>
+            <button type="submit">Request Free Quote</button>
+            <small>This is a private demo concept. Form submission is disabled.</small>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div><strong>Evergreen Lawn & Landscape</strong><p>Premium landscaping demo for Concord, NC.</p></div>
+      <div><p>Services · Work · Reviews · Contact</p><p>Private demo concept by ClearPeak Web.</p></div>
+    </footer>
   </div>
-</section>
 
-<section id="services" class="section">
-  <p class="eyebrow">Our Services</p>
-  <h2>Reliable landscaping services for local homeowners</h2>
-
-  <div class="cards">
-    <div class="card">
-      <h3>Lawn Care</h3>
-      <p>Mowing, edging, trimming, and seasonal maintenance for a clean, healthy lawn.</p>
-    </div>
-    <div class="card">
-      <h3>Mulch & Flower Beds</h3>
-      <p>Fresh mulch, weed control, planting, and bed cleanup to improve curb appeal.</p>
-    </div>
-    <div class="card">
-      <h3>Hardscaping</h3>
-      <p>Walkways, patios, stone borders, and outdoor upgrades built to last.</p>
-    </div>
-  </div>
-</section>
-
-<section id="work" class="section alt">
-  <p class="eyebrow">Recent Work</p>
-  <h2>Before & after yard transformations</h2>
-
-  <div class="gallery">
-    <div class="photo">Project Photo</div>
-    <div class="photo">Project Photo</div>
-    <div class="photo">Project Photo</div>
-  </div>
-</section>
-
-<section id="reviews" class="section">
-  <p class="eyebrow">Customer Reviews</p>
-  <h2>Trusted by local homeowners</h2>
-
-  <div class="reviews">
-    <div class="review">
-      <p>“They cleaned up our front yard and made the whole house look better. Fast, friendly, and professional.”</p>
-      <strong>— Sarah M.</strong>
-    </div>
-    <div class="review">
-      <p>“Great communication and excellent work. I’ll definitely use them again this season.”</p>
-      <strong>— James R.</strong>
-    </div>
-  </div>
-</section>
-
-<section id="contact" class="section contact">
-  <p class="eyebrow">Get Started</p>
-  <h2>Request a free landscaping quote</h2>
-  <p>Tell us what you need help with and we’ll get back to you as soon as possible.</p>
-
-  <form>
-    <input type="text" placeholder="Your name" />
-    <input type="email" placeholder="Email address" />
-    <input type="tel" placeholder="Phone number" />
-    <textarea placeholder="Tell us about your project"></textarea>
-    <button type="button">Request Quote</button>
-  </form>
-</section>
-
-<footer>
-  <p>© 2026 Evergreen Lawn & Landscape. Private demo concept.</p>
-</footer>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
