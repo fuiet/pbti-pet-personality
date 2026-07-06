@@ -3,215 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Premium lawn care, landscaping, and outdoor maintenance demo website for Evergreen Lawn & Landscape in Concord, NC." />
-  <title>Evergreen Lawn & Landscape | Concord, NC</title>
+  <title>Demo Remaster Engine | Multi-Industry Website Template</title>
+  <meta name="description" content="A multi-industry website remaster demo system for local businesses." />
   <link rel="preconnect" href="https://images.unsplash.com" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="site-shell">
-    <header class="header" id="top">
-      <a class="brand" href="#top" aria-label="Evergreen Lawn home">
-        <span class="brand-mark">E</span>
-        <span>
-          <strong>Evergreen Lawn</strong>
-          <small>Concord, NC</small>
-        </span>
+<body data-industry="landscape" data-style="luxury">
+  <aside class="control-panel" aria-label="Demo controls">
+    <div class="panel-head">
+      <span class="panel-kicker">Demo Remaster Engine</span>
+      <h1>Industry + Style + Real Assets</h1>
+      <p>Switch industry and style to preview how one system can remaster different local businesses.</p>
+    </div>
+
+    <div class="control-group">
+      <label>Industry</label>
+      <div class="segmented" id="industryControls">
+        <button class="active" data-industry="landscape">Landscape</button>
+        <button data-industry="restaurant">Restaurant</button>
+        <button data-industry="detailing">Auto Detail</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>Style</label>
+      <div class="segmented vertical" id="styleControls">
+        <button class="active" data-style="luxury">Luxury Commercial</button>
+        <button data-style="warm">Warm Local</button>
+        <button data-style="bold">High-Converting</button>
+      </div>
+    </div>
+
+    <div class="asset-card">
+      <strong>Variable Fields</strong>
+      <p>{{COMPANY_NAME}}, {{PHONE}}, {{CITY}}, {{SERVICES}}, {{REVIEWS}}, {{PHOTOS}}, {{CTA}}</p>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <nav class="site-nav">
+      <a class="brand" href="#top">
+        <span class="logo-mark" id="logoMark">S</span>
+        <span><strong id="brandName">Superior Landscapes</strong><small id="brandSub">Commercial Landscape Solutions</small></span>
       </a>
-
-      <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
-
-      <nav class="nav">
+      <div class="nav-links">
         <a href="#services">Services</a>
         <a href="#work">Work</a>
         <a href="#reviews">Reviews</a>
-        <a href="#faq">FAQ</a>
-        <a href="#contact" class="nav-cta">Get Quote</a>
-      </nav>
-    </header>
+        <a href="#contact">Contact</a>
+      </div>
+      <a class="nav-phone" id="phoneTop" href="tel:+12143683327">(214) 368-3327</a>
+    </nav>
 
-    <main>
-      <section class="hero reveal">
-        <div class="hero-bg"></div>
-        <div class="hero-content">
-          <p class="pill">Premium landscaping in Concord, NC</p>
-          <h1>Transform your yard into a space you love.</h1>
-          <p class="hero-text">Premium lawn care, landscaping, seasonal cleanups, and outdoor maintenance for homeowners who want their property to look sharp year-round.</p>
-
-          <div class="hero-actions">
-            <a href="#contact" class="btn btn-primary">Get a Free Quote</a>
-            <a href="tel:+17045551234" class="btn btn-light">Call (704) 555-1234</a>
-          </div>
-
-          <div class="trust-row" aria-label="Business trust indicators">
-            <div><strong>4.9★</strong><span>Google Rating</span></div>
-            <div><strong>120+</strong><span>Local Projects</span></div>
-            <div><strong>24hr</strong><span>Fast Estimates</span></div>
-          </div>
+    <section class="hero" id="top">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="hero-overlay"></div>
+      <div class="hero-inner">
+        <p class="eyebrow" id="heroKicker">Premium Commercial Landscaping</p>
+        <h2 id="heroTitle">Commercial Landscaping That Elevates Your Property.</h2>
+        <p id="heroText">A modern remaster using the business' own brand, services, phone, location, and real project photos whenever possible.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#contact" id="primaryCta">Get a Free Estimate</a>
+          <a class="btn glass" id="phoneHero" href="tel:+12143683327">Call (214) 368-3327</a>
         </div>
-
-        <aside class="hero-card" aria-label="Quote card">
-          <div class="card-topline">This week</div>
-          <h2>Spring cleanup slots are open</h2>
-          <p>Get beds cleaned, mulch refreshed, edges sharpened, and curb appeal restored before the weekend.</p>
-          <a href="#contact">Reserve a quote →</a>
-        </aside>
-      </section>
-
-      <section class="section logos reveal" aria-label="Service highlights">
-        <span>Licensed & insured</span>
-        <span>Local Concord crews</span>
-        <span>Clear written estimates</span>
-        <span>Residential specialists</span>
-      </section>
-
-      <section class="section split reveal" id="services">
-        <div class="section-heading sticky-heading">
-          <p class="eyebrow">Services</p>
-          <h2>Everything your yard needs to look clean, healthy, and ready to enjoy.</h2>
-          <p>Built for homeowners who want professional crews, clean communication, and dependable scheduling.</p>
+        <div class="metrics">
+          <div><strong id="ratingValue">4.8★</strong><span>Google Rating</span></div>
+          <div><strong id="reviewValue">120+</strong><span>Reviews</span></div>
+          <div><strong id="yearsValue">25+</strong><span>Years Experience</span></div>
         </div>
+      </div>
+      <div class="story-card">
+        <img id="storyImage" src="https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=800&q=80" alt="Business project preview" />
+        <div><span>Website Remaster</span><strong id="storyText">Same business. Stronger first impression.</strong></div>
+      </div>
+    </section>
 
-        <div class="service-grid">
-          <article class="service-card">
-            <span class="icon">✦</span>
-            <h3>Lawn Care & Maintenance</h3>
-            <p>Mowing, edging, trimming, weed control, and recurring maintenance that keeps your lawn looking consistent.</p>
-          </article>
-          <article class="service-card">
-            <span class="icon">◐</span>
-            <h3>Mulch & Flower Beds</h3>
-            <p>Fresh mulch, bed reshaping, seasonal planting, weed removal, and clean curb appeal upgrades.</p>
-          </article>
-          <article class="service-card">
-            <span class="icon">▣</span>
-            <h3>Hardscaping</h3>
-            <p>Stone borders, walkways, patios, and functional outdoor details that make the yard feel finished.</p>
-          </article>
-          <article class="service-card">
-            <span class="icon">☼</span>
-            <h3>Seasonal Cleanup</h3>
-            <p>Leaf removal, pruning, debris haul-away, spring prep, and end-of-season cleanup for busy homeowners.</p>
-          </article>
-        </div>
-      </section>
+    <section class="section intro">
+      <div>
+        <p class="eyebrow" id="introKicker">Built from real business assets</p>
+        <h2 id="introTitle">A demo should feel like their company, not a random AI template.</h2>
+      </div>
+      <p id="introText">The system keeps the merchant's logo, colors, phone, city, services, reviews, and real images, then rebuilds the page with modern layout, stronger CTA, and better trust signals.</p>
+    </section>
 
-      <section class="section work reveal" id="work">
-        <div class="section-heading center">
-          <p class="eyebrow">Before & after</p>
-          <h2>Yard transformations that feel obvious in one glance.</h2>
-          <p>For a real client demo, these cards would use the business owner’s actual project photos.</p>
-        </div>
+    <section class="section services" id="services">
+      <div class="section-head center">
+        <p class="eyebrow">Services</p>
+        <h2 id="servicesTitle">One partner for all your landscape needs.</h2>
+      </div>
+      <div class="service-grid" id="serviceGrid"></div>
+    </section>
 
-        <div class="project-grid">
-          <article class="project-card">
-            <img src="https://images.unsplash.com/photo-1598902108854-10e335adac99?auto=format&fit=crop&w=900&q=80" alt="Fresh green lawn and landscaping" />
-            <div class="project-copy">
-              <span>Front yard refresh</span>
-              <h3>Clean edges, fresh mulch, better curb appeal.</h3>
-            </div>
-          </article>
-          <article class="project-card featured">
-            <img src="https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=900&q=80" alt="Professional gardening and yard work" />
-            <div class="project-copy">
-              <span>Seasonal cleanup</span>
-              <h3>Overgrown beds turned into a polished outdoor space.</h3>
-            </div>
-          </article>
-          <article class="project-card">
-            <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=80" alt="Garden pathway and landscaping" />
-            <div class="project-copy">
-              <span>Backyard upgrade</span>
-              <h3>A more usable yard for weekends and family time.</h3>
-            </div>
-          </article>
-        </div>
-      </section>
+    <section class="section work" id="work">
+      <div class="work-copy">
+        <p class="eyebrow">Real-photo first</p>
+        <h2 id="workTitle">Use the merchant's own photos, then make them look premium.</h2>
+        <p id="workText">Real photos create recognition. AI images should only fill gaps, not replace the owner's actual projects, food, shop, cars, or team.</p>
+        <a class="btn dark" href="#contact">See the remaster plan</a>
+      </div>
+      <div class="gallery" id="gallery"></div>
+    </section>
 
-      <section class="section why reveal">
-        <div class="why-image">
-          <img src="https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?auto=format&fit=crop&w=1000&q=80" alt="Landscaping crew trimming plants" />
-        </div>
-        <div class="why-copy">
-          <p class="eyebrow">Why choose us</p>
-          <h2>Professional crews, simple estimates, and work that looks finished.</h2>
-          <div class="check-list">
-            <p><span>✓</span> Fast estimates without confusing upsells</p>
-            <p><span>✓</span> Clean crews who respect your property</p>
-            <p><span>✓</span> On-time scheduling and clear communication</p>
-            <p><span>✓</span> Local service for Concord and nearby communities</p>
+    <section class="section comparison">
+      <div class="before-card">
+        <span>Before</span>
+        <h3>Old site problem</h3>
+        <p id="beforeText">Generic hero, weak CTA, outdated layout, and not enough visible proof.</p>
+      </div>
+      <div class="after-card">
+        <span>After</span>
+        <h3>Remastered demo</h3>
+        <p id="afterText">Same company information, stronger story, modern visuals, clear contact path.</p>
+      </div>
+    </section>
+
+    <section class="section reviews" id="reviews">
+      <div class="section-head center">
+        <p class="eyebrow">Social proof</p>
+        <h2 id="reviewsTitle">Turn existing reputation into visible trust.</h2>
+      </div>
+      <div class="review-grid" id="reviewGrid"></div>
+    </section>
+
+    <section class="section contact" id="contact">
+      <div class="contact-card">
+        <div>
+          <p class="eyebrow">Conversion section</p>
+          <h2 id="contactTitle">Ready to make the business easier to contact?</h2>
+          <p id="contactText">Every demo ends with one obvious next step: call, reserve, book, quote, or message.</p>
+          <div class="contact-pills">
+            <span id="cityPill">Dallas, TX</span>
+            <span id="emailPill">contact@superiorlandscapes.biz</span>
+            <span id="phonePill">(214) 368-3327</span>
           </div>
         </div>
-      </section>
-
-      <section class="section process reveal">
-        <div class="section-heading center">
-          <p class="eyebrow">Simple process</p>
-          <h2>From quote request to a yard you are proud of.</h2>
-        </div>
-        <div class="steps">
-          <article><span>01</span><h3>Request a Quote</h3><p>Tell us what needs attention and share a few details about the property.</p></article>
-          <article><span>02</span><h3>Get a Simple Plan</h3><p>We recommend the right service, timeline, and clear pricing before work begins.</p></article>
-          <article><span>03</span><h3>Enjoy Your Yard</h3><p>Our crew completes the work and leaves the outdoor space clean and ready.</p></article>
-        </div>
-      </section>
-
-      <section class="section reviews reveal" id="reviews">
-        <div class="section-heading center">
-          <p class="eyebrow">Google-style reviews</p>
-          <h2>Homeowners notice the difference.</h2>
-        </div>
-        <div class="review-grid">
-          <article class="review-card"><div class="stars">★★★★★</div><p>“They made our front yard look better in one afternoon than it had in years. The quote was clear and the crew was professional.”</p><strong>Sarah Mitchell</strong></article>
-          <article class="review-card"><div class="stars">★★★★★</div><p>“Great communication, showed up on time, and cleaned everything before leaving. I already booked recurring lawn care.”</p><strong>James R.</strong></article>
-          <article class="review-card"><div class="stars">★★★★★</div><p>“The mulch and bed cleanup changed the whole look of our house. Easy to work with and worth every dollar.”</p><strong>Monica Lee</strong></article>
-        </div>
-      </section>
-
-      <section class="section faq reveal" id="faq">
-        <div class="section-heading center">
-          <p class="eyebrow">FAQ</p>
-          <h2>Questions homeowners ask before booking.</h2>
-        </div>
-        <div class="faq-list">
-          <button class="faq-item"><span>How fast can I get a quote?</span><strong>+</strong><p>Most quote requests receive a response within one business day.</p></button>
-          <button class="faq-item"><span>Do you serve my area?</span><strong>+</strong><p>This demo focuses on Concord, NC and nearby neighborhoods.</p></button>
-          <button class="faq-item"><span>Do you offer recurring lawn care?</span><strong>+</strong><p>Yes. Weekly, bi-weekly, and seasonal maintenance plans can be offered.</p></button>
-          <button class="faq-item"><span>Are you licensed and insured?</span><strong>+</strong><p>Yes. This trust signal is important for local service businesses.</p></button>
-        </div>
-      </section>
-
-      <section class="section contact reveal" id="contact">
-        <div class="contact-card">
-          <div class="contact-copy">
-            <p class="eyebrow">Get your free quote</p>
-            <h2>Ready for a cleaner, better-looking yard?</h2>
-            <p>Send a few details and we’ll follow up with the next available estimate window.</p>
-            <div class="contact-details">
-              <p><strong>Phone:</strong> (704) 555-1234</p>
-              <p><strong>Service area:</strong> Concord, Kannapolis, Huntersville</p>
-              <p><strong>Hours:</strong> Mon–Sat, 8am–6pm</p>
-            </div>
-          </div>
-
-          <form class="quote-form">
-            <label>Name<input type="text" placeholder="Your name" /></label>
-            <label>Phone<input type="tel" placeholder="Phone number" /></label>
-            <label>Email<input type="email" placeholder="Email address" /></label>
-            <label>Service Needed<select><option>Lawn care</option><option>Mulch & flower beds</option><option>Hardscaping</option><option>Seasonal cleanup</option></select></label>
-            <label>Message<textarea placeholder="Tell us about your yard"></textarea></label>
-            <button type="submit">Request Free Quote</button>
-            <small>This is a private demo concept. Form submission is disabled.</small>
-          </form>
-        </div>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <div><strong>Evergreen Lawn & Landscape</strong><p>Premium landscaping demo for Concord, NC.</p></div>
-      <div><p>Services · Work · Reviews · Contact</p><p>Private demo concept by ClearPeak Web.</p></div>
-    </footer>
-  </div>
+        <form class="demo-form">
+          <input type="text" placeholder="Name" />
+          <input type="tel" placeholder="Phone" />
+          <input type="email" placeholder="Email" />
+          <textarea placeholder="Tell us what you need"></textarea>
+          <button type="submit" id="formCta">Request Free Estimate</button>
+          <small>Demo only. In production, this sends leads to the business owner.</small>
+        </form>
+      </div>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>
