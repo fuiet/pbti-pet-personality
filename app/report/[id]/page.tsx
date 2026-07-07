@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { personalities } from "@/data/personalities";
 
 export default async function ReportPage({params}:{params:Promise<{id:string}>}){
@@ -12,7 +14,7 @@ export default async function ReportPage({params}:{params:Promise<{id:string}>})
       <p className="mt-4 text-sm">PET PERSONALITY ID</p>
       <h1 className="text-2xl font-bold">{id}</h1>
 
-      <div className="text-6xl my-6">{personality.emoji}</div>
+      <div className="text-6xl my-6}>{personality.emoji}</div>
       <h2 className="text-5xl font-bold">{personality.code}</h2>
       <h3 className="text-2xl mt-3">{personality.name}</h3>
       <p className="mt-5 leading-7">{personality.description}</p>
