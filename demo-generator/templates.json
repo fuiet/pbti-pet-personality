@@ -1,0 +1,20 @@
+{
+  "templates": [
+    {
+      "id":"landscaping-luxury",
+      "industry":"Landscaping",
+      "style":"Luxury Nature",
+      "path":"../demo/template"
+    },
+    {
+      "id":"restaurant-modern",
+      "industry":"Restaurant",
+      "style":"Modern"
+    },
+    {
+      "id":"hvac-professional",
+      "industry":"HVAC",
+      "style":"Professional"
+    }
+  ]
+}
