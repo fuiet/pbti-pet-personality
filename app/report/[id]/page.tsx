@@ -1,8 +1,7 @@
-"use client";
-
 import { personalities } from "@/data/personalities";
 
-export default function ReportPage({params}:{params:{id:string}}){
+export default async function ReportPage({params}:{params:Promise<{id:string}>}){
+ const {id}=await params;
  const personality=personalities.AECG;
 
  return (
@@ -11,7 +10,7 @@ export default function ReportPage({params}:{params:{id:string}}){
     <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
       <div className="text-5xl">🐾</div>
       <p className="mt-4 text-sm">PET PERSONALITY ID</p>
-      <h1 className="text-2xl font-bold">{params.id}</h1>
+      <h1 className="text-2xl font-bold">{id}</h1>
 
       <div className="text-6xl my-6">{personality.emoji}</div>
       <h2 className="text-5xl font-bold">{personality.code}</h2>
