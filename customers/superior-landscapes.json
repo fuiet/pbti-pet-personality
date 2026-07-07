@@ -1,0 +1,17 @@
+{
+  "slug":"superior-landscapes",
+  "companyName":"Superior Landscapes",
+  "industry":"Landscaping",
+  "style":"Luxury Nature",
+  "location":"Dallas, Texas",
+  "phone":"(214) 555-0188",
+  "services":[
+    "Landscape Design",
+    "Garden Maintenance",
+    "Outdoor Living Spaces"
+  ],
+  "images":{
+    "hero":"hero.jpg",
+    "projects":["project-1.jpg","project-2.jpg","project-3.jpg"]
+  }
+}
