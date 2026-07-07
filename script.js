@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded',()=>{
 
+const CONFIG={
+ company:'EVERGREEN',
+ phone:'(214) 555-0188',
+ location:'Dallas, Texas'
+};
+
+// Future ClearPeak generator hook
+// Replace website information through CONFIG object
+
 const header=document.querySelector('.header');
 
 window.addEventListener('scroll',()=>{
@@ -10,7 +19,7 @@ window.addEventListener('scroll',()=>{
  }
 });
 
-const elements=document.querySelectorAll('.cards div,.section h2,.trust');
+const elements=document.querySelectorAll('.cards div,.section h2,.trust,.project,.review-card,.service-area');
 
 const observer=new IntersectionObserver(entries=>{
  entries.forEach(entry=>{
@@ -32,11 +41,9 @@ const buttons=document.querySelectorAll('.button');
 buttons.forEach(btn=>{
  btn.addEventListener('mouseenter',()=>{
   btn.style.transform='translateY(-3px)';
-  btn.style.boxShadow='0 15px 35px rgba(185,154,98,.35)';
  });
  btn.addEventListener('mouseleave',()=>{
   btn.style.transform='translateY(0)';
-  btn.style.boxShadow='none';
  });
 });
 
