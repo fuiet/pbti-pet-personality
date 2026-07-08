@@ -5,3 +5,44 @@ body {
   margin: 0;
   padding: 0;
 }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.5; }
+  25% { transform: translateY(-22px) translateX(12px); opacity: 1; }
+  50% { transform: translateY(-12px) translateX(24px); opacity: 0.8; }
+  75% { transform: translateY(-32px) translateX(-8px); opacity: 1; }
+  100% { transform: translateY(0) translateX(0); opacity: 0.5; }
+}
+
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.55; }
+  25% { transform: translateY(24px) translateX(-12px); opacity: 1; }
+  50% { transform: translateY(12px) translateX(-24px); opacity: 0.8; }
+  75% { transform: translateY(32px) translateX(8px); opacity: 1; }
+  100% { transform: translateY(0) translateX(0); opacity: 0.55; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.6); opacity: 1; }
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff1df 0%, #ffb56f 40%, #ff7a1a 100%);
+  box-shadow: 0 0 10px 2px rgba(255, 122, 26, 0.55), 0 0 22px 8px rgba(255, 181, 111, 0.28);
+  pointer-events: none;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 7s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}

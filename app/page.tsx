@@ -93,14 +93,24 @@ export default function Home() {
         </div>
 
         <div className="relative flex min-h-[560px] items-center justify-center">
-          <div className="absolute inset-x-0 top-4 mx-auto h-[520px] max-w-[680px] rounded-full bg-gradient-to-br from-[#fff1df] via-[#ffd8ad] to-[#ffb56f] opacity-70 blur-[2px]" />
-          <div className="relative z-10 w-full max-w-[600px] overflow-hidden rounded-[2.5rem] bg-white/60 p-4 shadow-[0_30px_70px_rgba(52,34,20,.13)] backdrop-blur">
+          <div className="relative z-10 w-full max-w-[600px] overflow-hidden rounded-[2.5rem] p-4">
             <img
               src="/hero-pets.png"
               alt="A happy cat and dog together wearing PBTI tags"
-              className="h-auto w-full rounded-[2rem] object-contain"
+              className="h-auto w-full rounded-[2rem] object-contain drop-shadow-[0_20px_50px_rgba(52,34,20,.1)]"
             />
           </div>
+
+          <div className="particle h-2 w-2 left-[8%] top-[22%] animate-float" style={{ animationDelay: '0s' }} />
+          <div className="particle h-3 w-3 left-[15%] top-[60%] animate-float-reverse" style={{ animationDelay: '0.7s' }} />
+          <div className="particle h-2.5 w-2.5 left-[24%] top-[85%] animate-float" style={{ animationDelay: '1.4s' }} />
+          <div className="particle h-4 w-4 left-[6%] top-[78%] animate-pulse-glow" style={{ animationDelay: '0.3s' }} />
+          <div className="particle h-2 w-2 right-[10%] top-[18%] animate-float-reverse" style={{ animationDelay: '0.5s' }} />
+          <div className="particle h-3 w-3 right-[18%] top-[55%] animate-float" style={{ animationDelay: '1.1s' }} />
+          <div className="particle h-2.5 w-2.5 right-[8%] top-[82%] animate-float-reverse" style={{ animationDelay: '1.8s' }} />
+          <div className="particle h-4 w-4 right-[22%] top-[30%] animate-pulse-glow" style={{ animationDelay: '0.9s' }} />
+          <div className="particle h-2 w-2 left-[40%] top-[10%] animate-float" style={{ animationDelay: '2.1s' }} />
+          <div className="particle h-2 w-2 right-[42%] top-[88%] animate-float-reverse" style={{ animationDelay: '2.5s' }} />
         </div>
       </section>
 
