@@ -92,28 +92,15 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative min-h-[560px]">
+        <div className="relative flex min-h-[560px] items-center justify-center">
           <div className="absolute inset-x-0 top-4 mx-auto h-[520px] max-w-[680px] rounded-full bg-gradient-to-br from-[#fff1df] via-[#ffd8ad] to-[#ffb56f] opacity-70 blur-[2px]" />
-          <div className="absolute left-1/2 top-12 h-[460px] w-[460px] -translate-x-1/2 rounded-full border border-[#ffd7af] shadow-[0_0_90px_rgba(255,144,55,.28)]" />
-          <div className="absolute left-[4%] top-20 rotate-[-4deg] rounded-[3rem] bg-white/60 p-4 shadow-[0_30px_70px_rgba(52,34,20,.13)] backdrop-blur">
-            <div className="grid h-[360px] w-[250px] place-items-center rounded-[2.4rem] bg-gradient-to-b from-white to-[#fff0df] text-[180px]">🐱</div>
+          <div className="relative z-10 w-full max-w-[600px] overflow-hidden rounded-[2.5rem] bg-white/60 p-4 shadow-[0_30px_70px_rgba(52,34,20,.13)] backdrop-blur">
+            <img
+              src="/hero-pets.png"
+              alt="A happy cat and dog together wearing PBTI tags"
+              className="h-auto w-full rounded-[2rem] object-contain"
+            />
           </div>
-          <div className="absolute right-[2%] top-6 rotate-[3deg] rounded-[3rem] bg-white/60 p-4 shadow-[0_30px_70px_rgba(52,34,20,.13)] backdrop-blur">
-            <div className="grid h-[390px] w-[285px] place-items-center rounded-[2.4rem] bg-gradient-to-b from-white to-[#fff0df] text-[200px]">🐶</div>
-          </div>
-          <div className="absolute bottom-14 left-[28%] grid h-40 w-40 place-items-center rounded-[2.5rem] bg-white shadow-[0_28px_60px_rgba(52,34,20,.14)] ring-1 ring-[#eaded2]">
-            <LogoMark size={108} />
-          </div>
-          <div className="absolute bottom-28 left-12 rounded-2xl bg-white px-5 py-4 shadow-xl ring-1 ring-[#eaded2]">
-            <div className="text-sm font-black">🐾 Duoduo</div>
-            <div className="text-xs text-[#7a6d63]">The Curious Explorer</div>
-          </div>
-          <div className="absolute bottom-20 right-5 rounded-2xl bg-white px-5 py-4 shadow-xl ring-1 ring-[#eaded2]">
-            <div className="text-sm font-black">🐾 Koda</div>
-            <div className="text-xs text-[#7a6d63]">The Loyal Guardian</div>
-          </div>
-          <div className="absolute left-10 top-12 text-3xl text-[#ffb570]">✦</div>
-          <div className="absolute right-8 top-36 text-3xl text-[#ffb570]">✦</div>
         </div>
       </section>
 
