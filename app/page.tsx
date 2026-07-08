@@ -19,7 +19,7 @@ const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
     <img
       src="/logo.png"
       alt="PBTI Pet Behavior Type Indicator"
-      className={compact ? "h-[50px] w-auto object-contain" : "h-[88px] w-auto object-contain"}
+      className={compact ? "h-[90px] w-auto object-contain" : "h-[130px] w-auto object-contain"}
     />
   </a>
 );
