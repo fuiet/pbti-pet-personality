@@ -14,15 +14,41 @@ const LogoMark = ({ size = 84 }: { size?: number }) => (
   </svg>
 );
 
+const PBTILogo = ({ compact = false }: { compact?: boolean }) => (
+  <svg
+    width={compact ? 154 : 320}
+    height={compact ? 54 : 112}
+    viewBox="0 0 620 220"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="PBTI Pet Behavior Type Indicator"
+    className="block"
+  >
+    <g transform="translate(0 3) scale(1.02)">
+      <path d="M21 155V46C21 27.8 35.8 13 54 13h29c42.5 0 77 34.5 77 77s-34.5 77-77 77H56" stroke="#171514" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M49 93c9-18 26-29 47-29 20 0 36 14 41 34" stroke="#171514" strokeWidth="9" strokeLinecap="round" />
+      <path d="M47 54c5-22 26-32 48-27 19 4 34 19 37 39" stroke="#171514" strokeWidth="9" strokeLinecap="round" />
+      <path d="M55 52c7 16 6 30-4 43" stroke="#171514" strokeWidth="9" strokeLinecap="round" />
+      <path d="M68 92l12-22 13 22" stroke="#171514" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M60 128c10-20 27-31 50-34" stroke="#171514" strokeWidth="9" strokeLinecap="round" />
+      <path d="M109 66c9 0 16 4 22 11" stroke="#171514" strokeWidth="9" strokeLinecap="round" />
+      <circle cx="100" cy="45" r="6" fill="#171514" />
+      <circle cx="87" cy="99" r="5.5" fill="#171514" />
+      <path d="M96 110c8-2 14-2 20 0" stroke="#171514" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M94 121c8-2 15-2 21 0" stroke="#171514" strokeWidth="4.5" strokeLinecap="round" />
+    </g>
+    <text x="190" y="130" fill="#171514" fontFamily="Arial Black, Inter, system-ui, sans-serif" fontSize="112" fontWeight="900" letterSpacing="-7">PBT</text>
+    <rect x="515" y="72" width="34" height="76" rx="17" fill="#171514" />
+    <circle cx="532" cy="43" r="20" fill="#ff7a1a" />
+    <text x="560" y="48" fill="#171514" fontFamily="Inter, Arial, sans-serif" fontSize="18" fontWeight="800">TM</text>
+    <text x="202" y="188" fill="#171514" fontFamily="Inter, Arial, sans-serif" fontSize="30" fontWeight="500" letterSpacing="12">Pet Behavior Type Indicator</text>
+  </svg>
+);
+
 const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
-  <div className="flex items-center gap-3">
-    <LogoMark size={compact ? 42 : 56} />
-    <div className="leading-none">
-      <div className="flex items-start gap-1 text-[28px] font-black tracking-[-0.06em] text-[#171514]">
-        PBTI<span className="mt-1 text-[10px] tracking-normal">TM</span>
-      </div>
-      <div className="mt-1 text-[9px] font-semibold tracking-[0.15em] text-[#6f6258]">Pet Behavior Type Indicator</div>
-    </div>
+  <div className="flex items-center">
+    <PBTILogo compact={compact} />
   </div>
 );
 
@@ -54,7 +80,7 @@ export default function Home() {
       </div>
 
       <header className="sticky top-0 z-50 border-b border-[#eaded2]/70 bg-[#fff9f2]/78 backdrop-blur-2xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <BrandLogo compact />
           <div className="hidden items-center gap-10 text-sm font-bold text-[#4f463f] lg:flex">
             <a href="#features" className="hover:text-[#ff7a1a]">Features</a>
