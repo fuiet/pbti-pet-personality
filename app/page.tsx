@@ -1,193 +1,190 @@
-const LogoMark = ({ size = 64 }: { size?: number }) => (
+const LogoMark = ({ size = 84 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M29 103V31C29 19.95 37.95 11 49 11h15c27.61 0 50 22.39 50 50s-22.39 50-50 50H49" stroke="#181614" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M48 72c7-4 13-7 22-8 5-1 8-4 11-8" stroke="#181614" strokeWidth="5" strokeLinecap="round"/>
-    <path d="M47 37c7-16 30-15 41-1 5 6 5 14 0 20" stroke="#181614" strokeWidth="5" strokeLinecap="round"/>
-    <path d="M52 40c8 0 15 5 18 12" stroke="#181614" strokeWidth="5" strokeLinecap="round"/>
-    <path d="M49 70c0-12 9-23 22-23 12 0 21 9 21 20" stroke="#181614" strokeWidth="5" strokeLinecap="round"/>
-    <path d="M54 69l7-12 7 12" stroke="#181614" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="79" cy="38" r="3.8" fill="#181614"/>
-    <circle cx="70" cy="71" r="3.4" fill="#181614"/>
-    <path d="M87 46c5 0 8 2 10 5" stroke="#181614" strokeWidth="5" strokeLinecap="round"/>
+    <path d="M23 106V31C23 18.3 33.3 8 46 8h20c28.7 0 52 23.3 52 52s-23.3 52-52 52H47" stroke="#171514" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M42 66C48 53 60 45 75 45c14 0 26 10 29 24" stroke="#171514" strokeWidth="6" strokeLinecap="round" />
+    <path d="M40 39C43 24 58 17 74 21c13 3 23 13 25 26" stroke="#171514" strokeWidth="6" strokeLinecap="round" />
+    <path d="M45 37c5 11 4 21-3 29" stroke="#171514" strokeWidth="6" strokeLinecap="round" />
+    <path d="M55 65l8-15 9 15" stroke="#171514" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M50 90c7-14 18-21 34-23" stroke="#171514" strokeWidth="6" strokeLinecap="round" />
+    <path d="M84 47c6 0 11 3 15 8" stroke="#171514" strokeWidth="6" strokeLinecap="round" />
+    <circle cx="78" cy="34" r="4" fill="#171514" />
+    <circle cx="69" cy="69" r="3.6" fill="#171514" />
+    <path d="M75 77c5-1 9-1 13 0" stroke="#171514" strokeWidth="3" strokeLinecap="round" />
+    <path d="M74 84c5-1 9-1 13 0" stroke="#171514" strokeWidth="3" strokeLinecap="round" />
   </svg>
 );
 
-const TinyLogo = () => (
+const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
   <div className="flex items-center gap-3">
-    <div className="relative grid h-11 w-11 place-items-center rounded-2xl bg-white shadow-[0_14px_40px_rgba(24,22,20,.08)] ring-1 ring-black/5">
-      <LogoMark size={34} />
-      <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-[#ff7a1a]" />
-    </div>
+    <LogoMark size={compact ? 42 : 56} />
     <div className="leading-none">
-      <div className="text-xl font-black tracking-tight">Pawly</div>
-      <div className="mt-1 text-[10px] font-bold uppercase tracking-[.22em] text-[#8f847b]">Pet AI Studio</div>
+      <div className="flex items-start gap-1 text-[28px] font-black tracking-[-0.06em] text-[#171514]">
+        PBTI<span className="mt-1 text-[10px] tracking-normal">TM</span>
+      </div>
+      <div className="mt-1 text-[9px] font-semibold tracking-[0.15em] text-[#6f6258]">Pet Behavior Type Indicator</div>
     </div>
   </div>
 );
 
-const Feature = ({ icon, title, text }: { icon: string; title: string; text: string }) => (
-  <div className="group rounded-[2rem] border border-black/5 bg-white/70 p-7 shadow-[0_24px_80px_rgba(24,22,20,.06)] backdrop-blur transition duration-300 hover:-translate-y-2 hover:shadow-[0_34px_90px_rgba(255,122,26,.16)]">
-    <div className="mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-[#fff1e7] text-2xl text-[#ff7a1a]">{icon}</div>
-    <h3 className="text-xl font-black tracking-tight text-[#181614]">{title}</h3>
-    <p className="mt-3 text-sm leading-7 text-[#6f655c]">{text}</p>
+const FeatureCard = ({ icon, title, body, index }: { icon: string; title: string; body: string; index: string }) => (
+  <div className="group relative overflow-hidden rounded-[2rem] border border-[#eaded2] bg-white/80 p-7 shadow-[0_24px_70px_rgba(52,34,20,.07)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_34px_90px_rgba(255,122,26,.16)]">
+    <div className="grid h-16 w-16 place-items-center rounded-full bg-[#fff0e4] text-3xl text-[#ff7a1a]">{icon}</div>
+    <h3 className="mt-7 text-2xl font-black tracking-[-.04em] text-[#171514]">{title}</h3>
+    <p className="mt-3 text-sm leading-7 text-[#655a51]">{body}</p>
+    <div className="absolute bottom-6 right-7 text-xl font-black text-[#d5c4b6]">{index}</div>
   </div>
 );
 
-const Personality = ({ emoji, name, desc }: { emoji: string; name: string; desc: string }) => (
-  <div className="min-w-[210px] rounded-[2rem] border border-black/5 bg-white p-5 shadow-[0_20px_60px_rgba(24,22,20,.08)]">
-    <div className="grid h-36 place-items-center rounded-[1.5rem] bg-gradient-to-br from-[#fff4ea] to-[#f4eee7] text-6xl">{emoji}</div>
-    <div className="mt-5 text-lg font-black">{name}</div>
-    <div className="mt-1 text-sm text-[#7d746d]">{desc}</div>
+const PersonalityCard = ({ icon, name, desc, tint }: { icon: string; name: string; desc: string; tint: string }) => (
+  <div className="min-w-[190px] overflow-hidden rounded-[1.8rem] border border-[#eaded2] bg-white shadow-[0_20px_55px_rgba(52,34,20,.08)]">
+    <div className={`grid h-36 place-items-center ${tint} text-6xl`}>{icon}</div>
+    <div className="p-5 text-center">
+      <div className="text-lg font-black tracking-[-.03em] text-[#171514]">{name}</div>
+      <div className="mt-1 text-sm text-[#7a6d63]">{desc}</div>
+    </div>
   </div>
 );
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#fbf7f1] text-[#181614]">
+    <main className="min-h-screen overflow-hidden bg-[#fff9f2] text-[#171514]">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute left-[-8rem] top-[-8rem] h-[34rem] w-[34rem] rounded-full bg-[#ffb26f]/25 blur-3xl" />
-        <div className="absolute right-[-10rem] top-[10rem] h-[38rem] w-[38rem] rounded-full bg-[#a7bfae]/25 blur-3xl" />
-        <div className="absolute bottom-[-18rem] left-1/2 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-[#fff1d8]/60 blur-3xl" />
+        <div className="absolute right-[-10rem] top-[-8rem] h-[42rem] w-[42rem] rounded-full bg-[#ffb570]/35 blur-3xl" />
+        <div className="absolute left-[-12rem] top-[20rem] h-[35rem] w-[35rem] rounded-full bg-[#f8e7d2]/70 blur-3xl" />
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-[#fbf7f1]/75 backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 border-b border-[#eaded2]/70 bg-[#fff9f2]/78 backdrop-blur-2xl">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <TinyLogo />
-          <div className="hidden items-center gap-9 text-sm font-semibold text-[#5f574f] md:flex">
-            <a href="#features" className="hover:text-[#181614]">Features</a>
-            <a href="#how" className="hover:text-[#181614]">How it works</a>
-            <a href="#personalities" className="hover:text-[#181614]">Personalities</a>
-            <a href="/premium" className="hover:text-[#181614]">Pricing</a>
+          <BrandLogo compact />
+          <div className="hidden items-center gap-10 text-sm font-bold text-[#4f463f] lg:flex">
+            <a href="#features" className="hover:text-[#ff7a1a]">Features</a>
+            <a href="#how" className="hover:text-[#ff7a1a]">How it Works</a>
+            <a href="#personalities" className="hover:text-[#ff7a1a]">Personalities</a>
+            <a href="/premium" className="hover:text-[#ff7a1a]">Pricing</a>
+            <a href="#about" className="hover:text-[#ff7a1a]">About</a>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/login" className="hidden rounded-full px-5 py-3 text-sm font-bold text-[#181614] ring-1 ring-black/10 md:block">Sign in</a>
-            <a href="/create" className="rounded-full bg-[#181614] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(24,22,20,.18)] transition hover:scale-105">Start free</a>
+            <a href="/login" className="hidden rounded-full border border-[#eaded2] bg-white/60 px-6 py-3 text-sm font-bold text-[#171514] shadow-sm transition hover:bg-white md:block">Sign In</a>
+            <a href="/create" className="rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]">Start Free →</a>
           </div>
         </nav>
       </header>
 
-      <section className="mx-auto grid min-h-[calc(100vh-80px)] max-w-7xl items-center gap-14 px-6 py-20 lg:grid-cols-[1.02fr_.98fr]">
-        <div>
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#ff7a1a]/20 bg-white/80 px-4 py-2 text-sm font-bold text-[#c85d12] shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-[#ff7a1a]" /> AI-powered pet personality platform
+      <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-20 lg:min-h-[720px] lg:grid-cols-[.92fr_1.08fr]">
+        <div className="relative z-10">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-black text-[#d96612] shadow-sm ring-1 ring-[#ffd8bd]">
+            ✦ AI-powered personality analysis
           </div>
-          <h1 className="max-w-4xl text-6xl font-black tracking-[-.06em] text-[#181614] md:text-8xl">
-            Every Paw
-            <span className="block bg-gradient-to-r from-[#ff7a1a] via-[#d66b26] to-[#181614] bg-clip-text text-transparent">Has a Personality.</span>
+          <h1 className="max-w-3xl text-[64px] font-black leading-[.92] tracking-[-.075em] text-[#171514] md:text-[88px]">
+            Every <span className="bg-gradient-to-r from-[#ff7a1a] to-[#c35b16] bg-clip-text text-transparent">Paw</span>
+            <span className="block">Has a Personality.</span>
           </h1>
-          <p className="mt-8 max-w-2xl text-lg leading-9 text-[#655d55] md:text-xl">
-            Discover your pet's behavioral DNA with AI vision, science-based questions, and a lifelong personality profile designed for cats and dogs.
+          <p className="mt-7 max-w-xl text-lg leading-8 text-[#655a51]">
+            Discover your pet's unique behavioral DNA with AI vision, science, and 12 personality questions.
           </p>
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <a href="/create" className="rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_20px_45px_rgba(255,122,26,.32)] transition hover:-translate-y-1 hover:bg-[#ee6b10]">Start your pet journey →</a>
-            <a href="/report/sample" className="rounded-full bg-white px-8 py-4 text-center font-black text-[#181614] shadow-[0_18px_45px_rgba(24,22,20,.08)] ring-1 ring-black/10 transition hover:-translate-y-1">See sample report</a>
+          <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+            <a href="/create" className="rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_22px_50px_rgba(255,122,26,.34)] transition hover:-translate-y-1">Start Free →</a>
+            <a href="/report/sample" className="rounded-full border border-[#eaded2] bg-white/80 px-8 py-4 text-center font-black text-[#171514] shadow-[0_16px_45px_rgba(52,34,20,.07)] transition hover:-translate-y-1">▷ See Sample Report</a>
           </div>
-          <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-[#6f655c]">
-            <div><b className="text-[#181614]">50,000+</b> pet profiles</div>
-            <div><b className="text-[#181614]">12</b> behavior questions</div>
-            <div><b className="text-[#181614]">Cat & Dog</b> focused</div>
+          <div className="mt-10 flex items-center gap-6">
+            <div className="flex -space-x-3">
+              {['🐱','🐶','🐈','🦮','🐕'].map((x) => <div key={x} className="grid h-11 w-11 place-items-center rounded-full border-2 border-white bg-[#fff0e4] text-xl shadow-sm">{x}</div>)}
+            </div>
+            <div className="text-sm leading-6 text-[#655a51]"><span className="font-black text-[#ff7a1a]">★★★★★ 4.9</span><br />Loved by 50,000+ pet parents worldwide</div>
           </div>
         </div>
 
-        <div className="relative mx-auto h-[560px] w-full max-w-[560px]">
-          <div className="absolute inset-0 rounded-[4rem] bg-gradient-to-br from-white to-[#fff0df] shadow-[0_40px_120px_rgba(24,22,20,.12)] ring-1 ring-black/5" />
-          <div className="absolute inset-8 rounded-[3rem] border border-white/70 bg-white/40 backdrop-blur" />
-          <div className="absolute left-1/2 top-16 -translate-x-1/2">
-            <div className="relative grid h-72 w-72 place-items-center rounded-full bg-[#181614] shadow-[0_30px_80px_rgba(24,22,20,.25)]">
-              <LogoMark size={230} />
-              <div className="absolute -right-6 top-12 rounded-3xl bg-white px-5 py-4 shadow-xl">
-                <div className="text-sm font-black">Duoduo</div>
-                <div className="text-xs text-[#8f847b]">The Curious Explorer</div>
-              </div>
-            </div>
+        <div className="relative min-h-[560px]">
+          <div className="absolute inset-x-0 top-4 mx-auto h-[520px] max-w-[680px] rounded-full bg-gradient-to-br from-[#fff1df] via-[#ffd8ad] to-[#ffb56f] opacity-70 blur-[2px]" />
+          <div className="absolute left-1/2 top-12 h-[460px] w-[460px] -translate-x-1/2 rounded-full border border-[#ffd7af] shadow-[0_0_90px_rgba(255,144,55,.28)]" />
+          <div className="absolute left-[4%] top-20 rotate-[-4deg] rounded-[3rem] bg-white/60 p-4 shadow-[0_30px_70px_rgba(52,34,20,.13)] backdrop-blur">
+            <div className="grid h-[360px] w-[250px] place-items-center rounded-[2.4rem] bg-gradient-to-b from-white to-[#fff0df] text-[180px]">🐱</div>
           </div>
-          <div className="absolute bottom-12 left-10 right-10 rounded-[2rem] bg-[#181614] p-6 text-white shadow-2xl">
-            <div className="flex items-center justify-between gap-5">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[.2em] text-[#ffb26f]">Live preview</p>
-                <h3 className="mt-2 text-2xl font-black">Personality Report</h3>
-                <p className="mt-2 text-sm leading-6 text-white/65">AI transforms behavior into a clear, emotional, shareable profile.</p>
-              </div>
-              <div className="grid h-20 w-20 place-items-center rounded-3xl bg-white text-4xl">🐱</div>
-            </div>
+          <div className="absolute right-[2%] top-6 rotate-[3deg] rounded-[3rem] bg-white/60 p-4 shadow-[0_30px_70px_rgba(52,34,20,.13)] backdrop-blur">
+            <div className="grid h-[390px] w-[285px] place-items-center rounded-[2.4rem] bg-gradient-to-b from-white to-[#fff0df] text-[200px]">🐶</div>
           </div>
-          <div className="absolute right-8 top-8 h-5 w-5 rounded-full bg-[#ff7a1a]" />
-          <div className="absolute bottom-40 left-4 h-3 w-3 rounded-full bg-[#a7bfae]" />
+          <div className="absolute bottom-14 left-[28%] grid h-40 w-40 place-items-center rounded-[2.5rem] bg-white shadow-[0_28px_60px_rgba(52,34,20,.14)] ring-1 ring-[#eaded2]">
+            <LogoMark size={108} />
+          </div>
+          <div className="absolute bottom-28 left-12 rounded-2xl bg-white px-5 py-4 shadow-xl ring-1 ring-[#eaded2]">
+            <div className="text-sm font-black">🐾 Duoduo</div>
+            <div className="text-xs text-[#7a6d63]">The Curious Explorer</div>
+          </div>
+          <div className="absolute bottom-20 right-5 rounded-2xl bg-white px-5 py-4 shadow-xl ring-1 ring-[#eaded2]">
+            <div className="text-sm font-black">🐾 Koda</div>
+            <div className="text-xs text-[#7a6d63]">The Loyal Guardian</div>
+          </div>
+          <div className="absolute left-10 top-12 text-3xl text-[#ffb570]">✦</div>
+          <div className="absolute right-8 top-36 text-3xl text-[#ffb570]">✦</div>
         </div>
       </section>
 
-      <section id="features" className="mx-auto max-w-7xl px-6 py-24">
-        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[.22em] text-[#ff7a1a]">Why Pawly</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-.04em] md:text-6xl">Built for pet parents who want more than a cute quiz.</h2>
-          </div>
-          <p className="max-w-md text-base leading-8 text-[#6f655c]">Pawly combines emotional design with structured behavioral analysis, creating a premium experience people want to share.</p>
-        </div>
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          <Feature icon="📷" title="AI Vision" text="Photo-first experience that makes the analysis feel personal from the first second." />
-          <Feature icon="🧠" title="Behavior DNA" text="Questions designed around energy, curiosity, attachment, and social patterns." />
-          <Feature icon="🪪" title="Lifetime ID" text="Every pet receives a memorable profile ID and a report that can be revisited." />
-          <Feature icon="✨" title="Shareable Cards" text="Beautiful result cards built for TikTok, Instagram, X, and private sharing." />
+      <section className="border-y border-[#eaded2]/80 bg-white/40 py-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-16 gap-y-4 px-6 text-sm font-black text-[#8a7c70]">
+          <span>Petkit</span><span>vetstreet</span><span>Rover</span><span>Tractive</span><span>PetMD</span><span>Chewy</span>
         </div>
       </section>
 
-      <section id="how" className="mx-auto max-w-7xl px-6 py-24">
-        <div className="rounded-[3rem] bg-[#181614] p-8 text-white shadow-[0_40px_120px_rgba(24,22,20,.18)] md:p-12">
-          <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[.22em] text-[#ff9a4c]">How it works</p>
-              <h2 className="mt-4 text-4xl font-black tracking-[-.04em] md:text-6xl">Three steps to your pet's personality.</h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {[
-                ["01", "Create", "Tell us who your pet is."],
-                ["02", "Upload", "Add a clear photo for the profile."],
-                ["03", "Discover", "Answer questions and unlock the report."],
-              ].map(([n, title, text]) => (
-                <div key={n} className="rounded-[2rem] bg-white/8 p-6 ring-1 ring-white/10">
-                  <div className="text-3xl font-black text-[#ff9a4c]">{n}</div>
-                  <div className="mt-8 text-2xl font-black">{title}</div>
-                  <p className="mt-3 text-sm leading-7 text-white/60">{text}</p>
-                </div>
-              ))}
-            </div>
+      <section id="features" className="mx-auto max-w-7xl px-6 py-20">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <FeatureCard icon="📸" title="AI Vision" body="Advanced AI identifies facial features, expressions, and behavioral patterns." index="01" />
+          <FeatureCard icon="🧠" title="Behavior Analysis" body="12 science-based questions analyze your pet's daily behaviors and habits." index="02" />
+          <FeatureCard icon="🧬" title="Personality DNA" body="Our AI maps each pet across personality dimensions designed for cats and dogs." index="03" />
+          <FeatureCard icon="🪪" title="Lifetime Profile" body="Get a beautiful, shareable report and a permanent Personality ID for your pet." index="04" />
+        </div>
+      </section>
+
+      <section id="how" className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="mb-8 text-center text-3xl font-black tracking-[-.04em]">🐾 How it works</div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="rounded-[2rem] border border-[#eaded2] bg-white/75 p-8 shadow-[0_24px_65px_rgba(52,34,20,.07)]">
+            <div className="text-4xl font-black text-[#ff7a1a]">01</div>
+            <h3 className="mt-8 text-2xl font-black">Upload Photo</h3>
+            <p className="mt-3 text-sm leading-7 text-[#655a51]">Upload a clear photo of your cat or dog.</p>
+          </div>
+          <div className="rounded-[2rem] border border-[#eaded2] bg-white/75 p-8 shadow-[0_24px_65px_rgba(52,34,20,.07)]">
+            <div className="text-4xl font-black text-[#ff7a1a]">02</div>
+            <h3 className="mt-8 text-2xl font-black">Answer Questions</h3>
+            <p className="mt-3 text-sm leading-7 text-[#655a51]">Answer 12 simple questions about their behavior.</p>
+          </div>
+          <div className="rounded-[2rem] border border-[#eaded2] bg-white/75 p-8 shadow-[0_24px_65px_rgba(52,34,20,.07)]">
+            <div className="text-4xl font-black text-[#ff7a1a]">03</div>
+            <h3 className="mt-8 text-2xl font-black">Discover Personality</h3>
+            <p className="mt-3 text-sm leading-7 text-[#655a51]">AI generates a visual personality report you can revisit and share.</p>
           </div>
         </div>
       </section>
 
-      <section id="personalities" className="mx-auto max-w-7xl px-6 py-24">
-        <div className="mb-10 flex items-end justify-between gap-6">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[.22em] text-[#ff7a1a]">Personality system</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-.04em] md:text-6xl">Meet the PBTI types.</h2>
-          </div>
-          <a href="/quiz" className="hidden rounded-full bg-white px-6 py-3 font-black shadow-sm ring-1 ring-black/10 md:block">Try quiz</a>
+      <section id="personalities" className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="mb-7 flex items-end justify-between gap-6">
+          <h2 className="text-3xl font-black tracking-[-.04em]">12 Unique Personality Types</h2>
+          <a href="/quiz" className="text-sm font-black text-[#ff7a1a]">See all →</a>
         </div>
-        <div className="flex gap-5 overflow-x-auto pb-6">
-          <Personality emoji="🧭" name="Explorer" desc="Curious, brave, active" />
-          <Personality emoji="🛡️" name="Guardian" desc="Loyal, protective, calm" />
-          <Personality emoji="🌙" name="Dreamer" desc="Gentle, sensitive, soft" />
-          <Personality emoji="⚡" name="Maverick" desc="Wild, playful, bold" />
-          <Personality emoji="🎓" name="Scholar" desc="Observant, smart, precise" />
+        <div className="flex gap-5 overflow-x-auto pb-4">
+          <PersonalityCard icon="🔍" name="Explorer" desc="Curious" tint="bg-[#f7eadc]" />
+          <PersonalityCard icon="🛡️" name="Guardian" desc="Loyal" tint="bg-[#fff0d6]" />
+          <PersonalityCard icon="🌙" name="Dreamer" desc="Gentle" tint="bg-[#ece7f8]" />
+          <PersonalityCard icon="⚡" name="Maverick" desc="Adventurous" tint="bg-[#ffe1ce]" />
+          <PersonalityCard icon="📚" name="Scholar" desc="Intelligent" tint="bg-[#e8f0e8]" />
+          <PersonalityCard icon="👑" name="Leader" desc="Confident" tint="bg-[#ffe6be]" />
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-28">
-        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-r from-[#fff1e4] to-white p-10 shadow-[0_30px_90px_rgba(24,22,20,.08)] ring-1 ring-black/5 md:p-14">
+      <section id="about" className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-[#eaded2] bg-gradient-to-r from-white via-[#fff0df] to-[#ffd8ad] p-10 shadow-[0_30px_90px_rgba(52,34,20,.1)] md:p-12">
           <div className="max-w-2xl">
-            <h2 className="text-4xl font-black tracking-[-.04em] md:text-6xl">Ready to understand your pet better?</h2>
-            <p className="mt-6 text-lg leading-8 text-[#655d55]">Start with a free profile. Upgrade later for the full AI report, share cards, and deeper recommendations.</p>
-            <a href="/create" className="mt-8 inline-block rounded-full bg-[#181614] px-8 py-4 font-black text-white">Start free →</a>
+            <h2 className="text-4xl font-black tracking-[-.05em]">Ready to discover your pet's true personality?</h2>
+            <p className="mt-5 text-lg leading-8 text-[#5f544d]">Join thousands of pet parents who understand their pets on a deeper level.</p>
+            <a href="/create" className="mt-8 inline-block rounded-full bg-[#ff7a1a] px-8 py-4 font-black text-white shadow-[0_20px_45px_rgba(255,122,26,.32)]">Start Your Pet's Journey →</a>
           </div>
-          <div className="absolute -right-10 -top-10 hidden h-64 w-64 rounded-full bg-[#ff7a1a]/20 blur-2xl md:block" />
+          <div className="absolute bottom-0 right-10 hidden text-[220px] leading-none md:block">🐱</div>
         </div>
       </section>
 
-      <footer className="border-t border-black/5 px-6 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 text-sm text-[#7d746d] md:flex-row md:items-center">
-          <TinyLogo />
-          <div>© 2026 Pawly. Understand. Connect. Together.</div>
+      <footer className="border-t border-[#eaded2] px-6 py-9">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 text-sm text-[#7a6d63] md:flex-row md:items-center">
+          <BrandLogo compact />
+          <div>© 2026 PBTI. Pet Behavior Type Indicator.</div>
         </div>
       </footer>
     </main>
