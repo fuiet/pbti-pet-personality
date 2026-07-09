@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function UploadPage() {
@@ -11,12 +11,12 @@ export default function UploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Read pet info on mount
-  useState(() => {
+  useEffect(() => {
     const stored = localStorage.getItem("pbti_pet");
     if (stored) {
       try { setPet(JSON.parse(stored)); } catch { /* */ }
     }
-  });
+  }, []);
 
   function handleFile(file: File) {
     if (!file.type.startsWith("image/")) return;
@@ -135,14 +135,13 @@ export default function UploadPage() {
           onClick={() => router.push("/create")}
           className="rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-sm font-bold text-[#4f463f] transition hover:bg-white/80"
         >
-          ← Back
+          鈫?Back
         </button>
         <button
           onClick={() => router.push("/quiz")}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          Start Personality Test →
-        </button>
+          Start Personality Test 鈫?        </button>
       </div>
     </div>
   );
