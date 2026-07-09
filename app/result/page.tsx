@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import PersonalityCard from "@/components/PersonalityCard";
 
 export default function ResultPage() {
   const router = useRouter();
-  const [pet, setPet] = useState<{ name?: string; species?: string }>({});
+  const [pet, setPet] = useState<{ name?: string; species?: string; breed?: string; age?: string }>({});
   const [personality, setPersonality] = useState<typeof personalities.AECG | null>(null);
   const [dna, setDna] = useState<{ name: string; value: number }[]>([]);
   const [pbtiType, setPbtiType] = useState("");
