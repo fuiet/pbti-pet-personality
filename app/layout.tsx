@@ -1,8 +1,9 @@
-import "./globals.css";
+﻿import "./globals.css";
+import AppShell from "@/components/AppShell";
 
 export const metadata = {
   title: "PBTI - Pet Behavior Type Indicator",
-  description: "Discover your pet personality",
+  description: "Discover your pet\'s unique personality with AI-powered behavioral analysis",
 };
 
 export default function RootLayout({
@@ -12,7 +13,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }
