@@ -101,7 +101,7 @@ export default function Home() {
 
           {/* 真实猫狗图片 */}
           <img
-            src="/hero-pets.png"
+            src="/hero-pets.png?v=2"
             alt="A happy cat and dog together wearing PBTI tags"
             className="relative z-10 h-auto w-full max-w-[580px] object-contain"
           />
