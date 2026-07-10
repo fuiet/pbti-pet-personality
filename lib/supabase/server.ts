@@ -1,4 +1,4 @@
-﻿import { createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 function getSupabaseConfig() {
@@ -12,9 +12,9 @@ function getSupabaseConfig() {
   return { url, key };
 }
 
-export function createSupabaseServerClient() {
+export async function createSupabaseServerClient() {
   const { url, key } = getSupabaseConfig();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient(url, key, {
     cookies: {
