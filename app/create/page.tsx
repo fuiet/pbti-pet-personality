@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +40,7 @@ export default function CreatePet() {
                   : "border-2 border-[#eaded2] text-[#a3968a]"
               }`}
             >
-              {s < step ? "?" : s}
+              {s < step ? "OK" : s}
             </div>
             {s < 4 && (
               <div
@@ -84,7 +84,7 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl">??</div>
+              <div className="text-3xl font-black text-[#ff7a1a]">Cat</div>
               <div className="mt-1 text-sm font-bold">Cat</div>
             </button>
             <button
@@ -95,7 +95,7 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl">??</div>
+              <div className="text-3xl font-black text-[#ff7a1a]">Dog</div>
               <div className="mt-1 text-sm font-bold">Dog</div>
             </button>
           </div>
@@ -129,7 +129,7 @@ export default function CreatePet() {
         disabled={!name.trim()}
         className="mt-8 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Continue to Photo →
+        Continue to Photo
       </button>
     </div>
   );

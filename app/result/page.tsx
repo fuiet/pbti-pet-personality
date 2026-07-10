@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { personalities } from "@/data/personalities";
+import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import { calculatePBTI } from "@/lib/pbtiEngine";
 import PersonalityCard from "@/components/PersonalityCard";
 
 export default function ResultPage() {
   const router = useRouter();
   const [pet, setPet] = useState<{ name?: string; species?: string; breed?: string; age?: string }>({});
-  const [personality, setPersonality] = useState<typeof personalities.AECG | null>(null);
+  const [personality, setPersonality] = useState<(typeof personalities)[typeof defaultPersonalityCode] | null>(null);
   const [dna, setDna] = useState<{ name: string; value: number }[]>([]);
   const [pbtiType, setPbtiType] = useState("");
 
@@ -23,15 +23,18 @@ export default function ResultPage() {
     }
 
     if (storedPet) {
-      try { setPet(JSON.parse(storedPet)); } catch { /* */ }
+      try {
+        setPet(JSON.parse(storedPet));
+      } catch {
+        // Ignore malformed local data and continue with defaults.
+      }
     }
 
     const answers = JSON.parse(storedAnswers);
     const result = calculatePBTI(answers);
-    const p = personalities[result.type] || personalities.AECG;
 
-    setPbtiType(result.type);
-    setPersonality(p);
+    setPbtiType(result.code);
+    setPersonality(result.personality);
 
     const total = Object.values(result.scores).reduce((a, b) => a + b, 0) || 1;
     setDna([
@@ -45,39 +48,36 @@ export default function ResultPage() {
   if (!personality) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-4xl animate-pulse">??</div>
+        <div className="text-4xl animate-pulse">Analyzing...</div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      {/* Header */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#fff0e4] px-5 py-2 text-sm font-black text-[#d96612] shadow-sm ring-1 ring-[#ffd8bd]">
-          ? Analysis Complete
+          Analysis Complete
         </div>
       </div>
 
-      {/* Main Personality Card */}
       <PersonalityCard
         emoji={personality.emoji}
         code={personality.code}
         name={personality.name}
+        title={personality.title}
         description={personality.description}
       />
 
-      {/* Pet info */}
       {pet.name && (
         <div className="mt-4 text-center text-sm text-[#7a6d63]">
-          {pet.species === "dog" ? "??" : "??"} {pet.name}
-          {pet.breed ? ` · ${pet.breed}` : ""}
+          {pet.species === "dog" ? "Dog" : "Cat"} {pet.name}
+          {pet.breed ? ` - ${pet.breed}` : ""}
         </div>
       )}
 
-      {/* Traits */}
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">?? Key Traits</h3>
+        <h3 className="mb-4 text-lg font-bold text-[#171514]">Key Traits</h3>
         <div className="flex flex-wrap gap-2">
           {personality.traits.map((trait) => (
             <span
@@ -90,9 +90,8 @@ export default function ResultPage() {
         </div>
       </div>
 
-      {/* Personality DNA */}
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-5 text-lg font-bold text-[#171514]">?? Personality DNA</h3>
+        <h3 className="mb-5 text-lg font-bold text-[#171514]">Personality DNA</h3>
         <div className="space-y-4">
           {dna.map((item) => (
             <div key={item.name}>
@@ -111,28 +110,26 @@ export default function ResultPage() {
         </div>
       </div>
 
-      {/* Advice */}
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">?? Care Advice</h3>
+        <h3 className="mb-4 text-lg font-bold text-[#171514]">Care Advice</h3>
         <ul className="space-y-2">
-          {personality.advice.map((a, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
+          {personality.advice.map((advice, index) => (
+            <li key={index} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
               <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#fff0e4] text-xs text-[#ff7a1a]">
-                {i + 1}
+                {index + 1}
               </span>
-              {a}
+              {advice}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Action buttons */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <button
           onClick={() => router.push(`/report/${pbtiType}`)}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          View Full Report →
+          View Full Report
         </button>
         <button
           onClick={() => router.push("/dashboard")}
@@ -147,11 +144,10 @@ export default function ResultPage() {
           onClick={() => router.push("/premium")}
           className="text-sm font-bold text-[#ff7a1a] hover:underline"
         >
-          Unlock Premium Report · $9.99
+          Unlock Premium Report - $9.99
         </button>
       </div>
 
-      {/* Retake */}
       <div className="mt-6 text-center">
         <button
           onClick={() => {

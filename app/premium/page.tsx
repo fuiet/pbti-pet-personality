@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 
@@ -60,7 +60,7 @@ export default function Premium() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <div className="mb-10 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#fff0e4] px-5 py-2 text-sm font-black text-[#d96612] shadow-sm ring-1 ring-[#ffd8bd]">
-          ?? Understand Your Pet Deeper
+          Understand Your Pet Deeper
         </div>
         <h1 className="mt-4 text-4xl font-black tracking-[-.05em] text-[#171514]">
           Choose Your Plan
@@ -98,7 +98,7 @@ export default function Premium() {
             <ul className="mt-6 space-y-3">
               {plan.features.map((f, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-[#4f463f]">
-                  <span className="mt-0.5 text-[#ff7a1a]">?</span>
+                  <span className="mt-0.5 text-[#ff7a1a]">+</span>
                   {f}
                 </li>
               ))}

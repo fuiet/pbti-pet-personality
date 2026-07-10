@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { personalities } from "@/data/personalities";
+import { defaultPersonalityCode, personalities } from "@/data/personalities";
+import { calculatePBTI, Trait } from "@/lib/pbtiEngine";
 
 interface PetEntry {
   name: string;
@@ -13,8 +14,8 @@ interface PetEntry {
 
 interface ResultEntry {
   pet: PetEntry;
-  type: string;
-  personality: typeof personalities.AECG;
+  code: string;
+  personality: (typeof personalities)[typeof defaultPersonalityCode];
 }
 
 export default function Dashboard() {
@@ -23,33 +24,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     const results: ResultEntry[] = [];
-
-    // Read current pet
     const petRaw = localStorage.getItem("pbti_pet");
     const answersRaw = localStorage.getItem("pbti_answers");
 
     if (petRaw && answersRaw) {
       try {
         const pet = JSON.parse(petRaw) as PetEntry;
-        const answers = JSON.parse(answersRaw) as string[];
-        // Recalculate type from raw scores
-        const scores: Record<string, number> = { A: 0, I: 0, E: 0, S: 0, V: 0, C: 0, P: 0, G: 0 };
-        answers.forEach((a) => { if (a in scores) scores[a] += 1; });
-        const type = [
-          scores.A >= scores.I ? "A" : "I",
-          scores.E >= scores.S ? "E" : "S",
-          scores.V >= scores.C ? "V" : "C",
-          scores.P >= scores.G ? "P" : "G",
-        ].join("");
-        const p = personalities[type] || personalities.AECG;
-        results.push({ pet, type, personality: p });
-      } catch { /* ignore parse errors */ }
+        const answers = JSON.parse(answersRaw) as Trait[];
+        const result = calculatePBTI(answers);
+        results.push({ pet, code: result.code, personality: result.personality });
+      } catch {
+        // Ignore malformed local data and keep the dashboard empty.
+      }
     }
 
     setEntries(results);
   }, []);
 
-  const speciesEmoji = (s: string) => (s === "dog" ? "??" : "??");
+  const speciesLabel = (species: string) => (species === "dog" ? "Dog" : "Cat");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
@@ -73,7 +65,7 @@ export default function Dashboard() {
       <div className="mt-8 space-y-5">
         {entries.length === 0 ? (
           <div className="rounded-3xl border border-[#eaded2] bg-white/60 p-12 text-center">
-            <div className="text-6xl">??</div>
+            <div className="text-6xl font-black text-[#ff7a1a]">PBTI</div>
             <h2 className="mt-4 text-xl font-bold text-[#4f463f]">No pets yet</h2>
             <p className="mt-2 text-sm text-[#7a6d63]">
               Create your first pet profile to discover their personality
@@ -82,47 +74,47 @@ export default function Dashboard() {
               onClick={() => router.push("/create")}
               className="mt-6 rounded-full bg-[#ff7a1a] px-8 py-3 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"
             >
-              Get Started →
+              Get Started
             </button>
           </div>
         ) : (
-          entries.map((entry, idx) => (
+          entries.map((entry, index) => (
             <div
-              key={idx}
+              key={index}
               className="group rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-[0_16px_45px_rgba(52,34,20,.08)]"
             >
               <div className="flex items-center gap-5">
-                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#fff0e4] text-3xl">
-                  {speciesEmoji(entry.pet.species)}
+                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#fff0e4] text-base font-black text-[#d96612]">
+                  {speciesLabel(entry.pet.species)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-bold text-[#171514]">{entry.pet.name}</h2>
                   <p className="text-sm text-[#7a6d63]">
                     {entry.pet.species === "dog" ? "Dog" : "Cat"}
-                    {entry.pet.breed ? ` · ${entry.pet.breed}` : ""}
-                    {entry.pet.age ? ` · ${entry.pet.age}` : ""}
+                    {entry.pet.breed ? ` - ${entry.pet.breed}` : ""}
+                    {entry.pet.age ? ` - ${entry.pet.age}` : ""}
                   </p>
                 </div>
                 <div className="hidden text-right sm:block">
-                  <div className="text-sm font-bold text-[#ff7a1a]">{entry.type}</div>
-                  <div className="text-xs text-[#7a6d63]">{entry.personality.emoji} {entry.personality.name}</div>
+                  <div className="text-sm font-bold text-[#ff7a1a]">{entry.personality.name}</div>
+                  <div className="text-xs text-[#7a6d63]">{entry.personality.title}</div>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3 sm:ml-[5.25rem]">
                 <div className="flex gap-2">
-                  {entry.personality.traits.map((t) => (
+                  {entry.personality.traits.map((trait) => (
                     <span
-                      key={t}
+                      key={trait}
                       className="rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-bold text-[#d96612]"
                     >
-                      {t}
+                      {trait}
                     </span>
                   ))}
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex shrink-0 gap-2">
                   <button
-                    onClick={() => router.push(`/report/${entry.type}`)}
+                    onClick={() => router.push(`/report/${entry.code}`)}
                     className="rounded-full bg-[#ff7a1a] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#ee6b10]"
                   >
                     Report

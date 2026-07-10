@@ -1,4 +1,4 @@
-﻿ "use client";
+ "use client";
  
  import Link from "next/link";
  import { usePathname } from "next/navigation";
@@ -46,7 +46,8 @@
                href="/create"
                className="rounded-full bg-[#ff7a1a] px-5 py-2.5 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
              >
-               Start Free 鈫?             </Link>
+               Start Free
+             </Link>
            </div>
          </nav>
        </header>
@@ -55,7 +56,7 @@
          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-[#7a6d63] md:flex-row md:items-center">
            <div className="flex items-center gap-3">
              <img src="/logo.png" alt="PBTI" className="h-8 w-auto object-contain" />
-             <span>漏 2026 PBTI</span>
+             <span>Copyright 2026 PBTI</span>
            </div>
            <div className="flex gap-6">
              <Link href="/" className="hover:text-[#ff7a1a]">Home</Link>

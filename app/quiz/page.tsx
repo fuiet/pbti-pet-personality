@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,6 @@ export default function QuizPage() {
   const [pet, setPet] = useState<{ species: string; name?: string }>({ species: "cat" });
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
-  const [direction, setDirection] = useState<"next" | "prev">("next");
 
   useEffect(() => {
     const stored = localStorage.getItem("pbti_pet");
@@ -25,14 +24,12 @@ export default function QuizPage() {
 
   const goBack = useCallback(() => {
     if (current > 0) {
-      setDirection("prev");
       setCurrent(current - 1);
       setAnswers(answers.slice(0, -1));
     }
   }, [current, answers]);
 
   const select = useCallback((value: string) => {
-    setDirection("next");
     const next = [...answers, value];
     setAnswers(next);
 
@@ -73,21 +70,21 @@ export default function QuizPage() {
           Back
         </button>
         <div className="text-sm font-bold text-[#7a6d63]">
-          {pet.name ? `${pet.name} · ` : ""}Question {current + 1} of {questions.length}
+          {pet.name ? `${pet.name} - ` : ""}Question {current + 1} of {questions.length}
         </div>
         <button
           onClick={() => router.push("/create")}
           className="text-sm text-[#7a6d63] hover:text-[#ff7a1a]"
           title="Restart quiz"
         >
-          ? Quit
+          Quit
         </button>
       </div>
 
       <ProgressBar current={current + 1} total={questions.length} />
 
       <div className="mt-2 mb-8 flex justify-between text-xs text-[#a3968a]">
-        <span>{pet.species === "dog" ? "?? Dog" : "?? Cat"} Personality Test</span>
+        <span>{pet.species === "dog" ? "Dog" : "Cat"} Personality Test</span>
         <span>{Math.round(((current + 1) / questions.length) * 100)}%</span>
       </div>
 
