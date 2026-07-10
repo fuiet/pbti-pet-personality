@@ -80,14 +80,14 @@ export default function QuizPage() {
           className="text-sm text-[#7a6d63] hover:text-[#ff7a1a]"
           title="Restart quiz"
         >
-          ? Quit
+          × Quit
         </button>
       </div>
 
       <ProgressBar current={current + 1} total={questions.length} />
 
       <div className="mt-2 mb-8 flex justify-between text-xs text-[#a3968a]">
-        <span>{pet.species === "dog" ? "?? Dog" : "?? Cat"} Personality Test</span>
+        <span>{pet.species === "dog" ? "🐶 Dog" : "🐱 Cat"} Personality Test</span>
         <span>{Math.round(((current + 1) / questions.length) * 100)}%</span>
       </div>
 
