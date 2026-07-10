@@ -1,7 +1,8 @@
-﻿ "use client";
+"use client";
  
  import Link from "next/link";
  import { usePathname } from "next/navigation";
+ import { useState } from "react";
  
  const navLinks = [
    { href: "/", label: "Home" },
@@ -12,6 +13,7 @@
  export default function AppShell({ children }: { children: React.ReactNode }) {
    const pathname = usePathname();
    const isHome = pathname === "/";
+   const [menuOpen, setMenuOpen] = useState(false);
  
    if (isHome) return <>{children}</>;
  
@@ -35,7 +37,7 @@
                </Link>
              ))}
            </div>
-           <div className="flex items-center gap-3">
+           <div className="flex items-center gap-2 sm:gap-3">
              <Link
                href="/login"
                className="hidden rounded-full border border-[#eaded2] bg-white/60 px-5 py-2.5 text-sm font-bold shadow-sm transition hover:bg-white md:block"
@@ -46,16 +48,38 @@
                href="/create"
                className="rounded-full bg-[#ff7a1a] px-5 py-2.5 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
              >
-               Start Free 鈫?             </Link>
+               Start Free →
+             </Link>
+             <button
+               type="button"
+               onClick={() => setMenuOpen((open) => !open)}
+               className="grid h-10 w-10 place-items-center rounded-full border border-[#eaded2] bg-white text-xl md:hidden"
+               aria-label="Toggle navigation"
+               aria-expanded={menuOpen}
+             >
+               {menuOpen ? "×" : "☰"}
+             </button>
            </div>
          </nav>
+         {menuOpen ? (
+           <div className="border-t border-[#eaded2] bg-[#fff9f2] px-6 py-4 md:hidden">
+             <div className="mx-auto flex max-w-7xl flex-col gap-1">
+               {navLinks.map((link) => (
+                 <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-bold hover:bg-white">
+                   {link.label}
+                 </Link>
+               ))}
+               <Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-bold text-[#ff7a1a] hover:bg-white">Sign In</Link>
+             </div>
+           </div>
+         ) : null}
        </header>
        <main>{children}</main>
        <footer className="border-t border-[#eaded2] px-6 py-6">
          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-[#7a6d63] md:flex-row md:items-center">
            <div className="flex items-center gap-3">
              <img src="/logo.png" alt="PBTI" className="h-8 w-auto object-contain" />
-             <span>漏 2026 PBTI</span>
+             <span>© 2026 PBTI</span>
            </div>
            <div className="flex gap-6">
              <Link href="/" className="hover:text-[#ff7a1a]">Home</Link>

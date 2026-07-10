@@ -49,7 +49,7 @@ export default function Dashboard() {
     setEntries(results);
   }, []);
 
-  const speciesEmoji = (s: string) => (s === "dog" ? "??" : "??");
+  const speciesEmoji = (s: string) => (s === "dog" ? "🐶" : "🐱");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
@@ -73,7 +73,7 @@ export default function Dashboard() {
       <div className="mt-8 space-y-5">
         {entries.length === 0 ? (
           <div className="rounded-3xl border border-[#eaded2] bg-white/60 p-12 text-center">
-            <div className="text-6xl">??</div>
+            <div className="text-6xl">🐾</div>
             <h2 className="mt-4 text-xl font-bold text-[#4f463f]">No pets yet</h2>
             <p className="mt-2 text-sm text-[#7a6d63]">
               Create your first pet profile to discover their personality

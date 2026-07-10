@@ -111,7 +111,7 @@ export default function UploadPage() {
           </div>
         ) : (
           <div className="py-10">
-            <div className="text-6xl">??</div>
+            <div className="text-6xl">📷</div>
             <p className="mt-4 text-sm font-bold text-[#4f463f]">
               Drop your pet photo here or click to browse
             </p>
@@ -135,13 +135,14 @@ export default function UploadPage() {
           onClick={() => router.push("/create")}
           className="rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-sm font-bold text-[#4f463f] transition hover:bg-white/80"
         >
-          鈫?Back
+          ← Back
         </button>
         <button
           onClick={() => router.push("/quiz")}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          Start Personality Test 鈫?        </button>
+          Start Personality Test →
+        </button>
       </div>
     </div>
   );

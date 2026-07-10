@@ -45,7 +45,7 @@ export default function ResultPage() {
   if (!personality) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-4xl animate-pulse">??</div>
+        <div className="text-4xl animate-pulse">🐾</div>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default function ResultPage() {
       {/* Header */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#fff0e4] px-5 py-2 text-sm font-black text-[#d96612] shadow-sm ring-1 ring-[#ffd8bd]">
-          ? Analysis Complete
+          ✓ Analysis Complete
         </div>
       </div>
 
@@ -70,14 +70,14 @@ export default function ResultPage() {
       {/* Pet info */}
       {pet.name && (
         <div className="mt-4 text-center text-sm text-[#7a6d63]">
-          {pet.species === "dog" ? "??" : "??"} {pet.name}
+          {pet.species === "dog" ? "🐶" : "🐱"} {pet.name}
           {pet.breed ? ` · ${pet.breed}` : ""}
         </div>
       )}
 
       {/* Traits */}
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">?? Key Traits</h3>
+        <h3 className="mb-4 text-lg font-bold text-[#171514]">✨ Key Traits</h3>
         <div className="flex flex-wrap gap-2">
           {personality.traits.map((trait) => (
             <span
@@ -92,7 +92,7 @@ export default function ResultPage() {
 
       {/* Personality DNA */}
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-5 text-lg font-bold text-[#171514]">?? Personality DNA</h3>
+        <h3 className="mb-5 text-lg font-bold text-[#171514]">🧬 Personality DNA</h3>
         <div className="space-y-4">
           {dna.map((item) => (
             <div key={item.name}>
@@ -113,7 +113,7 @@ export default function ResultPage() {
 
       {/* Advice */}
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">?? Care Advice</h3>
+        <h3 className="mb-4 text-lg font-bold text-[#171514]">💡 Care Advice</h3>
         <ul className="space-y-2">
           {personality.advice.map((a, i) => (
             <li key={i} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">

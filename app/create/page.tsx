@@ -40,7 +40,7 @@ export default function CreatePet() {
                   : "border-2 border-[#eaded2] text-[#a3968a]"
               }`}
             >
-              {s < step ? "?" : s}
+              {s < step ? "✓" : s}
             </div>
             {s < 4 && (
               <div
@@ -84,7 +84,7 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl">??</div>
+              <div className="text-3xl">🐱</div>
               <div className="mt-1 text-sm font-bold">Cat</div>
             </button>
             <button
@@ -95,7 +95,7 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl">??</div>
+              <div className="text-3xl">🐶</div>
               <div className="mt-1 text-sm font-bold">Dog</div>
             </button>
           </div>
