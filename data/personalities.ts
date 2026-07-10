@@ -1,4 +1,19 @@
-﻿export interface Personality {
+export type PersonalityId =
+  | "explorer"
+  | "guardian"
+  | "dreamer"
+  | "maverick"
+  | "scholar"
+  | "leader"
+  | "companion"
+  | "healer"
+  | "sunny"
+  | "sentinel"
+  | "player"
+  | "noble";
+
+export interface Personality {
+  id: PersonalityId;
   code: string;
   name: string;
   title: string;
@@ -6,177 +21,47 @@
   description: string;
   traits: string[];
   advice: string[];
+  imageIndex: number;
 }
 
-export interface PersonalityShowcaseItem {
-  name: string;
-  blurb: string;
-}
+export const defaultPersonalityId: PersonalityId = "companion";
 
-export const defaultPersonalityCode = "AECG";
-
-export const personalityShowcase: PersonalityShowcaseItem[] = [
-  { name: "Explorer", blurb: "Curious and quick to investigate." },
-  { name: "Guardian", blurb: "Steady, loyal, and protective." },
-  { name: "Dreamer", blurb: "Gentle, calm, and comfort-loving." },
-  { name: "Maverick", blurb: "Independent and bold in new spaces." },
-  { name: "Scholar", blurb: "Observant, thoughtful, and clever." },
-  { name: "Leader", blurb: "Confident, expressive, and self-assured." },
-  { name: "Companion", blurb: "Warm, attached, and people-oriented." },
-  { name: "Healer", blurb: "Soft-hearted and emotionally grounding." },
-  { name: "Sunny", blurb: "Bright, social, and joyfully energetic." },
-  { name: "Sentinel", blurb: "Watchful, patient, and alert." },
-  { name: "Player", blurb: "Interactive, mischievous, and fun-loving." },
-  { name: "Noble", blurb: "Calm, poised, and quietly confident." },
+export const personalityOrder: PersonalityId[] = [
+  "explorer",
+  "guardian",
+  "dreamer",
+  "maverick",
+  "scholar",
+  "leader",
+  "companion",
+  "healer",
+  "sunny",
+  "sentinel",
+  "player",
+  "noble",
 ];
 
-export const personalities: Record<string, Personality> = {
-  AEVP: {
-    code: "AEVP",
-    name: "Sunny",
-    title: "Bright Companion",
-    emoji: "SU",
-    description: "A joyful pet who fills the home with upbeat energy, clear affection, and playful enthusiasm.",
-    traits: ["Playful", "Social", "Energetic"],
-    advice: ["Provide active play every day", "Use praise and shared routines to build connection"],
-  },
-  AEVG: {
-    code: "AEVG",
-    name: "Explorer",
-    title: "Free Spirit",
-    emoji: "EX",
-    description: "A brave and curious companion who loves discovering new things and checking every corner first.",
-    traits: ["Curious", "Brave", "Independent"],
-    advice: ["Offer safe exploration opportunities", "Respect their need for variety and choice"],
-  },
-  AECP: {
-    code: "AECP",
-    name: "Player",
-    title: "Joyful Teammate",
-    emoji: "PL",
-    description: "A lively, engaging pet that turns everyday moments into games and shared attention into fun.",
-    traits: ["Curious", "Gentle", "Interactive"],
-    advice: ["Use short, rewarding games", "Keep enrichment varied and easy to join"],
-  },
-  AECG: {
-    code: "AECG",
-    name: "Guardian",
-    title: "Steady Protector",
-    emoji: "GU",
-    description: "Quiet outside, deeply connected inside. This pet shows love through trust, loyalty, and steady presence.",
-    traits: ["Calm", "Loyal", "Sensitive"],
-    advice: ["Respect personal space", "Keep routines stable and predictable"],
-  },
-  ASEP: {
-    code: "ASEP",
-    name: "Companion",
-    title: "Comfort Explorer",
-    emoji: "CO",
-    description: "A close-hearted pet who enjoys familiar bonds and gentle adventures taken at a comfortable pace.",
-    traits: ["Careful", "Curious", "Balanced"],
-    advice: ["Create safe exploration areas", "Introduce novelty in small steps"],
-  },
-  ASEG: {
-    code: "ASEG",
-    name: "Healer",
-    title: "Trusted Friend",
-    emoji: "HE",
-    description: "A dependable, soothing presence who brings calm and comfort simply by staying near the family.",
-    traits: ["Reliable", "Loyal", "Stable"],
-    advice: ["Maintain routines", "Build trust through consistent signals"],
-  },
-  ASCP: {
-    code: "ASCP",
-    name: "Dreamer",
-    title: "Soft Soul",
-    emoji: "DR",
-    description: "A peaceful pet who enjoys comfort, quiet companionship, and a gentle rhythm to daily life.",
-    traits: ["Relaxed", "Gentle", "Comfort-seeking"],
-    advice: ["Provide cozy resting spaces", "Keep affection calm and predictable"],
-  },
-  ASCG: {
-    code: "ASCG",
-    name: "Sentinel",
-    title: "Calm Observer",
-    emoji: "SE",
-    description: "A watchful pet who values harmony, notices subtle change, and keeps a quiet eye on the home.",
-    traits: ["Peaceful", "Observant", "Patient"],
-    advice: ["Keep environments calm", "Avoid forcing fast social interactions"],
-  },
-  IEVP: {
-    code: "IEVP",
-    name: "Maverick",
-    title: "Active Scout",
-    emoji: "MA",
-    description: "Independent but curious, this pet loves testing limits, chasing novelty, and making its own path.",
-    traits: ["Explorer", "Active", "Self-directed"],
-    advice: ["Offer new experiences", "Rotate toys and enrichment regularly"],
-  },
-  IEVG: {
-    code: "IEVG",
-    name: "Leader",
-    title: "Bold Individual",
-    emoji: "LE",
-    description: "A confident, self-assured pet with strong curiosity and a clear sense of what it wants.",
-    traits: ["Bold", "Independent", "Curious"],
-    advice: ["Give freedom and challenges", "Use boundaries that still allow choice"],
-  },
-  IECP: {
-    code: "IECP",
-    name: "Scholar",
-    title: "Thoughtful Observer",
-    emoji: "SC",
-    description: "A thoughtful observer who likes understanding the world before joining in and often notices what others miss.",
-    traits: ["Smart", "Quiet", "Analytical"],
-    advice: ["Allow observation time", "Use puzzle play and quiet enrichment"],
-  },
-  IECG: {
-    code: "IECG",
-    name: "Noble",
-    title: "Calm Presence",
-    emoji: "NO",
-    description: "A composed, independent pet with strong personal boundaries and a dignified, grounded presence.",
-    traits: ["Confident", "Calm", "Independent"],
-    advice: ["Respect independence", "Offer affection without pressure"],
-  },
-  ISEP: {
-    code: "ISEP",
-    name: "Explorer",
-    title: "Slow Explorer",
-    emoji: "EX",
-    description: "A curious pet who explores on its own terms and prefers having control over when to engage.",
-    traits: ["Curious", "Independent", "Measured"],
-    advice: ["Encourage exploration", "Let them approach new things gradually"],
-  },
-  ISEG: {
-    code: "ISEG",
-    name: "Guardian",
-    title: "Quiet Protector",
-    emoji: "GU",
-    description: "A strong and reliable personality who protects quietly, values order, and stays deeply anchored to home.",
-    traits: ["Strong", "Reliable", "Watchful"],
-    advice: ["Respect boundaries", "Keep household routines consistent"],
-  },
-  ISCP: {
-    code: "ISCP",
-    name: "Dreamer",
-    title: "Peaceful Companion",
-    emoji: "DR",
-    description: "A relaxed pet who enjoys peaceful moments, familiar spaces, and gentle, low-pressure connection.",
-    traits: ["Calm", "Gentle", "Easygoing"],
-    advice: ["Create comfortable spaces", "Use low-stress enrichment"],
-  },
-  ISCG: {
-    code: "ISCG",
-    name: "Sentinel",
-    title: "Deep Observer",
-    emoji: "SE",
-    description: "A deeply observant pet with quiet confidence, strong intuition, and a patient way of reading the room.",
-    traits: ["Mysterious", "Observant", "Steady"],
-    advice: ["Be patient and understanding", "Let trust build through repeated calm moments"],
-  },
+export const personalities: Record<PersonalityId, Personality> = {
+  explorer: { id: "explorer", code: "EXPLORER", name: "Explorer", title: "Curious Pathfinder", emoji: "EX", imageIndex: 1, description: "Curious, adaptable, and eager to investigate unfamiliar places, objects, and experiences.", traits: ["Curious", "Adventurous", "Adaptable"], advice: ["Offer safe novelty and changing enrichment", "Let exploration happen at a comfortable pace"] },
+  guardian: { id: "guardian", code: "GUARDIAN", name: "Guardian", title: "Loyal Protector", emoji: "GU", imageIndex: 2, description: "Deeply loyal and attentive to the people, animals, and spaces that matter most.", traits: ["Loyal", "Protective", "Steady"], advice: ["Keep household rules consistent", "Reward calm watching and secure attachment"] },
+  dreamer: { id: "dreamer", code: "DREAMER", name: "Dreamer", title: "Gentle Imaginative Soul", emoji: "DR", imageIndex: 3, description: "A soft, peaceful personality that values comfort, quiet routines, and low-pressure connection.", traits: ["Gentle", "Relaxed", "Sensitive"], advice: ["Create cozy retreat spaces", "Use calm affection and predictable routines"] },
+  maverick: { id: "maverick", code: "MAVERICK", name: "Maverick", title: "Independent Adventurer", emoji: "MA", imageIndex: 4, description: "Independent, bold, and happiest when allowed to make choices and follow a self-directed path.", traits: ["Independent", "Bold", "Self-directed"], advice: ["Provide choices instead of pressure", "Use challenge-based enrichment and freedom within boundaries"] },
+  scholar: { id: "scholar", code: "SCHOLAR", name: "Scholar", title: "Thoughtful Observer", emoji: "SC", imageIndex: 5, description: "Observant and analytical, preferring to understand a situation before deciding how to respond.", traits: ["Thoughtful", "Observant", "Clever"], advice: ["Use puzzles and problem-solving games", "Allow time to watch before joining new situations"] },
+  leader: { id: "leader", code: "LEADER", name: "Leader", title: "Confident Decision Maker", emoji: "LE", imageIndex: 6, description: "Confident, expressive, and naturally inclined to influence the rhythm of the household.", traits: ["Confident", "Assertive", "Energetic"], advice: ["Set clear, fair boundaries", "Channel confidence into training and structured activity"] },
+  companion: { id: "companion", code: "COMPANION", name: "Companion", title: "Warm Social Partner", emoji: "CO", imageIndex: 7, description: "Affectionate and people-oriented, finding security and happiness through shared daily life.", traits: ["Affectionate", "Social", "Reliable"], advice: ["Include them in everyday routines", "Balance closeness with healthy independent time"] },
+  healer: { id: "healer", code: "HEALER", name: "Healer", title: "Calming Emotional Anchor", emoji: "HE", imageIndex: 8, description: "Sensitive to mood and atmosphere, offering a calm presence and gentle emotional connection.", traits: ["Caring", "Calm", "Empathetic"], advice: ["Protect them from chaotic overstimulation", "Use gentle touch and consistent emotional signals"] },
+  sunny: { id: "sunny", code: "SUNNY", name: "Sunny", title: "Bright Joy Bringer", emoji: "SU", imageIndex: 9, description: "Open, cheerful, and expressive, bringing visible enthusiasm to people, play, and daily routines.", traits: ["Optimistic", "Social", "Expressive"], advice: ["Provide frequent positive interaction", "Use active play and praise to maintain engagement"] },
+  sentinel: { id: "sentinel", code: "SENTINEL", name: "Sentinel", title: "Patient Watcher", emoji: "SE", imageIndex: 10, description: "Alert, measured, and highly aware of changes in people, sounds, spaces, and routines.", traits: ["Watchful", "Patient", "Cautious"], advice: ["Introduce change gradually", "Provide safe observation points and predictable cues"] },
+  player: { id: "player", code: "PLAYER", name: "Player", title: "Interactive Fun Seeker", emoji: "PL", imageIndex: 11, description: "Playful, mischievous, and highly motivated by games, movement, and shared interaction.", traits: ["Playful", "Interactive", "Spontaneous"], advice: ["Rotate games to prevent boredom", "Use play as a reward and relationship tool"] },
+  noble: { id: "noble", code: "NOBLE", name: "Noble", title: "Poised Independent Spirit", emoji: "NO", imageIndex: 12, description: "Composed, dignified, and quietly confident, with clear preferences and strong personal boundaries.", traits: ["Graceful", "Composed", "Independent"], advice: ["Respect personal boundaries", "Offer calm attention without demanding a response"] },
 };
 
-export function resolvePersonality(code: string): Personality {
-  return personalities[code] || personalities[defaultPersonalityCode];
+export function resolvePersonality(id: string): Personality {
+  return personalities[id as PersonalityId] || personalities[defaultPersonalityId];
+}
+
+export function getPersonalityImage(id: PersonalityId, species: "cat" | "dog"): string {
+  const personality = personalities[id];
+  const index = String(personality.imageIndex).padStart(2, "0");
+  return `/assets/personalities/${species}s/${index}-${id}-${species}.webp`;
 }
