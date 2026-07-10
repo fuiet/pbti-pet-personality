@@ -2,8 +2,3 @@ name = "pbti-pet-personality"
 compatibility_date = "2025-08-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
-
-[vars]
-NEXT_PUBLIC_SITE_URL = "https://pbti-pet-personality.pages.dev"
-NEXT_PUBLIC_SUPABASE_URL = "https://ppxgnlnfsgpqyftnbwnx.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_Jghjb7g6DckTBLbYJ2FApQ_OKivl7UQ"
