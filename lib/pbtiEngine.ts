@@ -19,18 +19,18 @@ export interface PBTIResult {
 type Profile = DimensionScores & { code: PersonalityCode };
 
 const profiles: Profile[] = [
-  { code: "explorer", attachment: 0.1, exploration: 0.95, vitality: 0.35, playfulness: 0.35 },
-  { code: "guardian", attachment: 0.7, exploration: -0.35, vitality: -0.15, playfulness: -0.9 },
-  { code: "dreamer", attachment: 0.15, exploration: -0.65, vitality: -0.9, playfulness: 0.1 },
-  { code: "maverick", attachment: -0.95, exploration: 0.7, vitality: 0.45, playfulness: 0.15 },
-  { code: "scholar", attachment: -0.35, exploration: 0.35, vitality: -0.65, playfulness: -0.45 },
-  { code: "leader", attachment: 0.15, exploration: 0.45, vitality: 0.9, playfulness: -0.35 },
-  { code: "companion", attachment: 0.95, exploration: -0.1, vitality: -0.15, playfulness: 0.15 },
-  { code: "healer", attachment: 0.75, exploration: -0.55, vitality: -0.75, playfulness: -0.15 },
-  { code: "sunny", attachment: 0.8, exploration: 0.45, vitality: 0.95, playfulness: 0.65 },
-  { code: "sentinel", attachment: -0.1, exploration: -0.75, vitality: -0.45, playfulness: -0.95 },
-  { code: "player", attachment: 0.35, exploration: 0.5, vitality: 0.75, playfulness: 0.95 },
-  { code: "noble", attachment: -0.75, exploration: -0.35, vitality: -0.65, playfulness: -0.55 },
+  { code: "AEVG", attachment: 0.2, exploration: 0.95, vitality: 0.55, playfulness: -0.35 },
+  { code: "AECG", attachment: 0.8, exploration: 0.45, vitality: -0.45, playfulness: -0.85 },
+  { code: "ASCP", attachment: 0.35, exploration: -0.8, vitality: -0.9, playfulness: 0.55 },
+  { code: "IEVP", attachment: -0.9, exploration: 0.8, vitality: 0.75, playfulness: 0.65 },
+  { code: "IECP", attachment: -0.55, exploration: 0.55, vitality: -0.7, playfulness: 0.55 },
+  { code: "IEVG", attachment: -0.35, exploration: 0.8, vitality: 0.9, playfulness: -0.65 },
+  { code: "ASEP", attachment: 0.95, exploration: -0.45, vitality: 0.25, playfulness: 0.65 },
+  { code: "ASEG", attachment: 0.9, exploration: -0.7, vitality: -0.35, playfulness: -0.55 },
+  { code: "AEVP", attachment: 0.9, exploration: 0.75, vitality: 0.95, playfulness: 0.9 },
+  { code: "ASCG", attachment: 0.4, exploration: -0.9, vitality: -0.65, playfulness: -0.95 },
+  { code: "AECP", attachment: 0.65, exploration: 0.55, vitality: -0.35, playfulness: 0.95 },
+  { code: "IECG", attachment: -0.85, exploration: 0.35, vitality: -0.75, playfulness: -0.8 },
 ];
 
 function balance(positive: number, negative: number) {
