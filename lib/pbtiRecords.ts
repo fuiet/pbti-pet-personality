@@ -26,6 +26,10 @@ export interface ResultRecord {
   pet_id?: string;
 }
 
+interface RawResultRecord extends Omit<ResultRecord, "pet"> {
+  pet?: PetRecord | PetRecord[] | null;
+}
+
 export interface PetProfileInput {
   name: string;
   species: "cat" | "dog";
@@ -52,11 +56,13 @@ function normalizePetRow(row: PetRecord): PetRecord {
   };
 }
 
-function normalizeResultRow(row: ResultRecord): ResultRecord {
+function normalizeResultRow(row: ResultRecord | RawResultRecord): ResultRecord {
+  const pet = Array.isArray(row.pet) ? row.pet[0] ?? null : row.pet ?? null;
+
   return {
     ...row,
     report: row.report ?? null,
-    pet: row.pet ? normalizePetRow(row.pet) : null,
+    pet: pet ? normalizePetRow(pet) : null,
   };
 }
 
@@ -177,7 +183,7 @@ export async function savePersonalityResult(
     throw new Error(error.message);
   }
 
-  return normalizeResultRow(data as ResultRecord);
+  return normalizeResultRow(data as RawResultRecord);
 }
 
 export async function getResultByRecordId(recordId: string) {
@@ -194,7 +200,7 @@ export async function getResultByRecordId(recordId: string) {
     throw new Error(error.message);
   }
 
-  const record = data ? normalizeResultRow(data as ResultRecord) : null;
+  const record = data ? normalizeResultRow(data as RawResultRecord) : null;
 
   if (!record?.pet || record.pet.user_id !== user.id) {
     return null;
@@ -235,7 +241,7 @@ export async function getLatestResultForCurrentUser() {
     throw new Error(error.message);
   }
 
-  const record = data ? normalizeResultRow(data as ResultRecord) : null;
+  const record = data ? normalizeResultRow(data as RawResultRecord) : null;
 
   if (!record?.pet || record.pet.user_id !== user.id) {
     return null;
@@ -274,9 +280,7 @@ export async function listCurrentUserResults() {
     throw new Error(error.message);
   }
 
-  return ((data || []) as ResultRecord[])
+  return ((data || []) as RawResultRecord[])
     .map(normalizeResultRow)
     .filter((record) => record.pet?.user_id === user.id);
 }
-
-
