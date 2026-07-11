@@ -6,21 +6,61 @@ import QuizCard from "@/components/QuizCard";
 import { catQuestions } from "@/data/catQuestions";
 import { dogQuestions } from "@/data/dogQuestions";
 import ProgressBar from "@/components/ProgressBar";
+import { calculatePBTI, type Trait } from "@/lib/pbtiEngine";
+import { getLatestPetRecord, getPetRecord, savePersonalityResult, type PetRecord } from "@/lib/pbtiRecords";
+import { useRequireAuth } from "@/lib/useRequireAuth";
+
+function getPetIdFromLocation() {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("petId");
+}
 
 export default function QuizPage() {
   const router = useRouter();
-  const [pet, setPet] = useState<{ species: string; name?: string }>({ species: "cat" });
+  const { loading: authLoading } = useRequireAuth();
+  const [pet, setPet] = useState<PetRecord | null>(null);
   const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<Trait[]>([]);
+  const [loadingPet, setLoadingPet] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("pbti_pet");
-    if (stored) {
-      try { setPet(JSON.parse(stored)); } catch { /* fallback */ }
-    }
-  }, []);
+    if (authLoading) return;
 
-  const questions = pet.species === "dog" ? dogQuestions : catQuestions;
+    let active = true;
+    const petId = getPetIdFromLocation();
+
+    async function loadPet() {
+      try {
+        const record = petId ? await getPetRecord(petId) : await getLatestPetRecord();
+
+        if (!active) return;
+
+        if (!record) {
+          router.replace("/create");
+          return;
+        }
+
+        setPet(record);
+      } catch {
+        if (active) {
+          router.replace("/create");
+        }
+      } finally {
+        if (active) {
+          setLoadingPet(false);
+        }
+      }
+    }
+
+    loadPet();
+
+    return () => {
+      active = false;
+    };
+  }, [authLoading, router]);
+
+  const questions = pet?.species === "dog" ? dogQuestions : catQuestions;
 
   const goBack = useCallback(() => {
     if (current > 0) {
@@ -29,22 +69,33 @@ export default function QuizPage() {
     }
   }, [current, answers]);
 
-  const select = useCallback((value: string) => {
-    const next = [...answers, value];
-    setAnswers(next);
+  const select = useCallback(
+    async (value: string) => {
+      if (!pet || isSaving) {
+        return;
+      }
 
-    if (current < questions.length - 1) {
-      setCurrent(current + 1);
-    } else {
-      const fullName = pet.name || "My Pet";
-      const petData = { ...pet, name: fullName };
-      localStorage.setItem("pbti_pet", JSON.stringify(petData));
-      localStorage.setItem("pbti_answers", JSON.stringify(next));
-      router.push("/result");
-    }
-  }, [current, answers, questions.length, pet, router]);
+      const next = [...answers, value as Trait];
+      setAnswers(next);
 
-  // Keyboard support
+      if (current < questions.length - 1) {
+        setCurrent(current + 1);
+        return;
+      }
+
+      setIsSaving(true);
+
+      try {
+        const result = calculatePBTI(next);
+        const saved = await savePersonalityResult(pet, result, next);
+        router.push(`/result?resultId=${saved.pbti_id}`);
+      } catch {
+        setIsSaving(false);
+      }
+    },
+    [answers, current, isSaving, pet, questions.length, router]
+  );
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Backspace" || e.key === "ArrowLeft") {
@@ -57,13 +108,16 @@ export default function QuizPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [goBack, router]);
 
+  if (authLoading || loadingPet || !pet) {
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
+  }
+
   return (
     <div className="mx-auto max-w-xl px-4 py-8 sm:px-6">
-      {/* Top bar */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <button
           onClick={goBack}
-          disabled={current === 0}
+          disabled={current === 0 || isSaving}
           className="flex items-center gap-1 text-sm font-bold text-[#7a6d63] transition hover:text-[#ff7a1a] disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
@@ -88,7 +142,6 @@ export default function QuizPage() {
         <span>{Math.round(((current + 1) / questions.length) * 100)}%</span>
       </div>
 
-      {/* Dimension indicator */}
       <div className="mb-4 text-center">
         <span className="inline-block rounded-full bg-[#fff0e4] px-4 py-1.5 text-xs font-bold text-[#d96612]">
           {questions[current]?.dimension || ""}

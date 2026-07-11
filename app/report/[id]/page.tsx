@@ -1,55 +1,78 @@
-﻿"use client";
+"use client";
 
-export const runtime = "edge";
-
-import { useState, useEffect, use } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
-import { generatePetReport, ReportInput } from "@/lib/reportGenerator";
-import { createPetIdentity } from "@/lib/petIdentity";
+import { generatePetReport } from "@/lib/reportGenerator";
+import { getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import ShareCard from "@/components/ShareCard";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [pet, setPet] = useState<{ name?: string; species?: string; breed?: string; age?: string }>({});
-  const [identity, setIdentity] = useState("");
+  const { loading: authLoading } = useRequireAuth();
+  const [record, setRecord] = useState<ResultRecord | null>(null);
+  const [loadingRecord, setLoadingRecord] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("pbti_pet");
-    if (stored) {
+    if (authLoading) return;
+
+    let active = true;
+
+    async function loadRecord() {
       try {
-        setPet(JSON.parse(stored));
+        const saved = await getResultByRecordId(id);
+        if (!active) return;
+
+        if (!saved) {
+          router.replace("/dashboard");
+          return;
+        }
+
+        setRecord(saved);
       } catch {
-        // Ignore malformed local data and continue with defaults.
+        if (active) {
+          router.replace("/dashboard");
+        }
+      } finally {
+        if (active) {
+          setLoadingRecord(false);
+        }
       }
     }
-    setIdentity(createPetIdentity());
-  }, []);
 
-  const personality = personalities[id] || personalities[defaultPersonalityCode];
+    loadRecord();
 
-  const reportInput: ReportInput = {
-    petName: pet.name || "Your Pet",
+    return () => {
+      active = false;
+    };
+  }, [authLoading, id, router]);
+
+  if (authLoading || loadingRecord || !record || !record.pet) {
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
+  }
+
+  const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
+  const report = record.report || generatePetReport({
+    petName: record.pet.name,
     pbtiType: personality.code,
     personalityName: personality.name,
     traits: personality.traits,
     advice: personality.advice,
-  };
-
-  const report = generatePetReport(reportInput);
+  });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <div className="mb-6 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#fff0e4] px-5 py-2 text-sm font-black text-[#d96612] shadow-sm ring-1 ring-[#ffd8bd]">
-          PBTI ID {identity}
+          PBTI ID {record.pbti_id}
         </div>
       </div>
 
       <ShareCard
-        petName={pet.name || "Your Pet"}
-        pbtiId={identity}
+        petName={record.pet.name}
+        pbtiId={record.pbti_id}
         type={personality.code}
         personality={`${personality.emoji} ${personality.name}`}
       />
@@ -91,9 +114,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <div className="mt-6 rounded-3xl border border-[#ff7a1a]/30 bg-gradient-to-br from-[#fff0e4] to-white p-6 text-center shadow-sm">
         <div className="text-3xl font-black text-[#ff7a1a]">PBTI</div>
         <h3 className="mt-3 text-xl font-bold text-[#171514]">Unlock the Full Premium Report</h3>
-        <p className="mt-2 text-sm text-[#655a51]">
-          Get AI deep dive, personalized care guide, shareable personality card, and more.
-        </p>
+        <p className="mt-2 text-sm text-[#655a51]">Get AI deep dive, personalized care guide, shareable personality card, and more.</p>
         <button
           onClick={() => router.push("/premium")}
           className="mt-4 rounded-full bg-[#ff7a1a] px-8 py-3 font-black text-white shadow-[0_12px_28px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"
