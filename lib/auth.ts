@@ -6,6 +6,11 @@ export interface AuthUser {
   email: string;
 }
 
+export interface EmailAuthResult {
+  user: AuthUser | null;
+  sessionActive: boolean;
+}
+
 function mapUser(user: { id: string; email?: string | null } | null | undefined): AuthUser | null {
   if (!user?.id || !user.email) {
     return null;
@@ -48,6 +53,45 @@ export async function signInWithGoogle(nextPath = "/dashboard") {
   }
 
   window.location.assign(data.url);
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<EmailAuthResult> {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    user: mapUser(data.user),
+    sessionActive: Boolean(data.session),
+  };
+}
+
+export async function signUpWithEmail(email: string, password: string, nextPath = "/dashboard"): Promise<EmailAuthResult> {
+  const supabase = createSupabaseBrowserClient();
+  const safeNextPath = normalizeNextPath(nextPath);
+  const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo,
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    user: mapUser(data.user),
+    sessionActive: Boolean(data.session),
+  };
 }
 
 export async function signOut() {
