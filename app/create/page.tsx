@@ -1,33 +1,45 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPetRecord } from "@/lib/pbtiRecords";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function CreatePet() {
   const router = useRouter();
+  const { loading } = useRequireAuth();
   const [name, setName] = useState("");
   const [species, setSpecies] = useState<"cat" | "dog">("cat");
   const [breed, setBreed] = useState("");
   const [age, setAge] = useState("");
-  const [step, setStep] = useState(1);
+  const [step] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
 
-  function saveProfile() {
-    if (!name.trim()) return;
-    localStorage.setItem(
-      "pbti_pet",
-      JSON.stringify({
+  async function saveProfile() {
+    if (!name.trim() || isSaving) return;
+
+    setIsSaving(true);
+
+    try {
+      const pet = await createPetRecord({
         name: name.trim(),
         species,
         breed: breed.trim(),
         age: age.trim(),
-      })
-    );
-    router.push("/upload");
+      });
+
+      router.push(`/upload?petId=${pet.id}`);
+    } catch {
+      setIsSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
   }
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12 sm:px-6">
-      {/* Steps indicator */}
       <div className="mb-10 flex items-center justify-center gap-2">
         {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex items-center gap-2">
@@ -40,28 +52,17 @@ export default function CreatePet() {
                   : "border-2 border-[#eaded2] text-[#a3968a]"
               }`}
             >
-              {s < step ? "✓" : s}
+              {s < step ? "OK" : s}
             </div>
-            {s < 4 && (
-              <div
-                className={`h-0.5 w-8 transition ${
-                  s < step ? "bg-[#8b5e3c]" : "bg-[#eaded2]"
-                }`}
-              />
-            )}
+            {s < 4 && <div className={`h-0.5 w-8 transition ${s < step ? "bg-[#8b5e3c]" : "bg-[#eaded2]"}`} />}
           </div>
         ))}
       </div>
 
-      <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">
-        Create Your Pet Profile
-      </h1>
-      <p className="mt-2 text-sm text-[#7a6d63]">
-        Tell us about your pet to begin the personality discovery journey.
-      </p>
+      <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">Create Your Pet Profile</h1>
+      <p className="mt-2 text-sm text-[#7a6d63]">Tell us about your pet to begin the personality discovery journey.</p>
 
       <div className="mt-8 space-y-5">
-        {/* Pet Name */}
         <div>
           <label className="mb-2 block text-sm font-bold text-[#4f463f]">Pet Name</label>
           <input
@@ -72,7 +73,6 @@ export default function CreatePet() {
           />
         </div>
 
-        {/* Species */}
         <div>
           <label className="mb-2 block text-sm font-bold text-[#4f463f]">Species</label>
           <div className="grid grid-cols-2 gap-3">
@@ -84,7 +84,7 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl">🐱</div>
+              <div className="text-3xl font-black text-[#ff7a1a]">Cat</div>
               <div className="mt-1 text-sm font-bold">Cat</div>
             </button>
             <button
@@ -95,13 +95,12 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl">🐶</div>
+              <div className="text-3xl font-black text-[#ff7a1a]">Dog</div>
               <div className="mt-1 text-sm font-bold">Dog</div>
             </button>
           </div>
         </div>
 
-        {/* Breed */}
         <div>
           <label className="mb-2 block text-sm font-bold text-[#4f463f]">Breed (optional)</label>
           <input
@@ -112,7 +111,6 @@ export default function CreatePet() {
           />
         </div>
 
-        {/* Age */}
         <div>
           <label className="mb-2 block text-sm font-bold text-[#4f463f]">Age (optional)</label>
           <input
@@ -126,10 +124,10 @@ export default function CreatePet() {
 
       <button
         onClick={saveProfile}
-        disabled={!name.trim()}
+        disabled={!name.trim() || isSaving}
         className="mt-8 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Continue to Photo →
+        {isSaving ? "Saving..." : "Continue to Photo"}
       </button>
     </div>
   );

@@ -1,41 +1,104 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { normalizeNextPath } from "@/lib/nextPath";
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export interface AuthUser {
+  id: string;
+  email: string;
+}
 
-  if (!url || !key) {
-    throw new Error("Supabase is not configured yet.");
+export interface EmailAuthResult {
+  user: AuthUser | null;
+  sessionActive: boolean;
+}
+
+function mapUser(user: { id: string; email?: string | null } | null | undefined): AuthUser | null {
+  if (!user?.id || !user.email) {
+    return null;
   }
 
-  return createBrowserClient(url, key);
+  return {
+    id: user.id,
+    email: user.email,
+  };
 }
 
-export async function signIn(email: string, password: string) {
-  const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data.user;
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    return null;
+  }
+
+  return mapUser(data.user);
 }
 
-export async function register(email: string, password: string) {
-  const { data, error } = await getSupabase().auth.signUp({
+export async function signInWithGoogle(nextPath = "/dashboard") {
+  const supabase = createSupabaseBrowserClient();
+  const safeNextPath = normalizeNextPath(nextPath);
+  const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`;
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data.url) {
+    throw new Error("Google sign-in did not return a redirect URL.");
+  }
+
+  window.location.assign(data.url);
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<EmailAuthResult> {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
-    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
   });
-  if (error) throw error;
-  return data.user;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    user: mapUser(data.user),
+    sessionActive: Boolean(data.session),
+  };
 }
 
-export async function signInWithGoogle() {
-  const { error } = await getSupabase().auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${window.location.origin}/auth/callback` },
+export async function signUpWithEmail(email: string, password: string, nextPath = "/dashboard"): Promise<EmailAuthResult> {
+  const supabase = createSupabaseBrowserClient();
+  const safeNextPath = normalizeNextPath(nextPath);
+  const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo,
+    },
   });
-  if (error) throw error;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    user: mapUser(data.user),
+    sessionActive: Boolean(data.session),
+  };
 }
 
 export async function signOut() {
-  const { error } = await getSupabase().auth.signOut();
-  if (error) throw error;
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

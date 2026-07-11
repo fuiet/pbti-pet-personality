@@ -1,31 +1,22 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+
+const protectedPaths = ["/create", "/upload", "/quiz", "/result", "/dashboard", "/report", "/memory"];
 
 export async function middleware(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return NextResponse.next();
+  const { response, user } = await updateSession(request);
+  const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
-  let response = NextResponse.next({ request });
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (cookies) => {
-        cookies.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookies.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
-    },
-  });
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    const login = request.nextUrl.clone();
-    login.pathname = "/login";
-    login.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(login);
+  if (isProtectedPath && !user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
+    return NextResponse.redirect(loginUrl);
   }
+
   return response;
 }
 
-export const config = { matcher: ["/create/:path*", "/upload/:path*", "/quiz/:path*", "/result/:path*", "/dashboard/:path*"] };
+export const config = {
+  matcher: ["/create/:path*", "/upload/:path*", "/quiz/:path*", "/result/:path*", "/dashboard/:path*", "/report/:path*", "/memory/:path*"],
+};

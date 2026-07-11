@@ -1,7 +1,11 @@
+﻿import { defaultPersonalityCode, resolvePersonality } from "@/data/personalities";
+
 export type Trait = "A" | "I" | "E" | "S" | "V" | "C" | "P" | "G";
 
 export interface PBTIResult {
+  code: string;
   type: string;
+  personality: ReturnType<typeof resolvePersonality>;
   scores: Record<Trait, number>;
 }
 
@@ -14,19 +18,24 @@ export function calculatePBTI(answers: Trait[]): PBTIResult {
     V: 0,
     C: 0,
     P: 0,
-    G: 0
+    G: 0,
   };
 
   answers.forEach((answer) => {
     scores[answer] += 1;
   });
 
-  const type = [
+  const code = [
     scores.A >= scores.I ? "A" : "I",
     scores.E >= scores.S ? "E" : "S",
     scores.V >= scores.C ? "V" : "C",
-    scores.P >= scores.G ? "P" : "G"
+    scores.P >= scores.G ? "P" : "G",
   ].join("");
 
-  return { type, scores };
+  return {
+    code,
+    type: code,
+    personality: resolvePersonality(code || defaultPersonalityCode),
+    scores,
+  };
 }

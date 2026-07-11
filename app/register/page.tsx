@@ -1,90 +1,10 @@
-﻿"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { register, signInWithGoogle } from "@/lib/auth";
+import { Suspense } from "react";
+import RegisterClient from "./RegisterClient";
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleRegister() {
-    if (!email || password.length < 8 || loading) return;
-    setError("");
-    setLoading(true);
-    try {
-      const user = await register(email, password);
-      if (user?.identities?.length === 0) throw new Error("An account with this email already exists.");
-      setMessage("Check your email to confirm your account.");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to create account.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="rounded-3xl border border-[#eaded2] bg-white p-8 shadow-sm">
-          <div className="mb-6 text-center">
-            <div className="text-4xl">🐾</div>
-            <h1 className="mt-3 text-2xl font-black tracking-[-.03em] text-[#171514]">Create Account</h1>
-            <p className="mt-1 text-sm text-[#7a6d63]">Start your pet personality journey</p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[#4f463f]">Email</label>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-2xl border-2 border-[#eaded2] bg-white p-4 text-sm font-semibold text-[#171514] outline-none transition placeholder:text-[#a3968a] focus:border-[#ff7a1a]/50"
-                placeholder="you@example.com"
-                type="email"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[#4f463f]">Password</label>
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-2xl border-2 border-[#eaded2] bg-white p-4 text-sm font-semibold text-[#171514] outline-none transition placeholder:text-[#a3968a] focus:border-[#ff7a1a]/50"
-                placeholder="Create a password"
-                type="password"
-                onKeyDown={(e) => e.key === "Enter" && handleRegister()}
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={handleRegister}
-            disabled={!email || password.length < 8 || loading}
-            className="mt-6 w-full rounded-full bg-[#ff7a1a] px-8 py-4 font-black text-white shadow-[0_12px_28px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {loading ? "Creating account…" : "Create Account"}
-          </button>
-
-          {error ? <p role="alert" className="mt-3 text-center text-sm font-semibold text-red-600">{error}</p> : null}
-          {message ? <p role="status" className="mt-3 text-center text-sm font-semibold text-emerald-700">{message}</p> : null}
-
-          <div className="my-5 flex items-center gap-3 text-xs text-[#a3968a]"><span className="h-px flex-1 bg-[#eaded2]" />OR<span className="h-px flex-1 bg-[#eaded2]" /></div>
-          <button type="button" onClick={() => signInWithGoogle().catch((cause) => setError(cause instanceof Error ? cause.message : "Google sign-up failed."))} className="w-full rounded-full border-2 border-[#eaded2] bg-white px-8 py-3.5 text-sm font-black text-[#4f463f] transition hover:bg-[#fff9f2]">
-            Continue with Google
-          </button>
-
-          <p className="mt-5 text-center text-sm text-[#7a6d63]">
-            Already have an account?{" "}
-            <a href="/login" className="font-bold text-[#ff7a1a] hover:underline">
-              Sign in
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
+    <Suspense fallback={<div className="min-h-[80vh]" />}>
+      <RegisterClient />
+    </Suspense>
   );
 }
