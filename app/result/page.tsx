@@ -1,167 +1,85 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { personalities } from "@/data/personalities";
-import { calculatePBTI } from "@/lib/pbtiEngine";
-import PersonalityCard from "@/components/PersonalityCard";
+import { getPersonalityImage, Personality } from "@/data/personalities";
+import { calculatePBTI, dimensionPercent, Trait } from "@/lib/pbtiEngine";
 
 export default function ResultPage() {
   const router = useRouter();
-  const [pet, setPet] = useState<{ name?: string; species?: string; breed?: string; age?: string }>({});
-  const [personality, setPersonality] = useState<typeof personalities.AECG | null>(null);
+  const [pet, setPet] = useState<{ name?: string; species?: "cat" | "dog"; breed?: string; age?: string }>({});
+  const [personality, setPersonality] = useState<Personality | null>(null);
   const [dna, setDna] = useState<{ name: string; value: number }[]>([]);
-  const [pbtiType, setPbtiType] = useState("");
 
   useEffect(() => {
     const storedPet = localStorage.getItem("pbti_pet");
     const storedAnswers = localStorage.getItem("pbti_answers");
-
     if (!storedAnswers) {
       router.push("/create");
       return;
     }
 
+    let parsedPet: typeof pet = {};
     if (storedPet) {
-      try { setPet(JSON.parse(storedPet)); } catch { /* */ }
+      try { parsedPet = JSON.parse(storedPet); } catch { parsedPet = {}; }
     }
+    setPet(parsedPet);
 
-    const answers = JSON.parse(storedAnswers);
-    const result = calculatePBTI(answers);
-    const p = personalities[result.type] || personalities.AECG;
-
-    setPbtiType(result.type);
-    setPersonality(p);
-
-    const total = Object.values(result.scores).reduce((a, b) => a + b, 0) || 1;
+    const result = calculatePBTI(JSON.parse(storedAnswers) as Trait[]);
+    setPersonality(result.personality);
     setDna([
-      { name: "Attachment", value: Math.round(((result.scores.A || 0) / total) * 100) },
-      { name: "Exploration", value: Math.round(((result.scores.E || 0) / total) * 100) },
-      { name: "Vitality", value: Math.round(((result.scores.V || 0) / total) * 100) },
-      { name: "Playfulness", value: Math.round(((result.scores.P || 0) / total) * 100) },
+      { name: "Attachment", value: dimensionPercent(result.dimensions.attachment) },
+      { name: "Exploration", value: dimensionPercent(result.dimensions.exploration) },
+      { name: "Vitality", value: dimensionPercent(result.dimensions.vitality) },
+      { name: "Playfulness", value: dimensionPercent(result.dimensions.playfulness) },
     ]);
   }, [router]);
 
-  if (!personality) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-4xl animate-pulse">🐾</div>
-      </div>
-    );
-  }
+  if (!personality) return <div className="flex min-h-[60vh] items-center justify-center text-4xl animate-pulse">🐾</div>;
+
+  const species = pet.species === "dog" ? "dog" : "cat";
+  const image = getPersonalityImage(personality.code, species);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      {/* Header */}
       <div className="mb-6 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#fff0e4] px-5 py-2 text-sm font-black text-[#d96612] shadow-sm ring-1 ring-[#ffd8bd]">
-          ✓ Analysis Complete
+        <div className="inline-flex rounded-full bg-[#fff0e4] px-5 py-2 text-sm font-black text-[#d96612] ring-1 ring-[#ffd8bd]">✓ Analysis Complete</div>
+      </div>
+
+      <div className="overflow-hidden rounded-3xl border border-[#eaded2] bg-white shadow-sm">
+        <div className="grid gap-6 p-6 sm:grid-cols-[220px_1fr] sm:items-center">
+          <div className="rounded-3xl bg-[#fff5ea] p-3">
+            <img src={image} alt={`${personality.name} ${species}`} className="mx-auto h-56 w-full object-contain" />
+          </div>
+          <div className="text-center sm:text-left">
+            <div className="text-sm font-black uppercase tracking-[.16em] text-[#ff7a1a]">PBTI Personality</div>
+            <h1 className="mt-2 text-4xl font-black text-[#171514]">{personality.name}</h1>
+            <p className="mt-1 font-bold text-[#d96612]">{personality.title}</p>
+            <p className="mt-4 leading-7 text-[#655a51]">{personality.description}</p>
+          </div>
         </div>
       </div>
 
-      {/* Main Personality Card */}
-      <PersonalityCard
-        emoji={personality.emoji}
-        code={personality.code}
-        name={personality.name}
-        description={personality.description}
-      />
+      {pet.name && <div className="mt-4 text-center text-sm text-[#7a6d63]">{species === "dog" ? "🐶" : "🐱"} {pet.name}{pet.breed ? ` · ${pet.breed}` : ""}</div>}
 
-      {/* Pet info */}
-      {pet.name && (
-        <div className="mt-4 text-center text-sm text-[#7a6d63]">
-          {pet.species === "dog" ? "🐶" : "🐱"} {pet.name}
-          {pet.breed ? ` · ${pet.breed}` : ""}
-        </div>
-      )}
+      <section className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-bold">✨ Key Traits</h2>
+        <div className="flex flex-wrap gap-2">{personality.traits.map((trait) => <span key={trait} className="rounded-full bg-[#fff0e4] px-4 py-1.5 text-sm font-bold text-[#d96612]">{trait}</span>)}</div>
+      </section>
 
-      {/* Traits */}
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">✨ Key Traits</h3>
-        <div className="flex flex-wrap gap-2">
-          {personality.traits.map((trait) => (
-            <span
-              key={trait}
-              className="rounded-full bg-[#fff0e4] px-4 py-1.5 text-sm font-bold text-[#d96612]"
-            >
-              {trait}
-            </span>
-          ))}
-        </div>
-      </div>
+      <section className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-lg font-bold">🧬 Personality DNA</h2>
+        <div className="space-y-4">{dna.map((item) => <div key={item.name}><div className="mb-1.5 flex justify-between text-sm font-bold"><span>{item.name}</span><span className="text-[#ff7a1a]">{item.value}%</span></div><div className="h-2.5 rounded-full bg-[#eadfd3]"><div className="h-2.5 rounded-full bg-gradient-to-r from-[#ffb56f] to-[#ff7a1a]" style={{ width: `${item.value}%` }} /></div></div>)}</div>
+      </section>
 
-      {/* Personality DNA */}
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-5 text-lg font-bold text-[#171514]">🧬 Personality DNA</h3>
-        <div className="space-y-4">
-          {dna.map((item) => (
-            <div key={item.name}>
-              <div className="mb-1.5 flex justify-between text-sm font-bold text-[#4f463f]">
-                <span>{item.name}</span>
-                <span className="text-[#ff7a1a]">{item.value}%</span>
-              </div>
-              <div className="h-2.5 rounded-full bg-[#eadfd3]">
-                <div
-                  className="h-2.5 rounded-full bg-gradient-to-r from-[#ffb56f] to-[#ff7a1a] transition-all duration-1000 ease-out"
-                  style={{ width: `${item.value}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <section className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-bold">💡 Care Advice</h2>
+        <ul className="space-y-2">{personality.advice.map((advice, index) => <li key={advice} className="flex gap-3 text-sm leading-6 text-[#655a51]"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#fff0e4] text-xs text-[#ff7a1a]">{index + 1}</span>{advice}</li>)}</ul>
+      </section>
 
-      {/* Advice */}
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">💡 Care Advice</h3>
-        <ul className="space-y-2">
-          {personality.advice.map((a, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
-              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#fff0e4] text-xs text-[#ff7a1a]">
-                {i + 1}
-              </span>
-              {a}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Action buttons */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <button
-          onClick={() => router.push(`/report/${pbtiType}`)}
-          className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
-        >
-          View Full Report →
-        </button>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="flex-1 rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-center font-bold text-[#4f463f] transition hover:bg-white/80"
-        >
-          My Dashboard
-        </button>
-      </div>
-
-      <div className="mt-4 text-center">
-        <button
-          onClick={() => router.push("/premium")}
-          className="text-sm font-bold text-[#ff7a1a] hover:underline"
-        >
-          Unlock Premium Report · $9.99
-        </button>
-      </div>
-
-      {/* Retake */}
-      <div className="mt-6 text-center">
-        <button
-          onClick={() => {
-            localStorage.removeItem("pbti_answers");
-            router.push("/quiz");
-          }}
-          className="text-sm text-[#a3968a] hover:text-[#7a6d63]"
-        >
-          Retake Test
-        </button>
+        <button onClick={() => router.push(`/report/${personality.code}`)} className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 font-black text-white">View Full Report →</button>
+        <button onClick={() => router.push("/dashboard")} className="flex-1 rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 font-bold">My Dashboard</button>
       </div>
     </div>
   );

@@ -1,5 +1,20 @@
+export type PersonalityCode =
+  | "AEVG"
+  | "AECG"
+  | "ASCP"
+  | "IEVP"
+  | "IECP"
+  | "IEVG"
+  | "ASEP"
+  | "ASEG"
+  | "AEVP"
+  | "ASCG"
+  | "AECP"
+  | "IECG";
+
 export interface Personality {
-  code: string;
+  code: PersonalityCode;
+  slug: string;
   name: string;
   title: string;
   emoji: string;
@@ -8,21 +23,30 @@ export interface Personality {
   advice: string[];
 }
 
-export const personalities: Record<string, Personality> = {
-  AEVP:{code:"AEVP",name:"Little Sunshine",title:"小太阳",emoji:"☀️",description:"A joyful pet who brings energy, happiness and endless interaction.",traits:["Playful","Social","Energetic"],advice:["Provide active play","Share joyful moments"]},
-  AEVG:{code:"AEVG",name:"Wild Heart",title:"自由灵魂",emoji:"🔥",description:"A brave and curious companion who loves discovering new things.",traits:["Curious","Brave","Independent"],advice:["Offer exploration opportunities","Respect their personality"]},
-  AECP:{code:"AECP",name:"Curious Dreamer",title:"好奇梦想家",emoji:"🎨",description:"A gentle explorer with a creative and thoughtful nature.",traits:["Curious","Gentle","Sensitive"],advice:["Use gentle games","Encourage discovery"]},
-  AECG:{code:"AECG",name:"Gentle Guardian",title:"温柔守护者",emoji:"🌙",description:"Quiet outside, deeply connected inside. This pet shows love through trust and companionship.",traits:["Calm","Loyal","Sensitive"],advice:["Respect personal space","Keep routines stable"]},
-  ASEP:{code:"ASEP",name:"Cozy Explorer",title:"舒适探险家",emoji:"🌱",description:"A careful explorer who enjoys safe adventures.",traits:["Careful","Curious","Balanced"],advice:["Create safe exploration areas"]},
-  ASEG:{code:"ASEG",name:"Loyal Companion",title:"忠诚伙伴",emoji:"🛡️",description:"A dependable friend who values trust and stability.",traits:["Reliable","Loyal","Stable"],advice:["Maintain routines","Build trust"]},
-  ASCP:{code:"ASCP",name:"Cozy Dreamer",title:"慵懒梦想家",emoji:"☁️",description:"A peaceful pet who enjoys comfort and quiet companionship.",traits:["Relaxed","Gentle"],advice:["Provide cozy spaces"]},
-  ASCG:{code:"ASCG",name:"Peace Keeper",title:"和平守护者",emoji:"🕊️",description:"A calm soul who avoids conflict and values harmony.",traits:["Peaceful","Observant"],advice:["Keep environments calm"]},
-  IEVP:{code:"IEVP",name:"Little Explorer",title:"小小探险家",emoji:"🧭",description:"Independent but curious, always ready for adventure.",traits:["Explorer","Active"],advice:["Offer new experiences"]},
-  IEVG:{code:"IEVG",name:"Wild Spirit",title:"野性精灵",emoji:"🐯",description:"A free spirit with strong curiosity and confidence.",traits:["Bold","Independent"],advice:["Give freedom and challenges"]},
-  IECP:{code:"IECP",name:"Quiet Thinker",title:"安静思考者",emoji:"🌌",description:"A thoughtful observer who enjoys understanding the world.",traits:["Smart","Quiet"],advice:["Allow observation time"]},
-  IECG:{code:"IECG",name:"Silent King",title:"沉默王者",emoji:"👑",description:"A confident independent pet with a calm presence.",traits:["Confident","Calm"],advice:["Respect independence"]},
-  ISEP:{code:"ISEP",name:"Curious Soul",title:"好奇灵魂",emoji:"🚀",description:"A curious pet who explores at their own pace.",traits:["Curious","Independent"],advice:["Encourage exploration"]},
-  ISEG:{code:"ISEG",name:"Independent Guardian",title:"独立守护者",emoji:"🏰",description:"A strong and reliable personality who protects quietly.",traits:["Strong","Reliable"],advice:["Respect boundaries"]},
-  ISCP:{code:"ISCP",name:"Calm Dreamer",title:"安静梦想家",emoji:"💤",description:"A relaxed pet who enjoys peaceful moments.",traits:["Calm","Gentle"],advice:["Create comfortable spaces"]},
-  ISCG:{code:"ISCG",name:"Mystery Soul",title:"神秘灵魂",emoji:"🌑",description:"A unique personality with deep emotions and quiet confidence.",traits:["Mysterious","Observant"],advice:["Be patient and understanding"]}
+export const personalityOrder: PersonalityCode[] = [
+  "AEVG", "AECG", "ASCP", "IEVP", "IECP", "IEVG",
+  "ASEP", "ASEG", "AEVP", "ASCG", "AECP", "IECG",
+];
+
+export const personalities: Record<PersonalityCode, Personality> = {
+  AEVG: { code: "AEVG", slug: "explorer", name: "Explorer", title: "Curious Pathfinder", emoji: "🧭", description: "Curious, adaptable, and eager to investigate unfamiliar places, objects, and routines.", traits: ["Curious", "Adventurous", "Adaptable"], advice: ["Offer safe novelty and varied enrichment", "Let exploration happen at a comfortable pace"] },
+  AECG: { code: "AECG", slug: "guardian", name: "Guardian", title: "Loyal Protector", emoji: "🛡️", description: "Deeply loyal, steady, and naturally attentive to the safety and rhythm of the household.", traits: ["Loyal", "Protective", "Steady"], advice: ["Keep household rules consistent", "Reward calm observation rather than over-alertness"] },
+  ASCP: { code: "ASCP", slug: "dreamer", name: "Dreamer", title: "Gentle Imagination", emoji: "☁️", description: "Soft, comfort-loving, and happiest in peaceful spaces with predictable affection.", traits: ["Gentle", "Calm", "Sensitive"], advice: ["Provide quiet resting places", "Use low-pressure play and gentle transitions"] },
+  IEVP: { code: "IEVP", slug: "maverick", name: "Maverick", title: "Independent Spirit", emoji: "⚡", description: "Boldly independent, self-directed, and happiest when given freedom to make choices.", traits: ["Independent", "Bold", "Self-directed"], advice: ["Offer choices instead of forcing interaction", "Use clear boundaries without limiting autonomy"] },
+  IECP: { code: "IECP", slug: "scholar", name: "Scholar", title: "Thoughtful Observer", emoji: "📚", description: "Analytical, observant, and inclined to study a situation before deciding how to respond.", traits: ["Thoughtful", "Observant", "Clever"], advice: ["Use puzzle-based enrichment", "Allow time to observe before joining new activities"] },
+  IEVG: { code: "IEVG", slug: "leader", name: "Leader", title: "Confident Director", emoji: "👑", description: "Confident, expressive, and naturally inclined to take initiative in social situations.", traits: ["Confident", "Decisive", "Expressive"], advice: ["Channel initiative through training and games", "Keep boundaries calm and consistent"] },
+  ASEP: { code: "ASEP", slug: "companion", name: "Companion", title: "Faithful Friend", emoji: "🤝", description: "Affectionate, connected, and happiest when sharing everyday life closely with trusted people.", traits: ["Affectionate", "Social", "Devoted"], advice: ["Build shared routines", "Balance closeness with healthy independent time"] },
+  ASEG: { code: "ASEG", slug: "healer", name: "Healer", title: "Calming Heart", emoji: "🌿", description: "Emotionally sensitive, soothing, and often drawn toward people who need quiet companionship.", traits: ["Empathetic", "Soothing", "Sensitive"], advice: ["Protect them from overstimulation", "Use calm touch and predictable emotional cues"] },
+  AEVP: { code: "AEVP", slug: "sunny", name: "Sunny", title: "Joyful Spark", emoji: "☀️", description: "Bright, enthusiastic, and openly affectionate, bringing visible energy into the home.", traits: ["Optimistic", "Energetic", "Friendly"], advice: ["Provide daily active play", "Use social rewards and positive attention"] },
+  ASCG: { code: "ASCG", slug: "sentinel", name: "Sentinel", title: "Watchful Keeper", emoji: "🔭", description: "Alert, patient, and highly aware of small changes in people, sounds, and surroundings.", traits: ["Watchful", "Patient", "Alert"], advice: ["Create predictable routines", "Introduce unfamiliar situations gradually"] },
+  AECP: { code: "AECP", slug: "player", name: "Player", title: "Playful Entertainer", emoji: "🎾", description: "Interactive, mischievous, and motivated by games, movement, and shared excitement.", traits: ["Playful", "Interactive", "Mischievous"], advice: ["Rotate games and toys", "Use play as a reward and learning tool"] },
+  IECG: { code: "IECG", slug: "noble", name: "Noble", title: "Graceful Presence", emoji: "💎", description: "Composed, dignified, and quietly confident, with clear preferences and personal boundaries.", traits: ["Graceful", "Composed", "Confident"], advice: ["Respect personal space", "Offer calm affection without pressure"] },
 };
+
+export const defaultPersonalityCode: PersonalityCode = "ASEP";
+
+export function getPersonalityImage(code: PersonalityCode, species: "cat" | "dog" = "cat") {
+  const personality = personalities[code];
+  const index = String(personalityOrder.indexOf(code) + 1).padStart(2, "0");
+  return `/assets/personalities/${species === "dog" ? "dogs" : "cats"}/${index}-${personality.slug}-${species}.webp`;
+}
