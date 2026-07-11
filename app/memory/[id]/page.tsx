@@ -94,7 +94,7 @@ export default function MemoryBookPage({ params }: { params: Promise<{ id: strin
           onClick={() => router.push("/dashboard")}
           className="text-sm font-bold text-[#7a6d63] hover:text-[#ff7a1a]"
         >
-          ¡û Back to Dashboard
+          Back to Dashboard
         </button>
       </div>
     </div>
