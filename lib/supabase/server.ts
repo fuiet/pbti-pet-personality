@@ -1,12 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+function isForbiddenBrowserKey(key: string) {
+  return key.startsWith("sb_secret_") || key.includes("service_role");
+}
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     throw new Error("Missing Supabase env vars: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  }
+
+  if (isForbiddenBrowserKey(key)) {
+    throw new Error("Supabase app config is using a secret key in NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Use the sb_publishable_ key instead.");
   }
 
   return { url, key };
