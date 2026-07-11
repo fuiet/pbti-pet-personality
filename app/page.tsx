@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 
 const features = [
@@ -108,24 +108,38 @@ export default function Home() {
 
       <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-16 lg:min-h-[700px] lg:grid-cols-[.9fr_1.1fr]">
         <div className="relative z-10">
-          <h1 className="max-w-3xl text-[56px] font-black leading-[.94] tracking-[-.06em] text-[#171514] md:text-[82px]">
-            Every paw has a personality.
+          <h1 className="max-w-3xl text-[54px] font-black leading-[.92] tracking-[-.07em] text-[#171514] md:text-[78px]">
+            发现它真正的性格
+            <span className="mt-3 block text-[#ff7a1a]">科学・专业・有趣</span>
           </h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-[#655a51]">
-            PBTI turns a pet profile, photo, and behavior quiz into a clear personality type, care guidance, and a report pet parents can revisit.
+          <p className="mt-6 max-w-xl text-lg leading-8 text-[#655a51]">
+            基于猫狗行为学研究的 PBTI 性格测评。通过 36 道行为问题，结合外貌特征和日常习惯，为你的宠物生成专属性格分类、深度报告和写真海报。
           </p>
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
             <Link href="/create" className="rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_22px_50px_rgba(255,122,26,.34)] transition hover:-translate-y-1 hover:bg-[#ee6b10]">
-              Start the test
+              开始免费测试
             </Link>
             <Link href="/premium" className="rounded-full border border-[#eaded2] bg-white/85 px-8 py-4 text-center font-black text-[#171514] shadow-[0_16px_45px_rgba(52,34,20,.07)] transition hover:-translate-y-1">
-              View plans
+              查看 12 种性格类型
             </Link>
           </div>
-          <div className="mt-10 grid max-w-xl grid-cols-3 gap-3 text-sm text-[#655a51]">
-            <div className="rounded-2xl border border-[#eaded2] bg-white/75 p-4"><strong className="block text-2xl text-[#171514]">4</strong> dimensions</div>
-            <div className="rounded-2xl border border-[#eaded2] bg-white/75 p-4"><strong className="block text-2xl text-[#171514]">12</strong> names</div>
-            <div className="rounded-2xl border border-[#eaded2] bg-white/75 p-4"><strong className="block text-2xl text-[#171514]">12</strong> cat cards</div>
+          <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 text-sm text-[#655a51] sm:grid-cols-4">
+            <div className="rounded-2xl border border-[#eaded2] bg-white/80 p-4 shadow-[0_14px_30px_rgba(52,34,20,.05)]">
+              <strong className="block text-3xl font-black text-[#171514]">36</strong>
+              行为问题
+            </div>
+            <div className="rounded-2xl border border-[#eaded2] bg-white/80 p-4 shadow-[0_14px_30px_rgba(52,34,20,.05)]">
+              <strong className="block text-3xl font-black text-[#171514]">12</strong>
+              性格分类
+            </div>
+            <div className="rounded-2xl border border-[#eaded2] bg-white/80 p-4 shadow-[0_14px_30px_rgba(52,34,20,.05)]">
+              <strong className="block text-3xl font-black text-[#171514]">10+</strong>
+              深度报告
+            </div>
+            <div className="rounded-2xl border border-[#eaded2] bg-white/80 p-4 shadow-[0_14px_30px_rgba(52,34,20,.05)]">
+              <strong className="block text-3xl font-black text-[#171514]">3</strong>
+              写真海报
+            </div>
           </div>
         </div>
 
