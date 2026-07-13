@@ -37,6 +37,29 @@ export interface PetProfileInput {
   age?: string;
 }
 
+const PET_COLUMNS_FULL = "id,user_id,name,species,breed,age,photo_url,created_at";
+const PET_COLUMNS_NO_AGE = "id,user_id,name,species,breed,photo_url,created_at";
+const PET_COLUMNS_MINIMAL = "id,user_id,name,species,breed,created_at";
+const RESULT_COLUMNS_FULL =
+  "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)";
+const RESULT_COLUMNS_NO_AGE =
+  "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,photo_url,created_at)";
+const RESULT_COLUMNS_MINIMAL =
+  "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,created_at)";
+
+function isPetSchemaColumnError(error: { message?: string } | null | undefined) {
+  const message = error?.message?.toLowerCase() || "";
+  const mentionsPetOptionalColumn = message.includes("age") || message.includes("photo_url");
+
+  return (
+    mentionsPetOptionalColumn &&
+    (message.includes("schema cache") ||
+      message.includes("could not find") ||
+      message.includes("column") ||
+      message.includes("invalid input syntax"))
+  );
+}
+
 async function requireCurrentUser() {
   const user = await getCurrentUser();
 
@@ -69,61 +92,110 @@ function normalizeResultRow(row: ResultRecord | RawResultRecord): ResultRecord {
 export async function createPetRecord(profile: PetProfileInput) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
+  const insertPayload = {
+    user_id: user.id,
+    name: profile.name,
+    species: profile.species,
+    breed: profile.breed?.trim() || null,
+  };
 
-  const { data, error } = await supabase
+  let response: any = await supabase
     .from("pets")
     .insert({
-      user_id: user.id,
-      name: profile.name,
-      species: profile.species,
-      breed: profile.breed?.trim() || null,
+      ...insertPayload,
       age: profile.age?.trim() || null,
     })
-    .select("id,user_id,name,species,breed,age,photo_url,created_at")
+    .select(PET_COLUMNS_MINIMAL)
     .single();
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("pets")
+      .insert(insertPayload)
+      .select(PET_COLUMNS_MINIMAL)
+      .single();
   }
 
-  return normalizePetRow(data as PetRecord);
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  return normalizePetRow(response.data as PetRecord);
 }
 
 export async function getPetRecord(petId: string) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
-  const { data, error } = await supabase
+  let response: any = await supabase
     .from("pets")
-    .select("id,user_id,name,species,breed,age,photo_url,created_at")
+    .select(PET_COLUMNS_FULL)
     .eq("id", petId)
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("pets")
+      .select(PET_COLUMNS_NO_AGE)
+      .eq("id", petId)
+      .eq("user_id", user.id)
+      .maybeSingle();
   }
 
-  return data ? normalizePetRow(data as PetRecord) : null;
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("pets")
+      .select(PET_COLUMNS_MINIMAL)
+      .eq("id", petId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+  }
+
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  return response.data ? normalizePetRow(response.data as PetRecord) : null;
 }
 
 export async function getLatestPetRecord() {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
-  const { data, error } = await supabase
+  let response: any = await supabase
     .from("pets")
-    .select("id,user_id,name,species,breed,age,photo_url,created_at")
+    .select(PET_COLUMNS_FULL)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("pets")
+      .select(PET_COLUMNS_NO_AGE)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
   }
 
-  return data ? normalizePetRow(data as PetRecord) : null;
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("pets")
+      .select(PET_COLUMNS_MINIMAL)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
+
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  return response.data ? normalizePetRow(response.data as PetRecord) : null;
 }
 
 export async function updatePetPhoto(petId: string, photoUrl: string | null) {
@@ -135,6 +207,10 @@ export async function updatePetPhoto(petId: string, photoUrl: string | null) {
     .update({ photo_url: photoUrl })
     .eq("id", petId)
     .eq("user_id", user.id);
+
+  if (error && isPetSchemaColumnError(error)) {
+    return;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -176,7 +252,7 @@ export async function savePersonalityResult(
       report,
       is_premium: false,
     })
-    .select("id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)")
+    .select(RESULT_COLUMNS_MINIMAL)
     .single();
 
   if (error) {
@@ -190,17 +266,33 @@ export async function getResultByRecordId(recordId: string) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
-  const { data, error } = await supabase
+  let response: any = await supabase
     .from("personality_results")
-    .select("id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)")
+    .select(RESULT_COLUMNS_FULL)
     .eq("pbti_id", recordId)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_NO_AGE)
+      .eq("pbti_id", recordId)
+      .maybeSingle();
   }
 
-  const record = data ? normalizeResultRow(data as RawResultRecord) : null;
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_MINIMAL)
+      .eq("pbti_id", recordId)
+      .maybeSingle();
+  }
+
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  const record = response.data ? normalizeResultRow(response.data as RawResultRecord) : null;
 
   if (!record?.pet || record.pet.user_id !== user.id) {
     return null;
@@ -229,19 +321,39 @@ export async function getLatestResultForCurrentUser() {
     return null;
   }
 
-  const { data, error } = await supabase
+  let response: any = await supabase
     .from("personality_results")
-    .select("id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)")
+    .select(RESULT_COLUMNS_FULL)
     .in("pet_id", petIds)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_NO_AGE)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
   }
 
-  const record = data ? normalizeResultRow(data as RawResultRecord) : null;
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_MINIMAL)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
+
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  const record = response.data ? normalizeResultRow(response.data as RawResultRecord) : null;
 
   if (!record?.pet || record.pet.user_id !== user.id) {
     return null;
@@ -270,17 +382,33 @@ export async function listCurrentUserResults() {
     return [];
   }
 
-  const { data, error } = await supabase
+  let response: any = await supabase
     .from("personality_results")
-    .select("id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)")
+    .select(RESULT_COLUMNS_FULL)
     .in("pet_id", petIds)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_NO_AGE)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false });
   }
 
-  return ((data || []) as RawResultRecord[])
+  if (response.error && isPetSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_MINIMAL)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false });
+  }
+
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  return ((response.data || []) as RawResultRecord[])
     .map(normalizeResultRow)
     .filter((record) => record.pet?.user_id === user.id);
 }

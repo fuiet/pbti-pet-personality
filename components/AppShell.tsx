@@ -1,47 +1,21 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getCurrentUser, signOut, type AuthUser } from "@/lib/auth";
+import { usePathname } from "next/navigation";
+import HeaderAccountActions from "@/components/HeaderAccountActions";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const navLinks = [
   { href: "/", label: "Home" },
+  { href: "/types", label: "Types" },
   { href: "/dashboard", label: "My Pets" },
+  { href: "/account", label: "Account" },
   { href: "/premium", label: "Premium" },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
   const isHome = pathname === "/";
-
-  useEffect(() => {
-    let active = true;
-
-    getCurrentUser()
-      .then((currentUser) => {
-        if (active) {
-          setUser(currentUser);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setUser(null);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
-
-  async function handleSignOut() {
-    await signOut();
-    setUser(null);
-    router.push("/login");
-  }
 
   if (isHome) return <>{children}</>;
 
@@ -64,30 +38,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
           <div className="flex items-center gap-3">
-            {user ? (
-              <>
-                <span className="hidden text-sm font-bold text-[#7a6d63] md:block">{user.email}</span>
-                <button
-                  onClick={handleSignOut}
-                  className="rounded-full border border-[#eaded2] bg-white/60 px-5 py-2.5 text-sm font-bold shadow-sm transition hover:bg-white"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="hidden rounded-full border border-[#eaded2] bg-white/60 px-5 py-2.5 text-sm font-bold shadow-sm transition hover:bg-white md:block"
-              >
-                Sign In
-              </Link>
-            )}
-            <Link
-              href="/create"
-              className="rounded-full bg-[#ff7a1a] px-5 py-2.5 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
-            >
-              Start Free
-            </Link>
+            <LanguageSelector compact />
+            <HeaderAccountActions />
           </div>
         </nav>
       </header>

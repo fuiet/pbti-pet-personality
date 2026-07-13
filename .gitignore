@@ -6,3 +6,9 @@ node_modules/
 !.env.example
 npm-debug.log*
 .DS_Store
+dev.pid
+dev.out.log
+dev.err.log
+tsconfig.tsbuildinfo
+preview-home.html
+add_runtime.js

@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
+import { LanguageProvider } from "@/components/LanguageProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://pbti-pet-personality.pages.dev"),
-  title: { default: "PBTI — Discover Your Pet's Personality", template: "%s | PBTI" },
+  title: { default: "PBTI - Discover Your Pet's Personality", template: "%s | PBTI" },
   description: "Discover your cat or dog's unique personality with a free behavior test and personalized PBTI insights.",
   applicationName: "PBTI",
   keywords: ["pet personality test", "cat personality", "dog personality", "PBTI", "pet behavior"],
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "PBTI",
-    title: "PBTI — Discover Your Pet's Personality",
+    title: "PBTI - Discover Your Pet's Personality",
     description: "A free personality test for cats and dogs.",
     images: [{ url: "/hero-pets.png", width: 1200, height: 630, alt: "PBTI pet personality test" }],
   },
@@ -31,7 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AppShell>{children}</AppShell>
+        <LanguageProvider>
+          <AppShell>{children}</AppShell>
+        </LanguageProvider>
       </body>
     </html>
   );
