@@ -46,6 +46,7 @@ const RESULT_COLUMNS_NO_AGE =
   "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,photo_url,created_at)";
 const RESULT_COLUMNS_MINIMAL =
   "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,created_at)";
+const RESULT_COLUMNS_RECORD = "id,pbti_id,personality_type,scores,report,is_premium,created_at,pet_id";
 
 function isPetSchemaColumnError(error: { message?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
@@ -252,7 +253,7 @@ export async function savePersonalityResult(
       report,
       is_premium: false,
     })
-    .select(RESULT_COLUMNS_MINIMAL)
+    .select(RESULT_COLUMNS_RECORD)
     .single();
 
   if (error) {
@@ -289,10 +290,22 @@ export async function getResultByRecordId(recordId: string) {
   }
 
   if (response.error) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_RECORD)
+      .eq("pbti_id", recordId)
+      .maybeSingle();
+  }
+
+  if (response.error) {
     throw new Error(response.error.message);
   }
 
   const record = response.data ? normalizeResultRow(response.data as RawResultRecord) : null;
+
+  if (record && !record.pet && record.pet_id) {
+    record.pet = await getPetRecord(record.pet_id);
+  }
 
   if (!record?.pet || record.pet.user_id !== user.id) {
     return null;
@@ -350,10 +363,24 @@ export async function getLatestResultForCurrentUser() {
   }
 
   if (response.error) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_RECORD)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
+
+  if (response.error) {
     throw new Error(response.error.message);
   }
 
   const record = response.data ? normalizeResultRow(response.data as RawResultRecord) : null;
+
+  if (record && !record.pet && record.pet_id) {
+    record.pet = await getPetRecord(record.pet_id);
+  }
 
   if (!record?.pet || record.pet.user_id !== user.id) {
     return null;

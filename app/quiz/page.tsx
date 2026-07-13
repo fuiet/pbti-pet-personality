@@ -75,6 +75,7 @@ export default function QuizPage() {
   const [loadingPet, setLoadingPet] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [quizError, setQuizError] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -141,6 +142,7 @@ export default function QuizPage() {
         return;
       }
 
+      setQuizError("");
       setSelectedValue(value);
 
       window.setTimeout(async () => {
@@ -159,9 +161,10 @@ export default function QuizPage() {
           const result = calculatePBTI(next);
           const saved = await savePersonalityResult(pet, result, next);
           router.push(`/result?resultId=${saved.pbti_id}`);
-        } catch {
+        } catch (error) {
           setIsSaving(false);
           setSelectedValue(null);
+          setQuizError(error instanceof Error ? error.message : "Unable to save your result. Please try again.");
         }
       }, 240);
     },
@@ -209,6 +212,12 @@ export default function QuizPage() {
           </div>
         </div>
       </section>
+
+      {quizError ? (
+        <div className="mb-5 rounded-2xl border border-[#ffd8bd] bg-[#fff0e4] px-5 py-4 text-sm font-bold text-[#d96612]">
+          Result saving failed: {quizError}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)_320px] lg:items-start">
         <aside className="rounded-[2rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_55px_rgba(52,34,20,.06)]">
