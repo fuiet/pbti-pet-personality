@@ -364,7 +364,7 @@ export default function UploadPage() {
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-black text-white">PBTI visual tags</h3>
                 <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[#ffb878]">
-                  {visualFallback ? "Fallback" : visualProfile.providerModel}
+                  {visualFallback ? "API key not active" : visualProfile.providerModel}
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -394,6 +394,11 @@ export default function UploadPage() {
                   <span>{visualProfile.photoQuality.score}/100</span>
                 </div>
               </div>
+              {visualFallback ? (
+                <p className="mt-4 rounded-2xl bg-[#ff7a1a]/15 px-3 py-2 text-xs font-bold leading-5 text-[#ffcfaa]">
+                  Live OpenAI analysis did not run. Check OPENAI_API_KEY in Cloudflare Production variables, then retry deployment.
+                </p>
+              ) : null}
               <p className="mt-4 text-xs leading-5 text-white/42">{visualProfile.disclaimer}</p>
             </div>
           ) : null}
