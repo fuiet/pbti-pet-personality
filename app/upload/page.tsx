@@ -42,6 +42,7 @@ function CheckIcon({ className = "" }: { className?: string }) {
 export default function UploadPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const analysisAttemptedKeyRef = useRef("");
   const { loading: authLoading } = useRequireAuth();
   const [preview, setPreview] = useState<string>("");
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -54,6 +55,7 @@ export default function UploadPage() {
   const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
   const [visualFallback, setVisualFallback] = useState(false);
   const [analysisPromptVisible, setAnalysisPromptVisible] = useState(false);
+  const [savedPhotoSetKey, setSavedPhotoSetKey] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -114,7 +116,10 @@ export default function UploadPage() {
     return () => window.clearInterval(interval);
   }, [analysisState]);
 
-  function startBackgroundAnalysis(currentPet: PetRecord) {
+  function startBackgroundAnalysis(currentPet: PetRecord, photoSetKey: string) {
+    if (!photoSetKey || analysisAttemptedKeyRef.current === photoSetKey) return;
+
+    analysisAttemptedKeyRef.current = photoSetKey;
     setAnalysisState("background");
     setAnalysisPromptVisible(true);
     setAnalysisProgress(8);
@@ -178,6 +183,7 @@ export default function UploadPage() {
     if (!primaryPhoto) return;
 
     const hasFullPhotoSet = usableUrls.length >= REQUIRED_PHOTO_COUNT;
+    const nextPhotoSetKey = usableUrls.join("|");
 
     setError("");
     setPreview(primaryPhoto);
@@ -189,17 +195,19 @@ export default function UploadPage() {
       setAnalysisState("idle");
       setAnalysisPromptVisible(false);
       setAnalysisProgress(0);
+      setSavedPhotoSetKey("");
     }
 
     try {
       await updatePetPhoto(pet.id, primaryPhoto);
     } catch {
       setError("Unable to save the front photo right now. You can continue and try again later.");
+      analysisAttemptedKeyRef.current = nextPhotoSetKey;
       return;
     }
 
     if (hasFullPhotoSet) {
-      startBackgroundAnalysis(pet);
+      setSavedPhotoSetKey(nextPhotoSetKey);
     }
 
     if (inputRef.current) inputRef.current.value = "";
@@ -222,6 +230,8 @@ export default function UploadPage() {
     setAnalysisState("idle");
     setAnalysisPromptVisible(false);
     setAnalysisProgress(0);
+    setSavedPhotoSetKey("");
+    analysisAttemptedKeyRef.current = "";
     setVisualProfile(null);
     setVisualFallback(false);
     if (inputRef.current) inputRef.current.value = "";
@@ -238,11 +248,20 @@ export default function UploadPage() {
   const uploadedPhotoCount = photoPreviews.filter(Boolean).length;
   const missingPhotoCount = Math.max(REQUIRED_PHOTO_COUNT - uploadedPhotoCount, 0);
   const hasFullPhotoSet = uploadedPhotoCount >= REQUIRED_PHOTO_COUNT;
+  const photoSetKey = photoPreviews.filter(Boolean).join("|");
   const uploadStatusText = hasFullPhotoSet
     ? "3/3 photos uploaded. Background analysis starts automatically."
     : `${uploadedPhotoCount}/3 photos uploaded. Add ${missingPhotoCount} more for the best identification.`;
   const activeStepIndex = analysisState === "complete" ? 2 : analysisState === "background" ? Math.min(2, Math.floor(analysisProgress / 28)) : 0;
   const canStartQuiz = Boolean(pet);
+
+  useEffect(() => {
+    if (!pet || analysisState !== "idle" || !hasFullPhotoSet || !photoSetKey || savedPhotoSetKey !== photoSetKey) {
+      return;
+    }
+
+    startBackgroundAnalysis(pet, photoSetKey);
+  }, [analysisState, hasFullPhotoSet, pet, photoSetKey, savedPhotoSetKey]);
 
   if (authLoading || loadingPet) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
