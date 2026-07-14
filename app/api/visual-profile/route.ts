@@ -4,98 +4,59 @@ import { normalizeVisualProfile, type RawVisualProfileInput } from "@/lib/visual
 
 export const runtime = "edge";
 
-const OPENAI_MODEL = "gpt-5.4-mini";
+const VISUAL_MODEL_PROVIDER = process.env.VISUAL_MODEL_PROVIDER || "qwen";
+const QWEN_MODEL = process.env.QWEN_MODEL || "qwen-vl-plus";
+const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
-const visualProfileSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    species: { type: "string", enum: ["cat", "dog", "unknown"] },
-    breedCandidates: {
-      type: "array",
-      maxItems: 3,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          breed: { type: "string" },
-          confidence: { type: "number", minimum: 0, maximum: 1 },
-          note: { type: "string" },
-        },
-        required: ["breed", "confidence", "note"],
-      },
-    },
-    coat: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        color: { type: "string" },
-        length: { type: "string" },
-        pattern: { type: "string" },
-        texture: { type: "string" },
-      },
-      required: ["color", "length", "pattern", "texture"],
-    },
-    face: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        eyeExpression: { type: "string" },
-        earPosition: { type: "string" },
-        muzzleShape: { type: "string" },
-        faceDirection: { type: "string" },
-      },
-      required: ["eyeExpression", "earPosition", "muzzleShape", "faceDirection"],
-    },
-    bodyLanguage: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        posture: { type: "string" },
-        energyCue: { type: "string" },
-        relaxation: { type: "string" },
-      },
-      required: ["posture", "energyCue", "relaxation"],
-    },
-    visualSignals: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        eyeFocus: { type: "string", enum: ["soft", "focused", "watchful", "unclear"] },
-        posture: { type: "string", enum: ["relaxed", "stable", "upright", "active", "tense", "unclear"] },
-        faceDirection: { type: "string", enum: ["front-facing", "side-facing", "partially visible", "unclear"] },
-        expressionIntensity: { type: "string", enum: ["soft", "moderate", "strong", "unclear"] },
-        coatCondition: { type: "string", enum: ["neat", "fluffy", "textured", "messy", "unclear"] },
-        movementCue: { type: "string", enum: ["low", "moderate", "high", "unclear"] },
-        bodyRelaxation: { type: "string", enum: ["relaxed", "neutral", "alert", "tense", "unclear"] },
-      },
-      required: ["eyeFocus", "posture", "faceDirection", "expressionIntensity", "coatCondition", "movementCue", "bodyRelaxation"],
-    },
-    photoQuality: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        score: { type: "number", minimum: 0, maximum: 100 },
-        issues: { type: "array", items: { type: "string" } },
-      },
-      required: ["score", "issues"],
-    },
-    summary: { type: "string" },
+const visualProfilePrompt = (species: "cat" | "dog" | "unknown") => `Analyze this ${species} photo for PBTI Visual Model v1.
+
+Return strict JSON only, with no markdown, no code fence, and exactly these top-level fields:
+{
+  "species": "cat" | "dog" | "unknown",
+  "breedCandidates": [{ "breed": string, "confidence": number between 0 and 1, "note": string }],
+  "coat": { "color": string, "length": string, "pattern": string, "texture": string },
+  "face": { "eyeExpression": string, "earPosition": string, "muzzleShape": string, "faceDirection": string },
+  "bodyLanguage": { "posture": string, "energyCue": string, "relaxation": string },
+  "visualSignals": {
+    "eyeFocus": "soft" | "focused" | "watchful" | "unclear",
+    "posture": "relaxed" | "stable" | "upright" | "active" | "tense" | "unclear",
+    "faceDirection": "front-facing" | "side-facing" | "partially visible" | "unclear",
+    "expressionIntensity": "soft" | "moderate" | "strong" | "unclear",
+    "coatCondition": "neat" | "fluffy" | "textured" | "messy" | "unclear",
+    "movementCue": "low" | "moderate" | "high" | "unclear",
+    "bodyRelaxation": "relaxed" | "neutral" | "alert" | "tense" | "unclear"
   },
-  required: ["species", "breedCandidates", "coat", "face", "bodyLanguage", "visualSignals", "photoQuality", "summary"],
-} as const;
+  "photoQuality": { "score": number from 0 to 100, "issues": string[] },
+  "summary": string
+}
 
-function extractResponseText(data: any) {
-  if (typeof data?.output_text === "string") return data.output_text;
+Describe visible traits only. Do not diagnose health, emotion, intelligence, aggression, or real personality. Breed candidates must be cautious visual guesses. If the image is unclear, use "unclear" fields and list the quality issues.`;
 
-  const chunks: string[] = [];
-  for (const item of data?.output || []) {
-    for (const content of item?.content || []) {
-      if (typeof content?.text === "string") chunks.push(content.text);
+function parseJsonObject(text: string) {
+  const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+
+  try {
+    return JSON.parse(cleaned) as RawVisualProfileInput;
+  } catch {
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1)) as RawVisualProfileInput;
     }
+    throw new Error("Qwen-VL returned a response that was not valid JSON.");
   }
+}
 
-  return chunks.join("\n");
+function extractQwenMessageText(data: any) {
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => (typeof item === "string" ? item : item?.text || ""))
+      .filter(Boolean)
+      .join("\\n");
+  }
+  return "";
 }
 
 function makeFallbackProfile(species: "cat" | "dog" | "unknown") {
@@ -115,10 +76,10 @@ function makeFallbackProfile(species: "cat" | "dog" | "unknown") {
         movementCue: "unclear",
         bodyRelaxation: "neutral",
       },
-      photoQuality: { score: 50, issues: ["OpenAI visual analysis is not configured yet."] },
-      summary: "Photo was saved, but live visual analysis requires OPENAI_API_KEY in the deployment environment.",
+      photoQuality: { score: 50, issues: ["Qwen-VL visual analysis is not configured yet."] },
+      summary: "Photo was saved, but live visual analysis requires DASHSCOPE_API_KEY in the deployment environment.",
     },
-    OPENAI_MODEL
+    QWEN_MODEL
   );
 }
 
@@ -170,61 +131,52 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
     }
 
-    const openaiKey = process.env.OPENAI_API_KEY;
+    if (VISUAL_MODEL_PROVIDER !== "qwen") {
+      return NextResponse.json({ error: "Unsupported visual model provider. Set VISUAL_MODEL_PROVIDER=qwen." }, { status: 500 });
+    }
+
+    const dashscopeKey = process.env.DASHSCOPE_API_KEY;
     const species = pet.species === "dog" ? "dog" : pet.species === "cat" ? "cat" : "unknown";
 
-    if (!openaiKey) {
+    if (!dashscopeKey) {
       const profile = makeFallbackProfile(species);
       const saveError = await saveVisualProfile(supabase, userResult.user.id, petId, profile, { fallback: true });
       return NextResponse.json({ profile, fallback: true, saveError });
     }
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch(QWEN_BASE_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openaiKey}`,
+        Authorization: `Bearer ${dashscopeKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
-        max_output_tokens: 900,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "pbti_visual_profile",
-            schema: visualProfileSchema,
-            strict: true,
-          },
-        },
-        input: [
+        model: QWEN_MODEL,
+        messages: [
           {
             role: "user",
             content: [
-              {
-                type: "input_text",
-                text: `Analyze this ${species} photo for PBTI Visual Model v1. Describe visible traits only. Do not diagnose health, emotion, intelligence, aggression, or real personality. Return only the requested JSON fields. Breed candidates must be cautious visual guesses.`,
-              },
-              {
-                type: "input_image",
-                image_url: imageUrl,
-                detail: "low",
-              },
+              { type: "text", text: visualProfilePrompt(species) },
+              { type: "image_url", image_url: { url: imageUrl } },
             ],
           },
         ],
+        temperature: 0.2,
+        max_tokens: 900,
+        response_format: { type: "json_object" },
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return NextResponse.json({ error: data?.error?.message || "OpenAI visual analysis failed." }, { status: 502 });
+      return NextResponse.json({ error: data?.error?.message || "Qwen-VL visual analysis failed." }, { status: 502 });
     }
 
-    const outputText = extractResponseText(data);
-    const raw = JSON.parse(outputText) as RawVisualProfileInput;
-    const profile = normalizeVisualProfile(raw, OPENAI_MODEL);
-    const saveError = await saveVisualProfile(supabase, userResult.user.id, petId, profile, raw);
+    const outputText = extractQwenMessageText(data);
+    const raw = parseJsonObject(outputText);
+    const profile = normalizeVisualProfile(raw, QWEN_MODEL);
+    const saveError = await saveVisualProfile(supabase, userResult.user.id, petId, profile, { provider: VISUAL_MODEL_PROVIDER, model: QWEN_MODEL, raw });
 
     return NextResponse.json({ profile, fallback: false, saveError });
   } catch (error) {

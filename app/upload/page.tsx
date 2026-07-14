@@ -396,7 +396,7 @@ export default function UploadPage() {
               </div>
               {visualFallback ? (
                 <p className="mt-4 rounded-2xl bg-[#ff7a1a]/15 px-3 py-2 text-xs font-bold leading-5 text-[#ffcfaa]">
-                  Live OpenAI analysis did not run. Check OPENAI_API_KEY in Cloudflare Production variables, then retry deployment.
+                  Live Qwen-VL analysis did not run. Check DASHSCOPE_API_KEY in Cloudflare Production variables, then retry deployment.
                 </p>
               ) : null}
               <p className="mt-4 text-xs leading-5 text-white/42">{visualProfile.disclaimer}</p>
