@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import PersonalityCard from "@/components/PersonalityCard";
 import { generatePetReport } from "@/lib/reportGenerator";
-import { getLatestResultForCurrentUser, getLatestVisualProfileForPet, getResultByRecordId, type PetVisualProfileRecord, type ResultRecord } from "@/lib/pbtiRecords";
+import { getLatestResultForCurrentUser, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
 function getResultIdFromLocation() {
@@ -22,8 +22,6 @@ export default function ResultPage() {
   const router = useRouter();
   const { loading: authLoading } = useRequireAuth();
   const [record, setRecord] = useState<ResultRecord | null>(null);
-  const [visualProfile, setVisualProfile] = useState<PetVisualProfileRecord | null>(null);
-  const [visualProfileChecked, setVisualProfileChecked] = useState(false);
   const [loadingRecord, setLoadingRecord] = useState(true);
 
   useEffect(() => {
@@ -44,20 +42,6 @@ export default function ResultPage() {
         }
 
         setRecord(saved);
-        if (saved.pet?.id) {
-          try {
-            const visual = await getLatestVisualProfileForPet(saved.pet.id);
-            if (!active) return;
-            setVisualProfile(visual);
-          } catch {
-            if (!active) return;
-            setVisualProfile(null);
-          } finally {
-            if (active) setVisualProfileChecked(true);
-          }
-        } else {
-          setVisualProfileChecked(true);
-        }
       } catch {
         if (active) {
           router.push("/create");
@@ -103,11 +87,17 @@ export default function ResultPage() {
     modelVersion: "PBTI Behavior Model v2.0",
     modelCue: personality.modelCue,
   });
-  const dna = [
-    { name: "Attachment", value: scoreValue(scores, "attachment", Math.round(((scores.A || 0) / rawTotal) * 100)) },
-    { name: "Exploration", value: scoreValue(scores, "exploration", Math.round(((scores.E || 0) / rawTotal) * 100)) },
-    { name: "Vitality", value: scoreValue(scores, "vitality", Math.round(((scores.V || 0) / rawTotal) * 100)) },
-    { name: "Playfulness", value: scoreValue(scores, "playfulness", Math.round(((scores.P || 0) / rawTotal) * 100)) },
+  const premiumSections = [
+    "Four-dimension behavior score breakdown",
+    "36-answer behavior pattern analysis",
+    "Visual breed, coat, face, and body identification",
+    "Mixed-breed likelihood and appearance notes",
+    "Emotional and social style report",
+    "Personalized care guide",
+    "Play and enrichment plan",
+    "Owner relationship guide",
+    "Potential challenges and support tips",
+    "Portrait poster and share card pack",
   ];
 
   return (
@@ -118,162 +108,66 @@ export default function ResultPage() {
         </div>
       </div>
 
-      <PersonalityCard
-        emoji={personality.emoji}
-        code={personality.code}
-        name={personality.name}
-        title={personality.title}
-        description={personality.description}
-      />
-
-      <div className="mt-4 text-center text-sm text-[#7a6d63]">
-        {record.pet.species === "dog" ? "Dog" : "Cat"} {record.pet.name}
-        {record.pet.breed ? ` - ${record.pet.breed}` : ""}
-      </div>
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">Visual identification</p>
-            <h3 className="mt-2 text-xl font-black tracking-[-.03em] text-[#171514]">Pet appearance profile</h3>
+      <section className="overflow-hidden rounded-[2rem] border border-[#eaded2] bg-white shadow-[0_24px_70px_rgba(52,34,20,.08)]">
+        {record.pet.photo_url ? (
+          <div className="relative h-72 bg-[#fff0e4] sm:h-96">
+            <img src={record.pet.photo_url} alt={`${record.pet.name} profile photo`} className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(23,21,20,0)_40%,rgba(23,21,20,.56))]" />
+            <div className="absolute bottom-5 left-5 rounded-full bg-white/92 px-4 py-2 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
+              {record.pet.species === "dog" ? "Dog" : "Cat"} profile
+            </div>
           </div>
-          {visualProfile ? <span className="rounded-full bg-[#fff0e4] px-3 py-1.5 text-xs font-black text-[#d96612]">{visualProfile.providerModel}</span> : null}
-        </div>
+        ) : null}
 
-        {visualProfile ? (
-          <div>
-            <p className="text-sm leading-7 text-[#655a51]">{visualProfile.summary}</p>
-
-            <div className="mt-5 rounded-2xl bg-[#171514] p-5 text-white">
-              <p className="text-xs font-black uppercase tracking-[.14em] text-[#ffb878]">Breed and mix assessment</p>
-              <h4 className="mt-2 text-2xl font-black tracking-[-.04em]">{visualProfile.breedAssessment.primaryBreed}</h4>
-              <p className="mt-1 text-sm font-bold text-white/70">Variety: {visualProfile.breedAssessment.variety}</p>
-              <p className="mt-3 text-sm leading-6 text-white/72">
-                Mixed-breed likelihood: <span className="font-black text-[#ffb878]">{visualProfile.breedAssessment.mixedLikelihood}</span>. {visualProfile.breedAssessment.mixedNotes}
-              </p>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl bg-[#fff8f1] p-4">
-                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Breed candidates</p>
-                <div className="mt-3 space-y-3">
-                  {(visualProfile.breedCandidates.length ? visualProfile.breedCandidates : [{ breed: "Mixed / unclear", confidence: 0, note: "No reliable breed candidate was detected from this photo." }]).map((candidate) => (
-                    <div key={candidate.breed}>
-                      <div className="flex items-center justify-between gap-3 text-sm font-black text-[#171514]">
-                        <span>{candidate.breed}</span>
-                        <span className="text-[#d96612]">{Math.round(candidate.confidence * 100)}%</span>
-                      </div>
-                      {candidate.note ? <p className="mt-1 text-xs leading-5 text-[#7a6d63]">{candidate.note}</p> : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-2xl bg-[#fff8f1] p-4">
-                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Coat and color</p>
-                <p className="mt-2 text-base font-black text-[#171514]">{[visualProfile.coat.color, visualProfile.coat.pattern, visualProfile.coat.length].filter(Boolean).join(" / ")}</p>
-                <p className="mt-2 text-xs leading-5 text-[#7a6d63]">Texture: {visualProfile.coat.texture}</p>
-              </div>
-              <div className="rounded-2xl bg-[#fff8f1] p-4">
-                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Face and eyes</p>
-                <p className="mt-2 text-sm font-bold leading-6 text-[#171514]">{visualProfile.face.eyeExpression}</p>
-                <p className="mt-2 text-xs leading-5 text-[#7a6d63]">Muzzle: {visualProfile.face.muzzleShape}</p>
-                <p className="mt-1 text-xs leading-5 text-[#7a6d63]">Ears: {visualProfile.face.earPosition} / Direction: {visualProfile.face.faceDirection}</p>
-              </div>
-              <div className="rounded-2xl bg-[#fff8f1] p-4">
-                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Body and posture</p>
-                <p className="mt-2 text-sm font-bold leading-6 text-[#171514]">{visualProfile.bodyLanguage.posture}</p>
-                <p className="mt-2 text-xs leading-5 text-[#7a6d63]">Energy cue: {visualProfile.bodyLanguage.energyCue}</p>
-                <p className="mt-1 text-xs leading-5 text-[#7a6d63]">Photo quality: {visualProfile.photoQuality.score}/100</p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {visualProfile.visualTags.map((tag) => (
-                <span key={tag} className="rounded-full bg-[#fff0e4] px-3 py-1.5 text-xs font-black text-[#d96612]">{tag}</span>
-              ))}
-            </div>
-            {visualProfile.photoQuality.issues.length ? (
-              <p className="mt-4 rounded-2xl bg-[#fff8f1] px-4 py-3 text-xs font-bold leading-5 text-[#7a6d63]">Photo notes: {visualProfile.photoQuality.issues.join(" / ")}</p>
-            ) : null}
-          </div>
-        ) : (
-          <p className="rounded-2xl bg-[#fff8f1] px-4 py-3 text-sm font-bold leading-6 text-[#7a6d63]">
-            {visualProfileChecked
-              ? "The photo is still being analyzed in the background. Refresh this result later to see breed, coat, facial, and body-structure identification."
-              : "Checking the background visual analysis result..."}
+        <div className="p-8 text-center">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff0e4] text-2xl font-black text-[#ff7a1a]">{personality.emoji}</div>
+          <div className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-[#a3968a]">Cover / result summary</div>
+          <h1 className="mt-3 text-7xl font-black leading-none tracking-[-.08em] text-[#171514]">{personality.code}</h1>
+          <div className="mt-3 text-3xl font-black tracking-[-.05em] text-[#d96612]">{personality.name}</div>
+          <h2 className="mt-1 text-lg font-semibold text-[#7a6d63]">{personality.title}</h2>
+          <p className="mt-5 text-xl font-black tracking-[-.03em] text-[#171514]">{record.pet.name}</p>
+          <p className="mt-1 text-sm font-semibold text-[#7a6d63]">
+            {record.pet.species === "dog" ? "Dog" : "Cat"}
+            {record.pet.breed ? ` - ${record.pet.breed}` : ""}
           </p>
-        )}
-      </div>
-
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">Key Traits</h3>
-        <div className="flex flex-wrap gap-2">
-          {personality.traits.map((trait) => (
-            <span key={trait} className="rounded-full bg-[#fff0e4] px-4 py-1.5 text-sm font-bold text-[#d96612]">
-              {trait}
-            </span>
-          ))}
+          <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-[#655a51]">{report.summary}</p>
+          {scores.fit ? <div className="mt-5 inline-flex rounded-full bg-[#fff0e4] px-4 py-2 text-sm font-black text-[#d96612]">{scores.fit}% profile match</div> : null}
         </div>
-      </div>
+      </section>
 
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <h3 className="text-lg font-bold text-[#171514]">Personality DNA</h3>
-          {scores.fit ? <span className="text-sm font-black text-[#ff7a1a]">{scores.fit}% match</span> : null}
-        </div>
-        <div className="space-y-4">
-          {dna.map((item) => (
-            <div key={item.name}>
-              <div className="mb-1.5 flex justify-between text-sm font-bold text-[#4f463f]">
-                <span>{item.name}</span>
-                <span className="text-[#ff7a1a]">{item.value}%</span>
-              </div>
-              <div className="h-2.5 rounded-full bg-[#eadfd3]">
-                <div className="h-2.5 rounded-full bg-gradient-to-r from-[#ffb56f] to-[#ff7a1a] transition-all duration-1000 ease-out" style={{ width: `${item.value}%` }} />
-              </div>
+      <section className="mt-6 rounded-[2rem] border border-[#ff7a1a]/25 bg-[#171514] p-6 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)] sm:p-8">
+        <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Premium deep report</div>
+        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Unlock the full 10+ page report</h2>
+        <p className="mt-3 text-sm leading-7 text-white/72">
+          Your free result shows the cover summary. Premium expands it into a complete pet personality dossier with behavior scoring, photo-based appearance analysis, care guidance, and shareable poster assets.
+        </p>
+        <div className="mt-6 grid gap-2 sm:grid-cols-2">
+          {premiumSections.map((section, index) => (
+            <div key={section} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm font-bold leading-6 text-white/82">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#ff7a1a] text-xs font-black text-white">{index + 1}</span>
+              {section}
             </div>
           ))}
         </div>
-      </div>
-
-      {report.methodology ? (
-        <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-          <h3 className="mb-3 text-lg font-bold text-[#171514]">Methodology</h3>
-          <p className="text-sm leading-7 text-[#655a51]">{report.methodology}</p>
-          {report.confidence ? <p className="mt-3 text-sm font-black text-[#d96612]">{report.confidence}</p> : null}
-        </div>
-      ) : null}
-
-      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-bold text-[#171514]">Care Advice</h3>
-        <ul className="space-y-2">
-          {personality.advice.map((advice, index) => (
-            <li key={index} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
-              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#fff0e4] text-xs text-[#ff7a1a]">
-                {index + 1}
-              </span>
-              {advice}
-            </li>
-          ))}
-        </ul>
-      </div>
-
+        <button
+          onClick={() => router.push("/premium")}
+          className="mt-7 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] sm:w-auto"
+        >
+          Unlock Premium Report - $9.99
+        </button>
+      </section>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={() => router.push(`/report/${record.pbti_id}`)}
+          onClick={() => router.push("/premium")}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          View Full Report
+          Unlock Premium Report
         </button>
         <button
           onClick={() => router.push("/dashboard")}
           className="flex-1 rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-center font-bold text-[#4f463f] transition hover:bg-white/80"
         >
           My Dashboard
-        </button>
-      </div>
-
-      <div className="mt-4 text-center">
-        <button onClick={() => router.push("/premium")} className="text-sm font-bold text-[#ff7a1a] hover:underline">
-          Unlock Premium Report - $9.99
         </button>
       </div>
 
