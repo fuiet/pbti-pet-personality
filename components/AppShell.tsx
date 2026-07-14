@@ -6,11 +6,11 @@ import HeaderAccountActions from "@/components/HeaderAccountActions";
 import LanguageSelector from "@/components/LanguageSelector";
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/types", label: "Types" },
-  { href: "/dashboard", label: "My Pets" },
-  { href: "/account", label: "Account" },
-  { href: "/premium", label: "Premium" },
+  { href: "/", label: "\u9996\u9875" },
+  { href: "/#method", label: "\u6d4b\u8bd5\u65b9\u6cd5" },
+  { href: "/types", label: "\u6027\u683c\u5206\u7c7b" },
+  { href: "/premium", label: "\u5b9a\u4ef7" },
+  { href: "/account", label: "\u7528\u6237\u4e2d\u5fc3" },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -31,7 +31,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition hover:text-[#ff7a1a] ${pathname === link.href ? "text-[#ff7a1a]" : ""}`}
+                className={`transition hover:text-[#ff7a1a] ${(link.href === "/#method" ? false : pathname === link.href) ? "text-[#ff7a1a]" : ""}`}
               >
                 {link.label}
               </Link>
@@ -51,9 +51,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <span>Copyright 2026 PBTI</span>
           </div>
           <div className="flex gap-6">
-            <Link href="/" className="hover:text-[#ff7a1a]">Home</Link>
-            <Link href="/dashboard" className="hover:text-[#ff7a1a]">Dashboard</Link>
-            <Link href="/premium" className="hover:text-[#ff7a1a]">Premium</Link>
+            <Link href="/" className="hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
+            <Link href="/#method" className="hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</Link>
+            <Link href="/premium" className="hover:text-[#ff7a1a]">{"\u5b9a\u4ef7"}</Link>
           </div>
         </div>
       </footer>

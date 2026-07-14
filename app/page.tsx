@@ -307,11 +307,11 @@ export default function Home() {
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
           <BrandLogo compact />
           <div className="hidden items-center gap-9 text-sm font-bold text-[#4f463f] lg:flex">
-            <a href="#method" className="transition hover:text-[#ff7a1a]">Method</a>
-            <a href="#method" className="transition hover:text-[#ff7a1a]">How it works</a>
-            <Link href="/types" className="transition hover:text-[#ff7a1a]">Types</Link>
-            <Link href="/premium" className="transition hover:text-[#ff7a1a]">Pricing</Link>
-            <Link href="/account" className="transition hover:text-[#ff7a1a]">Account</Link>
+            <Link href="/" className="transition hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
+            <a href="#method" className="transition hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</a>
+            <Link href="/types" className="transition hover:text-[#ff7a1a]">{"\u6027\u683c\u5206\u7c7b"}</Link>
+            <Link href="/premium" className="transition hover:text-[#ff7a1a]">{"\u5b9a\u4ef7"}</Link>
+            <Link href="/account" className="transition hover:text-[#ff7a1a]">{"\u7528\u6237\u4e2d\u5fc3"}</Link>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSelector compact />
