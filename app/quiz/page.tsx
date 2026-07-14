@@ -74,7 +74,7 @@ export default function QuizPage() {
   const [answers, setAnswers] = useState<Trait[]>([]);
   const [loadingPet, setLoadingPet] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [quizError, setQuizError] = useState("");
 
   useEffect(() => {
@@ -130,20 +130,20 @@ export default function QuizPage() {
 
   const goBack = useCallback(() => {
     if (current > 0 && !isSaving) {
-      setSelectedValue(null);
+      setSelectedOptionIndex(null);
       setCurrent(current - 1);
       setAnswers(answers.slice(0, -1));
     }
   }, [current, answers, isSaving]);
 
   const select = useCallback(
-    (value: string) => {
-      if (!pet || isSaving || selectedValue) {
+    (value: string, optionIndex: number) => {
+      if (!pet || isSaving || selectedOptionIndex !== null) {
         return;
       }
 
       setQuizError("");
-      setSelectedValue(value);
+      setSelectedOptionIndex(optionIndex);
 
       window.setTimeout(async () => {
         const next = [...answers, value as Trait];
@@ -151,7 +151,7 @@ export default function QuizPage() {
 
         if (current < questions.length - 1) {
           setCurrent(current + 1);
-          setSelectedValue(null);
+          setSelectedOptionIndex(null);
           return;
         }
 
@@ -163,12 +163,12 @@ export default function QuizPage() {
           router.push(`/result?resultId=${saved.pbti_id}`);
         } catch (error) {
           setIsSaving(false);
-          setSelectedValue(null);
+          setSelectedOptionIndex(null);
           setQuizError(error instanceof Error ? error.message : "Unable to save your result. Please try again.");
         }
       }, 240);
     },
-    [answers, current, isSaving, pet, questions.length, router, selectedValue]
+    [answers, current, isSaving, pet, questions.length, router, selectedOptionIndex]
   );
 
   useEffect(() => {
@@ -179,7 +179,7 @@ export default function QuizPage() {
         router.push("/create");
       } else if ((e.key === "1" || e.key === "2" || e.key === "3") && currentQuestion?.options) {
         const option = currentQuestion.options[Number(e.key) - 1];
-        if (option) select(option.value);
+        if (option) select(option.value, Number(e.key) - 1);
       }
     };
     window.addEventListener("keydown", handler);
@@ -283,12 +283,12 @@ export default function QuizPage() {
 
               <div className="mt-8 grid gap-4">
                 {(currentQuestion?.options || []).map((option, index) => {
-                  const selected = selectedValue === option.value;
+                  const selected = selectedOptionIndex === index;
                   return (
                     <button
                       key={`${current}-${index}`}
-                      onClick={() => select(option.value)}
-                      disabled={isSaving || Boolean(selectedValue)}
+                      onClick={() => select(option.value, index)}
+                      disabled={isSaving || selectedOptionIndex !== null}
                       className={`group flex min-h-[76px] w-full items-center gap-4 rounded-[1.35rem] border-2 p-4 text-left transition duration-200 sm:p-5 ${
                         selected
                           ? "border-[#ff7a1a] bg-[#fff0e4] shadow-[0_18px_42px_rgba(255,122,26,.18)]"
