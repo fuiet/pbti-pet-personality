@@ -71,6 +71,9 @@ const RESULT_COLUMNS_NO_AGE =
 const RESULT_COLUMNS_MINIMAL =
   "id,pbti_id,personality_type,scores,report,created_at, pet:pets(id,user_id,name,species,breed,created_at)";
 const RESULT_COLUMNS_RECORD = "id,pbti_id,personality_type,scores,report,created_at,pet_id";
+const RESULT_COLUMNS_MINIMAL_NO_REPORT =
+  "id,pbti_id,personality_type,scores,created_at, pet:pets(id,user_id,name,species,breed,created_at)";
+const RESULT_COLUMNS_RECORD_NO_REPORT = "id,pbti_id,personality_type,scores,created_at,pet_id";
 
 function isPetSchemaColumnError(error: { message?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
@@ -82,6 +85,15 @@ function isPetSchemaColumnError(error: { message?: string } | null | undefined) 
       message.includes("could not find") ||
       message.includes("column") ||
       message.includes("invalid input syntax"))
+  );
+}
+
+function isResultReportSchemaError(error: { message?: string } | null | undefined) {
+  const message = error?.message?.toLowerCase() || "";
+
+  return (
+    message.includes("report") &&
+    (message.includes("schema cache") || message.includes("could not find") || message.includes("column"))
   );
 }
 
@@ -110,6 +122,7 @@ function normalizeResultRow(row: ResultRecord | RawResultRecord): ResultRecord {
   return {
     ...row,
     report: row.report ?? null,
+    is_premium: row.is_premium ?? false,
     pet: pet ? normalizePetRow(pet) : null,
   };
 }
@@ -331,23 +344,35 @@ export async function savePersonalityResult(
     answers,
   };
 
-  const { data, error } = await supabase
+  const insertPayload = {
+    pet_id: pet.id,
+    pbti_id: makeRecordId(),
+    personality_type: result.code,
+    scores: result.scores,
+  };
+
+  let response: any = await supabase
     .from("personality_results")
     .insert({
-      pet_id: pet.id,
-      pbti_id: makeRecordId(),
-      personality_type: result.code,
-      scores: result.scores,
+      ...insertPayload,
       report,
     })
     .select(RESULT_COLUMNS_RECORD)
     .single();
 
-  if (error) {
-    throw new Error(error.message);
+  if (response.error && isResultReportSchemaError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .insert(insertPayload)
+      .select(RESULT_COLUMNS_RECORD_NO_REPORT)
+      .single();
   }
 
-  return normalizeResultRow(data as RawResultRecord);
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  return normalizeResultRow(response.data as RawResultRecord);
 }
 
 export async function getResultByRecordId(recordId: string) {
@@ -380,6 +405,14 @@ export async function getResultByRecordId(recordId: string) {
     response = await supabase
       .from("personality_results")
       .select(RESULT_COLUMNS_RECORD)
+      .eq("pbti_id", recordId)
+      .maybeSingle();
+  }
+
+  if (response.error && isResultReportSchemaError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_RECORD_NO_REPORT)
       .eq("pbti_id", recordId)
       .maybeSingle();
   }
@@ -459,6 +492,16 @@ export async function getLatestResultForCurrentUser() {
       .maybeSingle();
   }
 
+  if (response.error && isResultReportSchemaError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_RECORD_NO_REPORT)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
+
   if (response.error) {
     throw new Error(response.error.message);
   }
@@ -514,6 +557,14 @@ export async function listCurrentUserResults() {
     response = await supabase
       .from("personality_results")
       .select(RESULT_COLUMNS_MINIMAL)
+      .in("pet_id", petIds)
+      .order("created_at", { ascending: false });
+  }
+
+  if (response.error && isResultReportSchemaError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .select(RESULT_COLUMNS_MINIMAL_NO_REPORT)
       .in("pet_id", petIds)
       .order("created_at", { ascending: false });
   }
