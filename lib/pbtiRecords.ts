@@ -18,7 +18,7 @@ export interface ResultRecord {
   id: string;
   pbti_id: string;
   personality_type: string;
-  scores: Record<Trait, number>;
+  scores: Record<string, number>;
   report: (PetReport & { answers?: Trait[] }) | null;
   is_premium: boolean;
   created_at: string;
@@ -236,6 +236,10 @@ export async function savePersonalityResult(
     personalityName: result.personality.name,
     traits: result.personality.traits,
     advice: result.personality.advice,
+    dimensionScores: result.dimensionScores,
+    fitScore: result.fitScore,
+    modelVersion: result.modelVersion,
+    modelCue: result.personality.modelCue,
   };
 
   const report = {

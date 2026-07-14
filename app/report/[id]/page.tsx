@@ -10,6 +10,11 @@ import { getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import ShareCard from "@/components/ShareCard";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
+function scoreValue(scores: Record<string, number>, key: string, fallback: number) {
+  const value = scores[key];
+  return typeof value === "number" ? value : fallback;
+}
+
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -56,12 +61,23 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }
 
   const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
+  const scores = record.scores || {};
+  const rawTotal = (scores.A || 0) + (scores.I || 0) + (scores.E || 0) + (scores.S || 0) + (scores.V || 0) + (scores.C || 0) + (scores.P || 0) + (scores.G || 0) || 1;
   const report = record.report || generatePetReport({
     petName: record.pet.name,
     pbtiType: personality.code,
     personalityName: personality.name,
     traits: personality.traits,
     advice: personality.advice,
+    dimensionScores: {
+      attachment: scoreValue(scores, "attachment", Math.round(((scores.A || 0) / rawTotal) * 100)),
+      exploration: scoreValue(scores, "exploration", Math.round(((scores.E || 0) / rawTotal) * 100)),
+      vitality: scoreValue(scores, "vitality", Math.round(((scores.V || 0) / rawTotal) * 100)),
+      playfulness: scoreValue(scores, "playfulness", Math.round(((scores.P || 0) / rawTotal) * 100)),
+    },
+    fitScore: scores.fit,
+    modelVersion: "PBTI Behavior Model v2.0",
+    modelCue: personality.modelCue,
   });
 
   return (
@@ -82,6 +98,21 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
         <h3 className="mb-3 text-lg font-bold text-[#171514]">Summary</h3>
         <p className="text-sm leading-7 text-[#655a51]">{report.summary}</p>
+      </div>
+
+      <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <h3 className="mb-3 text-lg font-bold text-[#171514]">Behavior Dimensions</h3>
+        <div className="space-y-3">
+          {(report.dimensionNarrative || []).map((item) => (
+            <p key={item} className="text-sm leading-7 text-[#655a51]">{item}</p>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <h3 className="mb-3 text-lg font-bold text-[#171514]">Methodology</h3>
+        <p className="text-sm leading-7 text-[#655a51]">{report.methodology}</p>
+        {report.confidence ? <p className="mt-3 text-sm font-black text-[#d96612]">{report.confidence}</p> : null}
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">

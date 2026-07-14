@@ -31,6 +31,23 @@ const methodSteps = [
     signal: "Report output",
   },
 ] as const;
+const researchPillars = [
+  {
+    label: "Cat behavior basis",
+    title: "Feline Five personality research",
+    body: "Cat scoring is informed by published work on owner-observed feline traits such as sociability, neuroticism, impulsiveness, dominance, and agreeableness.",
+  },
+  {
+    label: "Dog behavior basis",
+    title: "C-BARQ and dog trait studies",
+    body: "Dog scoring follows the same owner-observed logic used in canine behavior questionnaires: social contact, fearfulness, excitability, trainability, play, and vigilance.",
+  },
+  {
+    label: "PBTI model",
+    title: "4 behavior dimensions, 12 profiles",
+    body: "Answers are converted into four behavior dimensions, then matched against twelve personality prototypes shared across cats and dogs.",
+  },
+] as const;
 const methodDecorations = [
   {
     image: "/assets/personalities/cats/03-dreamer-cat.webp",
@@ -371,9 +388,12 @@ export default function Home() {
               How PBTI turns behavior into a useful report
             </h2>
             <p className="mt-5 max-w-lg text-base leading-8 text-[#655a51]">
-              A structured pet personality assessment that combines profile data, photo context, behavior signals, and report generation into one readable workflow.
+              PBTI is a behavior-based personality indicator. It uses owner-observed daily behavior as the scoring source, with breed, age, and photo context used only to personalize the report experience.
             </p>
-            <div className="mt-8 grid max-w-md grid-cols-3 overflow-hidden rounded-[1.35rem] border border-[#eaded2] bg-white shadow-[0_16px_40px_rgba(52,34,20,.06)]">
+            <div className="mt-8 rounded-[1.35rem] border border-[#eaded2] bg-white p-4 text-sm leading-6 text-[#655a51] shadow-[0_16px_40px_rgba(52,34,20,.06)]">
+              Based on behavior research, not breed stereotypes. Educational indicator only, not a veterinary diagnosis.
+            </div>
+            <div className="mt-4 grid max-w-md grid-cols-3 overflow-hidden rounded-[1.35rem] border border-[#eaded2] bg-white shadow-[0_16px_40px_rgba(52,34,20,.06)]">
               <div className="border-r border-[#eaded2] p-4">
                 <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">36</div>
                 <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">questions</div>
@@ -391,6 +411,15 @@ export default function Home() {
 
           <div className="relative">
             <div className="absolute left-[1.65rem] top-10 hidden h-[calc(100%-5rem)] w-px bg-[#f2d8bf] md:block" />
+            <div className="mb-5 grid gap-4 md:grid-cols-3">
+              {researchPillars.map((pillar) => (
+                <article key={pillar.title} className="rounded-[1.35rem] border border-[#eaded2] bg-white/92 p-5 shadow-[0_16px_40px_rgba(52,34,20,.05)]">
+                  <div className="text-[11px] font-black uppercase tracking-[.14em] text-[#d96612]">{pillar.label}</div>
+                  <h3 className="mt-3 text-xl font-black tracking-[-.04em] text-[#171514]">{pillar.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#655a51]">{pillar.body}</p>
+                </article>
+              ))}
+            </div>
             <div className="grid gap-4">
               {methodSteps.map((step) => (
                 <article key={step.index} className="relative rounded-[1.6rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_48px_rgba(52,34,20,.06)] md:ml-14 md:grid md:grid-cols-[1fr_auto] md:items-center md:gap-8">

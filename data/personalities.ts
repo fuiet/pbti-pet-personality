@@ -1,4 +1,4 @@
-﻿export interface Personality {
+export interface Personality {
   code: string;
   name: string;
   title: string;
@@ -6,6 +6,7 @@
   description: string;
   traits: string[];
   advice: string[];
+  modelCue: string;
 }
 
 export interface PersonalityShowcaseItem {
@@ -13,170 +14,162 @@ export interface PersonalityShowcaseItem {
   blurb: string;
 }
 
-export const defaultPersonalityCode = "AECG";
+export const defaultPersonalityCode = "GUARDIAN";
 
-export const personalityShowcase: PersonalityShowcaseItem[] = [
-  { name: "Explorer", blurb: "Curious and quick to investigate." },
-  { name: "Guardian", blurb: "Steady, loyal, and protective." },
-  { name: "Dreamer", blurb: "Gentle, calm, and comfort-loving." },
-  { name: "Maverick", blurb: "Independent and bold in new spaces." },
-  { name: "Scholar", blurb: "Observant, thoughtful, and clever." },
-  { name: "Leader", blurb: "Confident, expressive, and self-assured." },
-  { name: "Companion", blurb: "Warm, attached, and people-oriented." },
-  { name: "Healer", blurb: "Soft-hearted and emotionally grounding." },
-  { name: "Sunny", blurb: "Bright, social, and joyfully energetic." },
-  { name: "Sentinel", blurb: "Watchful, patient, and alert." },
-  { name: "Player", blurb: "Interactive, mischievous, and fun-loving." },
-  { name: "Noble", blurb: "Calm, poised, and quietly confident." },
-];
-
-export const personalities: Record<string, Personality> = {
-  AEVP: {
-    code: "AEVP",
-    name: "Sunny",
-    title: "Bright Companion",
-    emoji: "SU",
-    description: "A joyful pet who fills the home with upbeat energy, clear affection, and playful enthusiasm.",
-    traits: ["Playful", "Social", "Energetic"],
-    advice: ["Provide active play every day", "Use praise and shared routines to build connection"],
-  },
-  AEVG: {
-    code: "AEVG",
+const twelvePersonalities: Record<string, Personality> = {
+  EXPLORER: {
+    code: "EXPLORER",
     name: "Explorer",
-    title: "Free Spirit",
+    title: "Curious Pathfinder",
     emoji: "EX",
-    description: "A brave and curious companion who loves discovering new things and checking every corner first.",
-    traits: ["Curious", "Brave", "Independent"],
-    advice: ["Offer safe exploration opportunities", "Respect their need for variety and choice"],
+    description: "A novelty-seeking pet that learns the world by investigating new spaces, sounds, scents, and routines.",
+    traits: ["Curious", "Adventurous", "Alert"],
+    advice: ["Offer safe novelty through rotating toys, scent games, and new walking or play routes.", "Let exploration happen with an easy escape path so curiosity stays confident."],
+    modelCue: "High Exploration with moderate Playfulness.",
   },
-  AECP: {
-    code: "AECP",
-    name: "Player",
-    title: "Joyful Teammate",
-    emoji: "PL",
-    description: "A lively, engaging pet that turns everyday moments into games and shared attention into fun.",
-    traits: ["Curious", "Gentle", "Interactive"],
-    advice: ["Use short, rewarding games", "Keep enrichment varied and easy to join"],
-  },
-  AECG: {
-    code: "AECG",
+  GUARDIAN: {
+    code: "GUARDIAN",
     name: "Guardian",
     title: "Steady Protector",
     emoji: "GU",
-    description: "Quiet outside, deeply connected inside. This pet shows love through trust, loyalty, and steady presence.",
-    traits: ["Calm", "Loyal", "Sensitive"],
-    advice: ["Respect personal space", "Keep routines stable and predictable"],
+    description: "A bonded and steady pet that reads the home carefully and shows care through presence, routine, and watchfulness.",
+    traits: ["Loyal", "Stable", "Protective"],
+    advice: ["Keep daily routines predictable, especially around guests, meals, and rest.", "Reward calm checking-in behavior instead of forcing fast social contact."],
+    modelCue: "High Attachment, high Stability, and high Guardianship.",
   },
-  ASEP: {
-    code: "ASEP",
-    name: "Companion",
-    title: "Comfort Explorer",
-    emoji: "CO",
-    description: "A close-hearted pet who enjoys familiar bonds and gentle adventures taken at a comfortable pace.",
-    traits: ["Careful", "Curious", "Balanced"],
-    advice: ["Create safe exploration areas", "Introduce novelty in small steps"],
-  },
-  ASEG: {
-    code: "ASEG",
-    name: "Healer",
-    title: "Trusted Friend",
-    emoji: "HE",
-    description: "A dependable, soothing presence who brings calm and comfort simply by staying near the family.",
-    traits: ["Reliable", "Loyal", "Stable"],
-    advice: ["Maintain routines", "Build trust through consistent signals"],
-  },
-  ASCP: {
-    code: "ASCP",
+  DREAMER: {
+    code: "DREAMER",
     name: "Dreamer",
-    title: "Soft Soul",
+    title: "Soft Comfort Seeker",
     emoji: "DR",
-    description: "A peaceful pet who enjoys comfort, quiet companionship, and a gentle rhythm to daily life.",
-    traits: ["Relaxed", "Gentle", "Comfort-seeking"],
-    advice: ["Provide cozy resting spaces", "Keep affection calm and predictable"],
+    description: "A gentle, low-pressure pet that prefers comfort, quiet rhythm, and emotionally safe spaces.",
+    traits: ["Gentle", "Comfort-loving", "Calm"],
+    advice: ["Create cozy rest zones and protect quiet recovery time.", "Use soft invitations for affection and avoid sudden environmental pressure."],
+    modelCue: "High Composure with lower novelty-seeking.",
   },
-  ASCG: {
-    code: "ASCG",
-    name: "Sentinel",
-    title: "Calm Observer",
-    emoji: "SE",
-    description: "A watchful pet who values harmony, notices subtle change, and keeps a quiet eye on the home.",
-    traits: ["Peaceful", "Observant", "Patient"],
-    advice: ["Keep environments calm", "Avoid forcing fast social interactions"],
-  },
-  IEVP: {
-    code: "IEVP",
+  MAVERICK: {
+    code: "MAVERICK",
     name: "Maverick",
-    title: "Active Scout",
+    title: "Independent Scout",
     emoji: "MA",
-    description: "Independent but curious, this pet loves testing limits, chasing novelty, and making its own path.",
-    traits: ["Explorer", "Active", "Self-directed"],
-    advice: ["Offer new experiences", "Rotate toys and enrichment regularly"],
+    description: "An independent and bold pet that prefers choice, freedom, and self-directed discovery.",
+    traits: ["Independent", "Bold", "Self-directed"],
+    advice: ["Use choice-based routines and enrichment that lets your pet opt in.", "Set clear boundaries while preserving room for autonomy."],
+    modelCue: "High Exploration and Independence.",
   },
-  IEVG: {
-    code: "IEVG",
-    name: "Leader",
-    title: "Bold Individual",
-    emoji: "LE",
-    description: "A confident, self-assured pet with strong curiosity and a clear sense of what it wants.",
-    traits: ["Bold", "Independent", "Curious"],
-    advice: ["Give freedom and challenges", "Use boundaries that still allow choice"],
-  },
-  IECP: {
-    code: "IECP",
+  SCHOLAR: {
+    code: "SCHOLAR",
     name: "Scholar",
     title: "Thoughtful Observer",
     emoji: "SC",
-    description: "A thoughtful observer who likes understanding the world before joining in and often notices what others miss.",
-    traits: ["Smart", "Quiet", "Analytical"],
-    advice: ["Allow observation time", "Use puzzle play and quiet enrichment"],
+    description: "A measured pet that studies before acting, notices subtle patterns, and benefits from puzzle-like enrichment.",
+    traits: ["Observant", "Analytical", "Patient"],
+    advice: ["Offer puzzle feeders, quiet training games, and time to observe new situations.", "Do not rush decisions; let curiosity build through repeated safe exposure."],
+    modelCue: "High Composure with careful, moderate Stability.",
   },
-  IECG: {
-    code: "IECG",
-    name: "Noble",
-    title: "Calm Presence",
-    emoji: "NO",
-    description: "A composed, independent pet with strong personal boundaries and a dignified, grounded presence.",
-    traits: ["Confident", "Calm", "Independent"],
-    advice: ["Respect independence", "Offer affection without pressure"],
+  LEADER: {
+    code: "LEADER",
+    name: "Leader",
+    title: "Confident Director",
+    emoji: "LE",
+    description: "A confident and expressive pet that takes up space, communicates clearly, and likes knowing the rules of the room.",
+    traits: ["Confident", "Expressive", "Decisive"],
+    advice: ["Channel confidence into structured games, training cues, and cooperative tasks.", "Use consistent rules with calm reinforcement rather than confrontation."],
+    modelCue: "High Vitality with confident Exploration and lower Playfulness than Player.",
   },
-  ISEP: {
-    code: "ISEP",
-    name: "Explorer",
-    title: "Slow Explorer",
-    emoji: "EX",
-    description: "A curious pet who explores on its own terms and prefers having control over when to engage.",
-    traits: ["Curious", "Independent", "Measured"],
-    advice: ["Encourage exploration", "Let them approach new things gradually"],
+  COMPANION: {
+    code: "COMPANION",
+    name: "Companion",
+    title: "Warm Everyday Partner",
+    emoji: "CO",
+    description: "A strongly bonded pet that values shared routines, closeness, and frequent everyday connection.",
+    traits: ["Affectionate", "People-oriented", "Warm"],
+    advice: ["Build daily rituals for greetings, rest, play, and calm contact.", "Give reassurance during transitions so attachment remains secure."],
+    modelCue: "Very high Attachment with balanced emotional expression.",
   },
-  ISEG: {
-    code: "ISEG",
-    name: "Guardian",
-    title: "Quiet Protector",
-    emoji: "GU",
-    description: "A strong and reliable personality who protects quietly, values order, and stays deeply anchored to home.",
-    traits: ["Strong", "Reliable", "Watchful"],
-    advice: ["Respect boundaries", "Keep household routines consistent"],
+  HEALER: {
+    code: "HEALER",
+    name: "Healer",
+    title: "Gentle Grounding Presence",
+    emoji: "HE",
+    description: "A soothing, sensitive pet that brings calm through trust, soft signals, and steady emotional presence.",
+    traits: ["Soothing", "Sensitive", "Trusting"],
+    advice: ["Protect predictable quiet time and reward small signs of confidence.", "Use gentle cues, slow introductions, and consistent reassurance."],
+    modelCue: "High Attachment and Composure.",
   },
-  ISCP: {
-    code: "ISCP",
-    name: "Dreamer",
-    title: "Peaceful Companion",
-    emoji: "DR",
-    description: "A relaxed pet who enjoys peaceful moments, familiar spaces, and gentle, low-pressure connection.",
-    traits: ["Calm", "Gentle", "Easygoing"],
-    advice: ["Create comfortable spaces", "Use low-stress enrichment"],
+  SUNNY: {
+    code: "SUNNY",
+    name: "Sunny",
+    title: "Joyful Social Spark",
+    emoji: "SU",
+    description: "A bright, expressive pet that seeks connection, play, and positive attention in everyday life.",
+    traits: ["Social", "Upbeat", "Energetic"],
+    advice: ["Plan regular interactive play and praise-based routines.", "Give constructive outlets before excitement turns into over-arousal."],
+    modelCue: "High Attachment, Exploration, Vitality, and Playfulness.",
   },
-  ISCG: {
-    code: "ISCG",
+  SENTINEL: {
+    code: "SENTINEL",
     name: "Sentinel",
-    title: "Deep Observer",
+    title: "Watchful Pattern Keeper",
     emoji: "SE",
-    description: "A deeply observant pet with quiet confidence, strong intuition, and a patient way of reading the room.",
-    traits: ["Mysterious", "Observant", "Steady"],
-    advice: ["Be patient and understanding", "Let trust build through repeated calm moments"],
+    description: "A careful and watchful pet that tracks environmental change, routines, and household signals.",
+    traits: ["Watchful", "Patient", "Aware"],
+    advice: ["Let your pet observe before joining new social situations.", "Keep household cues steady and avoid overwhelming novelty."],
+    modelCue: "High Stability and Guardianship with controlled expression.",
+  },
+  PLAYER: {
+    code: "PLAYER",
+    name: "Player",
+    title: "Interactive Game Maker",
+    emoji: "PL",
+    description: "A high-energy, playful pet that turns attention, movement, and novelty into games.",
+    traits: ["Playful", "Interactive", "Mischievous"],
+    advice: ["Use short training games, toy rotation, and reward-based challenges.", "Balance high-energy play with predictable decompression time."],
+    modelCue: "Very high Playfulness and Vitality.",
+  },
+  NOBLE: {
+    code: "NOBLE",
+    name: "Noble",
+    title: "Composed Independent Spirit",
+    emoji: "NO",
+    description: "A poised pet with clear boundaries, quiet confidence, and a preference for respectful connection.",
+    traits: ["Composed", "Independent", "Graceful"],
+    advice: ["Offer affection as an invitation and respect when your pet chooses distance.", "Use calm routines and low-pressure enrichment to preserve trust."],
+    modelCue: "High Independence and Composure.",
   },
 };
 
+export const personalityShowcase: PersonalityShowcaseItem[] = Object.values(twelvePersonalities).map((personality) => ({
+  name: personality.name,
+  blurb: personality.description,
+}));
+
+export const personalities: Record<string, Personality> = {
+  ...twelvePersonalities,
+  AEVP: twelvePersonalities.SUNNY,
+  AEVG: twelvePersonalities.EXPLORER,
+  AECP: twelvePersonalities.PLAYER,
+  AECG: twelvePersonalities.GUARDIAN,
+  ASEP: twelvePersonalities.COMPANION,
+  ASEG: twelvePersonalities.HEALER,
+  ASCP: twelvePersonalities.DREAMER,
+  ASCG: twelvePersonalities.SENTINEL,
+  IEVP: twelvePersonalities.MAVERICK,
+  IEVG: twelvePersonalities.LEADER,
+  IECP: twelvePersonalities.SCHOLAR,
+  IECG: twelvePersonalities.NOBLE,
+  ISEP: twelvePersonalities.EXPLORER,
+  ISEG: twelvePersonalities.GUARDIAN,
+  ISCP: twelvePersonalities.DREAMER,
+  ISCG: twelvePersonalities.SENTINEL,
+};
+
 export function resolvePersonality(code: string): Personality {
-  return personalities[code] || personalities[defaultPersonalityCode];
+  const normalized = code?.trim().toUpperCase();
+  const byCode = personalities[normalized];
+
+  if (byCode) return byCode;
+
+  const byName = Object.values(twelvePersonalities).find((personality) => personality.name.toUpperCase() === normalized);
+  return byName || personalities[defaultPersonalityCode];
 }

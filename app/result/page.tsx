@@ -13,6 +13,11 @@ function getResultIdFromLocation() {
   return new URLSearchParams(window.location.search).get("resultId");
 }
 
+function scoreValue(scores: Record<string, number>, key: string, fallback: number) {
+  const value = scores[key];
+  return typeof value === "number" ? value : fallback;
+}
+
 export default function ResultPage() {
   const router = useRouter();
   const { loading: authLoading } = useRequireAuth();
@@ -64,20 +69,29 @@ export default function ResultPage() {
   }
 
   const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
+  const scores = record.scores || {};
+  const rawTotal = (scores.A || 0) + (scores.I || 0) + (scores.E || 0) + (scores.S || 0) + (scores.V || 0) + (scores.C || 0) + (scores.P || 0) + (scores.G || 0) || 1;
   const report = record.report || generatePetReport({
     petName: record.pet.name,
     pbtiType: personality.code,
     personalityName: personality.name,
     traits: personality.traits,
     advice: personality.advice,
+    dimensionScores: {
+      attachment: scoreValue(scores, "attachment", Math.round(((scores.A || 0) / rawTotal) * 100)),
+      exploration: scoreValue(scores, "exploration", Math.round(((scores.E || 0) / rawTotal) * 100)),
+      vitality: scoreValue(scores, "vitality", Math.round(((scores.V || 0) / rawTotal) * 100)),
+      playfulness: scoreValue(scores, "playfulness", Math.round(((scores.P || 0) / rawTotal) * 100)),
+    },
+    fitScore: scores.fit,
+    modelVersion: "PBTI Behavior Model v2.0",
+    modelCue: personality.modelCue,
   });
-  const dnaSource = record.scores || { A: 0, I: 0, E: 0, S: 0, V: 0, C: 0, P: 0, G: 0 };
-  const total = Object.values(dnaSource).reduce((a, b) => a + b, 0) || 1;
   const dna = [
-    { name: "Attachment", value: Math.round(((dnaSource.A || 0) / total) * 100) },
-    { name: "Exploration", value: Math.round(((dnaSource.E || 0) / total) * 100) },
-    { name: "Vitality", value: Math.round(((dnaSource.V || 0) / total) * 100) },
-    { name: "Playfulness", value: Math.round(((dnaSource.P || 0) / total) * 100) },
+    { name: "Attachment", value: scoreValue(scores, "attachment", Math.round(((scores.A || 0) / rawTotal) * 100)) },
+    { name: "Exploration", value: scoreValue(scores, "exploration", Math.round(((scores.E || 0) / rawTotal) * 100)) },
+    { name: "Vitality", value: scoreValue(scores, "vitality", Math.round(((scores.V || 0) / rawTotal) * 100)) },
+    { name: "Playfulness", value: scoreValue(scores, "playfulness", Math.round(((scores.P || 0) / rawTotal) * 100)) },
   ];
 
   return (
@@ -113,7 +127,10 @@ export default function ResultPage() {
       </div>
 
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-5 text-lg font-bold text-[#171514]">Personality DNA</h3>
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <h3 className="text-lg font-bold text-[#171514]">Personality DNA</h3>
+          {scores.fit ? <span className="text-sm font-black text-[#ff7a1a]">{scores.fit}% match</span> : null}
+        </div>
         <div className="space-y-4">
           {dna.map((item) => (
             <div key={item.name}>
@@ -128,6 +145,14 @@ export default function ResultPage() {
           ))}
         </div>
       </div>
+
+      {report.methodology ? (
+        <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+          <h3 className="mb-3 text-lg font-bold text-[#171514]">Methodology</h3>
+          <p className="text-sm leading-7 text-[#655a51]">{report.methodology}</p>
+          {report.confidence ? <p className="mt-3 text-sm font-black text-[#d96612]">{report.confidence}</p> : null}
+        </div>
+      ) : null}
 
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-lg font-bold text-[#171514]">Care Advice</h3>
