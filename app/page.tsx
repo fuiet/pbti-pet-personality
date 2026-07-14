@@ -9,26 +9,30 @@ const methodSteps = [
   {
     index: "01",
     title: "Pet Profile",
-    body: "Name, species, breed, age, and daily context establish the baseline.",
-    signal: "Profile data",
+    body: "Name, species, breed, age, and daily living context create the baseline for interpreting behavior without relying on breed stereotypes.",
+    signal: "Baseline context",
+    badge: "Input layer",
   },
   {
     index: "02",
-    title: "Photo Context",
-    body: "A clear pet photo gives the report visual identity and a personal anchor.",
-    signal: "Visual context",
+    title: "Visual Identification",
+    body: "Upload up to 3 pet photos. The visual model reviews appearance cues such as coat, face shape, body structure, and possible breed mix to enrich the final report.",
+    signal: "Photo analysis",
+    badge: "Vision layer",
   },
   {
     index: "03",
-    title: "36-Question Behavior Test",
-    body: "Daily reactions, routines, and social patterns are mapped into personality signals.",
-    signal: "Behavior signals",
+    title: "36 Behavior Signals",
+    body: "Owner-observed reactions, routines, social contact, novelty response, activity level, and vigilance are mapped into the four PBTI behavior axes.",
+    signal: "Behavior scoring",
+    badge: "Scoring layer",
   },
   {
     index: "04",
     title: "Personality Report",
-    body: "The final output connects one of 12 types with traits, care advice, and poster-ready assets.",
+    body: "The final result links one of 12 PBTI types with trait evidence, care suggestions, visual notes, and poster-ready material for sharing.",
     signal: "Report output",
+    badge: "Insight delivery",
   },
 ] as const;
 const researchPillars = [
@@ -418,8 +422,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="absolute left-[1.65rem] top-10 hidden h-[calc(100%-5rem)] w-px bg-[#f2d8bf] md:block" />
+          <div className="relative lg:pt-14 xl:pt-20">
+            <div className="absolute left-[1.65rem] top-10 hidden h-[calc(100%-5rem)] w-px bg-[#f2d8bf] md:block lg:top-24 xl:top-28" />
 
             <div className="grid gap-4">
               {methodSteps.map((step) => (
@@ -437,7 +441,7 @@ export default function Home() {
                     <p className="mt-2 max-w-2xl text-sm leading-7 text-[#655a51]">{step.body}</p>
                   </div>
                   <div className="mt-5 rounded-2xl bg-[#fff8ef] px-4 py-3 text-sm font-black text-[#8a4f22] md:mt-0">
-                    {step.index === "03" ? "Behavior scoring" : step.index === "04" ? "Insight delivery" : "Input layer"}
+                    {step.badge}
                   </div>
                 </article>
               ))}
