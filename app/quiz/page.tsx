@@ -206,7 +206,6 @@ export default function QuizPage() {
           <div key={`quiz-progress-${questionNumber}`} className="min-w-[240px] rounded-2xl bg-[#fff7ed] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-[#8c7b6d]">
               <span>Question {questionNumber}/{questions.length}</span>
-              <span>{progress}%</span>
             </div>
             <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#eaded2]">
               <div className="h-full rounded-full bg-[#ff7a1a] transition-all duration-300" style={{ width: `${progress}%` }} />
