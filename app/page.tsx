@@ -357,14 +357,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative flex min-h-[500px] items-center justify-center">
-          <div className="absolute inset-8 rounded-[2rem] bg-gradient-to-br from-white via-[#fff0df] to-[#ffd5a8] shadow-[0_35px_100px_rgba(52,34,20,.1)]" />
+        <div className="relative flex min-h-[560px] items-center justify-center lg:min-h-[640px]">
           <img
             src="/hero-pets.png?v=2"
             alt="A happy cat and dog together wearing PBTI tags"
-            className="relative z-10 h-auto w-full max-w-[600px] object-contain drop-shadow-[0_24px_50px_rgba(52,34,20,.16)]"
+            className="relative z-10 h-auto w-[112%] max-w-[760px] object-contain drop-shadow-[0_28px_58px_rgba(52,34,20,.18)] lg:w-[118%] lg:max-w-[840px]"
           />
-          <div className="absolute bottom-8 left-8 z-20 rounded-2xl border border-[#eaded2] bg-white/90 p-4 shadow-[0_18px_50px_rgba(52,34,20,.1)]">
+          <div className="absolute bottom-10 left-4 z-20 rounded-2xl border border-[#eaded2] bg-white/92 p-4 shadow-[0_18px_50px_rgba(52,34,20,.1)] backdrop-blur sm:left-10 lg:left-6 xl:left-12">
             <div className="text-xs font-black uppercase tracking-[.12em] text-[#d96612]">Sample type</div>
             <div className="mt-1 text-2xl font-black">Guardian</div>
             <div className="text-sm text-[#655a51]">Steady, loyal, and protective.</div>
