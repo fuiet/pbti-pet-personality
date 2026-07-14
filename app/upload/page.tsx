@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "r
 import { useRouter } from "next/navigation";
 import { getLatestPetRecord, getPetRecord, updatePetPhoto, type PetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import type { PetVisualProfile } from "@/lib/visualProfile";
 
 type AnalysisState = "idle" | "analyzing" | "complete";
 
-const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Preparing quiz context"];
+const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Assigning PBTI visual tags"];
 
 function getPetIdFromLocation() {
   if (typeof window === "undefined") return null;
@@ -42,6 +43,8 @@ export default function UploadPage() {
   const [error, setError] = useState("");
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
+  const [visualFallback, setVisualFallback] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -90,12 +93,11 @@ export default function UploadPage() {
     const duration = 3200;
     const interval = window.setInterval(() => {
       const elapsed = Date.now() - startedAt;
-      const nextProgress = Math.min(100, Math.round((elapsed / duration) * 100));
+      const nextProgress = Math.min(92, Math.round((elapsed / duration) * 92));
       setAnalysisProgress(nextProgress);
 
-      if (nextProgress >= 100) {
+      if (nextProgress >= 92) {
         window.clearInterval(interval);
-        setAnalysisState("complete");
       }
     }, 120);
 
@@ -113,16 +115,42 @@ export default function UploadPage() {
       setError("");
       setPreview(dataUrl);
       setAnalysisState("analyzing");
+      setAnalysisProgress(8);
+      setVisualProfile(null);
+      setVisualFallback(false);
 
       try {
         await updatePetPhoto(pet.id, dataUrl);
       } catch {
         setError("Unable to save photo right now. You can continue and try again later.");
       }
+
+      try {
+        const response = await fetch("/api/visual-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ petId: pet.id, imageUrl: dataUrl }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Unable to analyze photo.");
+        }
+
+        setVisualProfile(data.profile || null);
+        setVisualFallback(Boolean(data.fallback));
+        if (data.saveError) {
+          setError(`Visual profile generated, but database save needs setup: ${data.saveError}`);
+        }
+      } catch (analysisError) {
+        setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo right now.");
+      } finally {
+        setAnalysisProgress(100);
+        setAnalysisState("complete");
+      }
     };
     reader.readAsDataURL(file);
   }
-
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) handleFile(file);
@@ -139,6 +167,8 @@ export default function UploadPage() {
     setPreview("");
     setAnalysisState("idle");
     setAnalysisProgress(0);
+    setVisualProfile(null);
+    setVisualFallback(false);
     if (inputRef.current) inputRef.current.value = "";
 
     if (pet) {
@@ -329,6 +359,44 @@ export default function UploadPage() {
             </p>
           </div>
 
+          {visualProfile ? (
+            <div className="mt-6 rounded-[1.25rem] border border-white/10 bg-white/[.06] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-black text-white">PBTI visual tags</h3>
+                <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[#ffb878]">
+                  {visualFallback ? "Fallback" : visualProfile.providerModel}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {visualProfile.visualTags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-[#ff7a1a] px-3 py-1.5 text-xs font-black text-white shadow-[0_10px_22px_rgba(255,122,26,.18)]">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 grid gap-3 text-sm text-white/72">
+                <div>
+                  <span className="text-white/42">Breed guess: </span>
+                  <span className="font-bold text-white">
+                    {visualProfile.breedCandidates[0]?.breed || "Mixed / unclear"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-white/42">Coat: </span>
+                  <span>{[visualProfile.coat.color, visualProfile.coat.length, visualProfile.coat.pattern].filter(Boolean).join(", ")}</span>
+                </div>
+                <div>
+                  <span className="text-white/42">Expression: </span>
+                  <span>{visualProfile.face.eyeExpression}</span>
+                </div>
+                <div>
+                  <span className="text-white/42">Photo quality: </span>
+                  <span>{visualProfile.photoQuality.score}/100</span>
+                </div>
+              </div>
+              <p className="mt-4 text-xs leading-5 text-white/42">{visualProfile.disclaimer}</p>
+            </div>
+          ) : null}
           <div className="mt-7 border-t border-white/10 pt-5">
             <h3 className="text-sm font-black text-white">Best photo tips</h3>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-white/68">
