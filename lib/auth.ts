@@ -37,10 +37,17 @@ export async function signInWithGoogle(nextPath = "/dashboard") {
   const supabase = createSupabaseBrowserClient();
   const safeNextPath = normalizeNextPath(nextPath);
   const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`;
+
+  // Avoid linking a new Google OAuth identity onto a previously signed-in account.
+  await supabase.auth.signOut({ scope: "local" });
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo,
+      queryParams: {
+        prompt: "select_account",
+      },
     },
   });
 
