@@ -65,12 +65,12 @@ const PET_COLUMNS_FULL = "id,user_id,name,species,breed,age,photo_url,created_at
 const PET_COLUMNS_NO_AGE = "id,user_id,name,species,breed,photo_url,created_at";
 const PET_COLUMNS_MINIMAL = "id,user_id,name,species,breed,created_at";
 const RESULT_COLUMNS_FULL =
-  "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)";
+  "id,pbti_id,personality_type,scores,report,created_at, pet:pets(id,user_id,name,species,breed,age,photo_url,created_at)";
 const RESULT_COLUMNS_NO_AGE =
-  "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,photo_url,created_at)";
+  "id,pbti_id,personality_type,scores,report,created_at, pet:pets(id,user_id,name,species,breed,photo_url,created_at)";
 const RESULT_COLUMNS_MINIMAL =
-  "id,pbti_id,personality_type,scores,report,is_premium,created_at, pet:pets(id,user_id,name,species,breed,created_at)";
-const RESULT_COLUMNS_RECORD = "id,pbti_id,personality_type,scores,report,is_premium,created_at,pet_id";
+  "id,pbti_id,personality_type,scores,report,created_at, pet:pets(id,user_id,name,species,breed,created_at)";
+const RESULT_COLUMNS_RECORD = "id,pbti_id,personality_type,scores,report,created_at,pet_id";
 
 function isPetSchemaColumnError(error: { message?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
@@ -339,7 +339,6 @@ export async function savePersonalityResult(
       personality_type: result.code,
       scores: result.scores,
       report,
-      is_premium: false,
     })
     .select(RESULT_COLUMNS_RECORD)
     .single();
