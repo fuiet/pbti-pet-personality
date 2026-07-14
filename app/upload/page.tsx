@@ -10,6 +10,12 @@ type AnalysisState = "idle" | "background" | "complete";
 
 const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Assigning PBTI visual tags"];
 
+const photoRequirements = [
+  { label: "Front face", detail: "Clear front-facing face photo" },
+  { label: "Left side", detail: "Left profile / body angle" },
+  { label: "Right side", detail: "Right profile / body angle" },
+] as const;
+
 function getPetIdFromLocation() {
   if (typeof window === "undefined") return null;
   return new URLSearchParams(window.location.search).get("petId");
@@ -37,6 +43,7 @@ export default function UploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { loading: authLoading } = useRequireAuth();
   const [preview, setPreview] = useState<string>("");
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [pet, setPet] = useState<PetRecord | null>(null);
   const [loadingPet, setLoadingPet] = useState(true);
@@ -65,6 +72,7 @@ export default function UploadPage() {
 
         setPet(record);
         setPreview(record.photo_url || "");
+        setPhotoPreviews(record.photo_url ? [record.photo_url] : []);
         setAnalysisState(record.photo_url ? "background" : "idle");
         setAnalysisProgress(record.photo_url ? 100 : 0);
       } catch {
@@ -104,68 +112,85 @@ export default function UploadPage() {
     return () => window.clearInterval(interval);
   }, [analysisState]);
 
-  async function handleFile(file: File) {
-    if (!file.type.startsWith("image/") || !pet) return;
+  async function handleFiles(fileList: FileList | File[]) {
+    if (!pet) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = typeof e.target?.result === "string" ? e.target.result : "";
-      if (!dataUrl) return;
+    const files = Array.from(fileList)
+      .filter((file) => file.type.startsWith("image/"))
+      .slice(0, 3);
 
-      setError("");
-      setPreview(dataUrl);
-      setAnalysisState("background");
-      setAnalysisProgress(8);
-      setVisualProfile(null);
-      setVisualFallback(false);
+    if (!files.length) return;
 
-      try {
-        await updatePetPhoto(pet.id, dataUrl);
-      } catch {
-        setError("Unable to save photo right now. You can continue and try again later.");
-      }
+    const dataUrls = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => resolve(typeof event.target?.result === "string" ? event.target.result : "");
+            reader.readAsDataURL(file);
+          })
+      )
+    );
 
-      void fetch("/api/visual-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ petId: pet.id }),
-        keepalive: true,
+    const usableUrls = dataUrls.filter(Boolean);
+    const primaryPhoto = usableUrls[0];
+    if (!primaryPhoto) return;
+
+    setError("");
+    setPreview(primaryPhoto);
+    setPhotoPreviews(usableUrls);
+    setAnalysisState("background");
+    setAnalysisProgress(8);
+    setVisualProfile(null);
+    setVisualFallback(false);
+
+    try {
+      await updatePetPhoto(pet.id, primaryPhoto);
+    } catch {
+      setError("Unable to save the front photo right now. You can continue and try again later.");
+    }
+
+    void fetch("/api/visual-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ petId: pet.id }),
+      keepalive: true,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Unable to analyze photo.");
+        }
+
+        setVisualProfile(data.profile || null);
+        setVisualFallback(Boolean(data.fallback));
+        if (data.saveError) {
+          setError(`Visual profile generated, but database save needs setup: ${data.saveError}`);
+        }
+        setAnalysisProgress(100);
+        setAnalysisState("complete");
       })
-        .then(async (response) => {
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data?.error || "Unable to analyze photo.");
-          }
-
-          setVisualProfile(data.profile || null);
-          setVisualFallback(Boolean(data.fallback));
-          if (data.saveError) {
-            setError(`Visual profile generated, but database save needs setup: ${data.saveError}`);
-          }
-          setAnalysisProgress(100);
-          setAnalysisState("complete");
-        })
-        .catch((analysisError) => {
-          setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo in the background right now.");
-        });
-    };
-    reader.readAsDataURL(file);
+      .catch((analysisError) => {
+        setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo in the background right now.");
+      });
   }
+
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    const files = e.target.files;
+    if (files?.length) handleFiles(files);
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
+    const files = e.dataTransfer.files;
+    if (files?.length) handleFiles(files);
   }
 
   async function removePhoto() {
     setPreview("");
+    setPhotoPreviews([]);
     setAnalysisState("idle");
     setAnalysisProgress(0);
     setVisualProfile(null);
@@ -211,9 +236,9 @@ export default function UploadPage() {
 
       <div className="mb-8 text-center lg:text-left">
         <p className="text-sm font-black uppercase tracking-[.18em] text-[#d96612]">Step 2 of 4</p>
-        <h1 className="mt-3 text-4xl font-black tracking-[-.05em] text-[#171514] sm:text-5xl">Upload a pet photo</h1>
+        <h1 className="mt-3 text-4xl font-black tracking-[-.05em] text-[#171514] sm:text-5xl">Upload 3 pet photos</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-[#6f6258] lg:text-lg">
-          Choose a clear photo so PBTI can personalize the saved report, visual memory, and portrait poster pack for {pet?.name || "your pet"}.
+          Please upload three clear photos of {pet?.name || "your pet"}: front face, left side, and right side. The front photo will be used as the main saved image for visual analysis.
         </p>
       </div>
 
@@ -235,7 +260,7 @@ export default function UploadPage() {
             type="button"
             onClick={() => inputRef.current?.click()}
             className="block w-full text-left"
-            aria-label="Choose a pet photo"
+            aria-label="Choose up to 3 pet photos"
           >
             <div className="relative grid min-h-[430px] place-items-center overflow-hidden rounded-[1.5rem] border border-[#f0dfcf] bg-[#fffaf5]">
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,122,26,.06)_1px,transparent_1px),linear-gradient(0deg,rgba(255,122,26,.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-80" />
@@ -268,24 +293,46 @@ export default function UploadPage() {
                   <div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.5rem] bg-[#fff0e4] text-[#ff7a1a] shadow-[0_18px_44px_rgba(255,122,26,.14)]">
                     <CameraIcon className="h-9 w-9" />
                   </div>
-                  <h2 className="mt-7 text-3xl font-black tracking-[-.04em] text-[#171514]">Drop your pet photo here</h2>
-                  <p className="mt-3 text-sm leading-6 text-[#756960]">or click to browse from your device</p>
+                  <h2 className="mt-7 text-3xl font-black tracking-[-.04em] text-[#171514]">Upload front, left, and right photos</h2>
+                  <p className="mt-3 text-sm leading-6 text-[#756960]">Choose up to 3 images from your device</p>
                   <div className="mt-7 inline-flex rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white shadow-[0_16px_34px_rgba(255,122,26,.26)]">
-                    Choose photo
+                    Choose photos
                   </div>
-                  <p className="mt-4 text-xs font-semibold text-[#a3968a]">JPG, PNG or WebP up to 10MB</p>
+                  <div className="mt-7 grid gap-2 sm:grid-cols-3">
+                    {photoRequirements.map((item, index) => (
+                      <div key={item.label} className="rounded-2xl border border-[#f0dfcf] bg-white/78 px-3 py-3 text-left shadow-sm">
+                        <div className="text-xs font-black uppercase tracking-[.12em] text-[#ff7a1a]">0{index + 1}</div>
+                        <div className="mt-1 text-sm font-black text-[#171514]">{item.label}</div>
+                        <div className="mt-1 text-xs leading-5 text-[#8c7b6d]">{item.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-xs font-semibold text-[#a3968a]">JPG, PNG or WebP up to 10MB each. Incomplete or unclear photos may affect identification and test results.</p>
                 </div>
               )}
             </div>
           </button>
 
-          <input ref={inputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
+          <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleChange} className="hidden" />
 
           {preview ? (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1">
               <div>
-                <p className="text-sm font-black text-[#171514]">{pet?.name ? `${pet.name}'s profile photo` : "Profile photo"}</p>
-                <p className="text-xs font-semibold text-[#8c7b6d]">Used in the saved report and poster pack.</p>
+                <p className="text-sm font-black text-[#171514]">{pet?.name ? `${pet.name}'s photo set` : "Photo set"}</p>
+                <p className="text-xs font-semibold text-[#8c7b6d]">Front photo is saved as the main image. Side photos help guide visual identification.</p>
+              </div>
+              <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:min-w-[260px]">
+                {photoRequirements.map((item, index) => (
+                  <div key={item.label} className="overflow-hidden rounded-xl border border-[#eaded2] bg-[#fff7ed]">
+                    {photoPreviews[index] ? (
+                      <img src={photoPreviews[index]} alt={`${item.label} preview`} className="h-16 w-full object-cover" />
+                    ) : (
+                      <div className="grid h-16 place-items-center px-2 text-center text-[10px] font-black uppercase tracking-[.08em] text-[#b59b85]">
+                        {item.label}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
               <div className="flex gap-2">
                 <button
@@ -406,11 +453,12 @@ export default function UploadPage() {
             </div>
           ) : null}
           <div className="mt-7 border-t border-white/10 pt-5">
-            <h3 className="text-sm font-black text-white">Best photo tips</h3>
+            <h3 className="text-sm font-black text-white">Required photo set</h3>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-white/68">
-              <li>Face clearly visible</li>
-              <li>Good lighting, not too dark</li>
-              <li>One pet centered in the frame</li>
+              <li>Front-facing face photo</li>
+              <li>Left-side body / profile photo</li>
+              <li>Right-side body / profile photo</li>
+              <li className="text-[#ffcfaa]">Incomplete or unclear photos may affect identification and test results.</li>
             </ul>
           </div>
         </aside>
