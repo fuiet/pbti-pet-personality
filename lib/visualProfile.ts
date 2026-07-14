@@ -21,6 +21,12 @@ export interface PetVisualProfile {
   providerModel: string;
   species: "cat" | "dog" | "unknown";
   breedCandidates: BreedCandidate[];
+  breedAssessment: {
+    primaryBreed: string;
+    variety: string;
+    mixedLikelihood: "low" | "medium" | "high" | "unclear";
+    mixedNotes: string;
+  };
   coat: {
     color: string;
     length: string;
@@ -51,6 +57,7 @@ export interface PetVisualProfile {
 export interface RawVisualProfileInput {
   species?: string;
   breedCandidates?: BreedCandidate[];
+  breedAssessment?: Partial<PetVisualProfile["breedAssessment"]>;
   coat?: Partial<PetVisualProfile["coat"]>;
   face?: Partial<PetVisualProfile["face"]>;
   bodyLanguage?: Partial<PetVisualProfile["bodyLanguage"]>;
@@ -130,6 +137,12 @@ export function normalizeVisualProfile(raw: RawVisualProfileInput, providerModel
       .filter((candidate) => candidate?.breed)
       .slice(0, 3)
       .map((candidate) => ({ ...candidate, confidence: clampConfidence(candidate.confidence) })),
+    breedAssessment: {
+      primaryBreed: raw.breedAssessment?.primaryBreed || raw.breedCandidates?.[0]?.breed || "mixed / unclear",
+      variety: raw.breedAssessment?.variety || "unclear",
+      mixedLikelihood: normalizeSignal(raw.breedAssessment?.mixedLikelihood, ["low", "medium", "high", "unclear"] as const, "unclear"),
+      mixedNotes: raw.breedAssessment?.mixedNotes || "Breed and mix assessment is based on visible appearance only.",
+    },
     coat: {
       color: raw.coat?.color || "unclear",
       length: raw.coat?.length || "unclear",

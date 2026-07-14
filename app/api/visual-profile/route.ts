@@ -14,6 +14,7 @@ Return strict JSON only, with no markdown, no code fence, and exactly these top-
 {
   "species": "cat" | "dog" | "unknown",
   "breedCandidates": [{ "breed": string, "confidence": number between 0 and 1, "note": string }],
+  "breedAssessment": { "primaryBreed": string, "variety": string, "mixedLikelihood": "low" | "medium" | "high" | "unclear", "mixedNotes": string },
   "coat": { "color": string, "length": string, "pattern": string, "texture": string },
   "face": { "eyeExpression": string, "earPosition": string, "muzzleShape": string, "faceDirection": string },
   "bodyLanguage": { "posture": string, "energyCue": string, "relaxation": string },
@@ -30,7 +31,9 @@ Return strict JSON only, with no markdown, no code fence, and exactly these top-
   "summary": string
 }
 
-Describe visible traits only. Do not diagnose health, emotion, intelligence, aggression, or real personality. Breed candidates must be cautious visual guesses. If the image is unclear, use "unclear" fields and list the quality issues.`;
+Write the result like a concise pet appearance identification report. For example, if visually appropriate: "Your cat appears to be a British Shorthair silver shaded cat, with a rounded face, large clear eyes, a balanced body structure, and dense plush coat." Describe breed guess, whether the pet appears purebred or possibly mixed, coat color/pattern, face, eyes, body shape, posture, and photo quality.
+
+Describe visible traits only. Do not diagnose health, emotion, intelligence, aggression, or real personality. Breed candidates and mixed-breed judgment must be cautious visual guesses. If the image is unclear, use "unclear" fields and list the quality issues.`;
 
 function parseJsonObject(text: string) {
   const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
@@ -105,8 +108,8 @@ export async function POST(request: Request) {
   try {
     const { petId, imageUrl } = await request.json();
 
-    if (!petId || !imageUrl || typeof imageUrl !== "string") {
-      return NextResponse.json({ error: "petId and imageUrl are required." }, { status: 400 });
+    if (!petId) {
+      return NextResponse.json({ error: "petId is required." }, { status: 400 });
     }
 
     const supabase = await createSupabaseServerClient();
@@ -118,7 +121,7 @@ export async function POST(request: Request) {
 
     const { data: pet, error: petError } = await supabase
       .from("pets")
-      .select("id,user_id,species")
+      .select("id,user_id,species,photo_url")
       .eq("id", petId)
       .eq("user_id", userResult.user.id)
       .maybeSingle();
@@ -135,8 +138,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unsupported visual model provider. Set VISUAL_MODEL_PROVIDER=qwen." }, { status: 500 });
     }
 
-    const dashscopeKey = process.env.DASHSCOPE_API_KEY;
+const dashscopeKey = process.env.DASHSCOPE_API_KEY;
     const species = pet.species === "dog" ? "dog" : pet.species === "cat" ? "cat" : "unknown";
+    const photoUrl = typeof imageUrl === "string" && imageUrl ? imageUrl : pet.photo_url;
+
+    if (!photoUrl || typeof photoUrl !== "string") {
+      return NextResponse.json({ error: "A pet photo is required before visual analysis." }, { status: 400 });
+    }
 
     if (!dashscopeKey) {
       const profile = makeFallbackProfile(species);
@@ -157,7 +165,7 @@ export async function POST(request: Request) {
             role: "user",
             content: [
               { type: "text", text: visualProfilePrompt(species) },
-              { type: "image_url", image_url: { url: imageUrl } },
+              { type: "image_url", image_url: { url: photoUrl } },
             ],
           },
         ],

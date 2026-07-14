@@ -6,7 +6,7 @@ import { getLatestPetRecord, getPetRecord, updatePetPhoto, type PetRecord } from
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import type { PetVisualProfile } from "@/lib/visualProfile";
 
-type AnalysisState = "idle" | "analyzing" | "complete";
+type AnalysisState = "idle" | "background" | "complete";
 
 const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Assigning PBTI visual tags"];
 
@@ -65,7 +65,7 @@ export default function UploadPage() {
 
         setPet(record);
         setPreview(record.photo_url || "");
-        setAnalysisState(record.photo_url ? "complete" : "idle");
+        setAnalysisState(record.photo_url ? "background" : "idle");
         setAnalysisProgress(record.photo_url ? 100 : 0);
       } catch {
         if (active) {
@@ -86,14 +86,14 @@ export default function UploadPage() {
   }, [authLoading, router]);
 
   useEffect(() => {
-    if (analysisState !== "analyzing") return;
+    if (analysisState !== "background") return;
 
     setAnalysisProgress(8);
     const startedAt = Date.now();
-    const duration = 3200;
+    const duration = 2600;
     const interval = window.setInterval(() => {
       const elapsed = Date.now() - startedAt;
-      const nextProgress = Math.min(92, Math.round((elapsed / duration) * 92));
+      const nextProgress = Math.min(74, Math.round((elapsed / duration) * 74));
       setAnalysisProgress(nextProgress);
 
       if (nextProgress >= 92) {
@@ -114,7 +114,7 @@ export default function UploadPage() {
 
       setError("");
       setPreview(dataUrl);
-      setAnalysisState("analyzing");
+      setAnalysisState("background");
       setAnalysisProgress(8);
       setVisualProfile(null);
       setVisualFallback(false);
@@ -125,29 +125,30 @@ export default function UploadPage() {
         setError("Unable to save photo right now. You can continue and try again later.");
       }
 
-      try {
-        const response = await fetch("/api/visual-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ petId: pet.id, imageUrl: dataUrl }),
+      void fetch("/api/visual-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ petId: pet.id }),
+        keepalive: true,
+      })
+        .then(async (response) => {
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data?.error || "Unable to analyze photo.");
+          }
+
+          setVisualProfile(data.profile || null);
+          setVisualFallback(Boolean(data.fallback));
+          if (data.saveError) {
+            setError(`Visual profile generated, but database save needs setup: ${data.saveError}`);
+          }
+          setAnalysisProgress(100);
+          setAnalysisState("complete");
+        })
+        .catch((analysisError) => {
+          setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo in the background right now.");
         });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data?.error || "Unable to analyze photo.");
-        }
-
-        setVisualProfile(data.profile || null);
-        setVisualFallback(Boolean(data.fallback));
-        if (data.saveError) {
-          setError(`Visual profile generated, but database save needs setup: ${data.saveError}`);
-        }
-      } catch (analysisError) {
-        setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo right now.");
-      } finally {
-        setAnalysisProgress(100);
-        setAnalysisState("complete");
-      }
     };
     reader.readAsDataURL(file);
   }
@@ -180,8 +181,8 @@ export default function UploadPage() {
     }
   }
 
-  const activeStepIndex = analysisState === "complete" ? 2 : Math.min(2, Math.floor(analysisProgress / 34));
-  const canStartQuiz = analysisState !== "analyzing";
+  const activeStepIndex = analysisState === "complete" ? 2 : analysisState === "background" ? Math.min(2, Math.floor(analysisProgress / 28)) : 0;
+  const canStartQuiz = Boolean(pet);
 
   if (authLoading || loadingPet) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
@@ -244,7 +245,7 @@ export default function UploadPage() {
                   <img src={preview} alt="Pet preview" className="h-full min-h-[430px] w-full object-cover" />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(23,21,20,.08),rgba(23,21,20,.36))]" />
 
-                  {analysisState === "analyzing" ? (
+                  {analysisState === "background" ? (
                     <div className="pointer-events-none absolute inset-0 overflow-hidden">
                       <div className="pbti-scan-line absolute left-0 right-0 h-20 bg-[linear-gradient(180deg,transparent,rgba(255,122,26,.2),rgba(255,255,255,.78),rgba(255,122,26,.2),transparent)]" />
                       <div className="absolute inset-x-8 top-8 h-px bg-[#ffb878]/90 shadow-[0_0_20px_rgba(255,122,26,.75)]" />
@@ -259,7 +260,7 @@ export default function UploadPage() {
                   ) : null}
 
                   <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
-                    {analysisState === "complete" ? "Visual analysis complete" : analysisState === "analyzing" ? "Analyzing visual profile" : "Photo selected"}
+                    {analysisState === "complete" ? "Visual identification saved" : analysisState === "background" ? "Background analysis running" : "Photo selected"}
                   </div>
                 </div>
               ) : (
@@ -319,7 +320,7 @@ export default function UploadPage() {
 
           <div className="mt-7 rounded-[1.25rem] border border-white/10 bg-white/[.06] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-white/58">
-              <span>{analysisState === "idle" ? "Waiting for photo" : analysisState === "analyzing" ? "Scanning" : "Ready"}</span>
+              <span>{analysisState === "idle" ? "Waiting for photo" : analysisState === "background" ? "Background scan" : "Ready"}</span>
               <span>{analysisProgress}%</span>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
@@ -332,8 +333,8 @@ export default function UploadPage() {
 
           <div className="mt-6 space-y-3">
             {analysisSteps.map((step, index) => {
-              const isDone = analysisState === "complete" || (analysisState === "analyzing" && index < activeStepIndex);
-              const isActive = analysisState === "analyzing" && index === activeStepIndex;
+              const isDone = analysisState === "complete" || (analysisState === "background" && index < activeStepIndex);
+              const isActive = analysisState === "background" && index === activeStepIndex;
 
               return (
                 <div key={step} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3">
@@ -351,10 +352,12 @@ export default function UploadPage() {
           </div>
 
           <div className={`mt-6 rounded-[1.25rem] p-4 ${analysisState === "complete" ? "bg-[#10351f] text-[#c9f8db]" : "bg-white/[.06] text-white/68"}`}>
-            <p className="text-sm font-black text-white">{analysisState === "complete" ? "Visual model analysis complete." : "Upload a clear photo to start the visual scan."}</p>
+            <p className="text-sm font-black text-white">{analysisState === "complete" ? "Visual identification saved." : analysisState === "background" ? "Background analysis is running." : "Upload a clear photo to start the visual scan."}</p>
             <p className="mt-2 text-sm leading-6 opacity-80">
               {analysisState === "complete"
                 ? "Your pet photo is ready. Please start the personality test."
+                : analysisState === "background"
+                ? "We are identifying breed cues, coat details, facial features, and body structure in the background. You can continue answering now; the result will appear with the final report."
                 : "The scan checks photo clarity and prepares the visual profile used in the report experience."}
             </p>
           </div>
@@ -425,7 +428,7 @@ export default function UploadPage() {
           disabled={!canStartQuiz}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:bg-[#ffc397] disabled:shadow-none disabled:hover:translate-y-0"
         >
-          {analysisState === "analyzing" ? "Analyzing photo..." : analysisState === "complete" ? "Start personality test" : "Skip photo and continue"}
+          {analysisState === "idle" ? "Skip photo and continue" : "Continue to personality test"}
         </button>
       </div>
     </div>

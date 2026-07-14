@@ -2,6 +2,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
 import { generatePetReport, type PetReport, type ReportInput } from "@/lib/reportGenerator";
 import { type PBTIResult, type Trait } from "@/lib/pbtiEngine";
+import { type PetVisualProfile } from "@/lib/visualProfile";
 
 export interface PetRecord {
   id: string;
@@ -36,6 +37,29 @@ export interface PetProfileInput {
   breed?: string;
   age?: string;
 }
+export interface PetVisualProfileRecord extends PetVisualProfile {
+  id: string;
+  pet_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+interface RawVisualProfileRecord {
+  id: string;
+  pet_id: string;
+  user_id: string;
+  species: "cat" | "dog" | "unknown";
+  breed_candidates: PetVisualProfile["breedCandidates"] | null;
+  coat: PetVisualProfile["coat"] | null;
+  face: PetVisualProfile["face"] | null;
+  body_language: PetVisualProfile["bodyLanguage"] | null;
+  visual_signals: PetVisualProfile["visualSignals"] | null;
+  visual_tags: PetVisualProfile["visualTags"] | null;
+  photo_quality: PetVisualProfile["photoQuality"] | null;
+  raw_analysis: { model?: string; provider?: string; fallback?: boolean; raw?: { summary?: string; breedAssessment?: PetVisualProfile["breedAssessment"] } } | null;
+  created_at: string;
+}
+
 
 const PET_COLUMNS_FULL = "id,user_id,name,species,breed,age,photo_url,created_at";
 const PET_COLUMNS_NO_AGE = "id,user_id,name,species,breed,photo_url,created_at";
@@ -218,6 +242,66 @@ export async function updatePetPhoto(petId: string, photoUrl: string | null) {
   }
 }
 
+function isMissingVisualProfilesTable(error: { message?: string; code?: string } | null | undefined) {
+  const message = error?.message?.toLowerCase() || "";
+  return error?.code === "42P01" || message.includes("pet_visual_profiles") || message.includes("schema cache");
+}
+
+function normalizeVisualProfileRow(row: RawVisualProfileRecord): PetVisualProfileRecord {
+  return {
+    id: row.id,
+    pet_id: row.pet_id,
+    user_id: row.user_id,
+    created_at: row.created_at,
+    modelVersion: "PBTI Visual Model v1",
+    providerModel: row.raw_analysis?.model || "qwen-vl-plus",
+    species: row.species || "unknown",
+    breedCandidates: row.breed_candidates || [],
+    breedAssessment: row.raw_analysis?.raw?.breedAssessment || {
+      primaryBreed: row.breed_candidates?.[0]?.breed || "mixed / unclear",
+      variety: "unclear",
+      mixedLikelihood: "unclear",
+      mixedNotes: "Breed and mix assessment is based on visible appearance only.",
+    },
+    coat: row.coat || { color: "unclear", length: "unclear", pattern: "unclear", texture: "unclear" },
+    face: row.face || { eyeExpression: "unclear", earPosition: "unclear", muzzleShape: "unclear", faceDirection: "unclear" },
+    bodyLanguage: row.body_language || { posture: "unclear", energyCue: "unclear", relaxation: "unclear" },
+    visualSignals: row.visual_signals || {
+      eyeFocus: "unclear",
+      posture: "unclear",
+      faceDirection: "unclear",
+      expressionIntensity: "unclear",
+      coatCondition: "unclear",
+      movementCue: "unclear",
+      bodyRelaxation: "unclear",
+    },
+    visualTags: row.visual_tags || [],
+    photoQuality: row.photo_quality || { score: 50, issues: [] },
+    summary: row.raw_analysis?.raw?.summary || "Visual identification is ready.",
+    disclaimer: "Visual analysis describes visible traits only. Personality results require the behavior assessment.",
+  };
+}
+
+export async function getLatestVisualProfileForPet(petId: string) {
+  const user = await requireCurrentUser();
+  const supabase = createSupabaseBrowserClient();
+
+  const { data, error } = await supabase
+    .from("pet_visual_profiles")
+    .select("id,pet_id,user_id,species,breed_candidates,coat,face,body_language,visual_signals,visual_tags,photo_quality,raw_analysis,created_at")
+    .eq("pet_id", petId)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingVisualProfilesTable(error)) return null;
+    throw new Error(error.message);
+  }
+
+  return data ? normalizeVisualProfileRow(data as RawVisualProfileRecord) : null;
+}
 function makeRecordId() {
   return `PBTI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }

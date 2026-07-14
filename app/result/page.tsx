@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import PersonalityCard from "@/components/PersonalityCard";
 import { generatePetReport } from "@/lib/reportGenerator";
-import { getLatestResultForCurrentUser, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
+import { getLatestResultForCurrentUser, getLatestVisualProfileForPet, getResultByRecordId, type PetVisualProfileRecord, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
 function getResultIdFromLocation() {
@@ -22,6 +22,8 @@ export default function ResultPage() {
   const router = useRouter();
   const { loading: authLoading } = useRequireAuth();
   const [record, setRecord] = useState<ResultRecord | null>(null);
+  const [visualProfile, setVisualProfile] = useState<PetVisualProfileRecord | null>(null);
+  const [visualProfileChecked, setVisualProfileChecked] = useState(false);
   const [loadingRecord, setLoadingRecord] = useState(true);
 
   useEffect(() => {
@@ -42,6 +44,20 @@ export default function ResultPage() {
         }
 
         setRecord(saved);
+        if (saved.pet?.id) {
+          try {
+            const visual = await getLatestVisualProfileForPet(saved.pet.id);
+            if (!active) return;
+            setVisualProfile(visual);
+          } catch {
+            if (!active) return;
+            setVisualProfile(null);
+          } finally {
+            if (active) setVisualProfileChecked(true);
+          }
+        } else {
+          setVisualProfileChecked(true);
+        }
       } catch {
         if (active) {
           router.push("/create");
@@ -113,6 +129,78 @@ export default function ResultPage() {
       <div className="mt-4 text-center text-sm text-[#7a6d63]">
         {record.pet.species === "dog" ? "Dog" : "Cat"} {record.pet.name}
         {record.pet.breed ? ` - ${record.pet.breed}` : ""}
+      </div>
+      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">Visual identification</p>
+            <h3 className="mt-2 text-xl font-black tracking-[-.03em] text-[#171514]">Pet appearance profile</h3>
+          </div>
+          {visualProfile ? <span className="rounded-full bg-[#fff0e4] px-3 py-1.5 text-xs font-black text-[#d96612]">{visualProfile.providerModel}</span> : null}
+        </div>
+
+        {visualProfile ? (
+          <div>
+            <p className="text-sm leading-7 text-[#655a51]">{visualProfile.summary}</p>
+
+            <div className="mt-5 rounded-2xl bg-[#171514] p-5 text-white">
+              <p className="text-xs font-black uppercase tracking-[.14em] text-[#ffb878]">Breed and mix assessment</p>
+              <h4 className="mt-2 text-2xl font-black tracking-[-.04em]">{visualProfile.breedAssessment.primaryBreed}</h4>
+              <p className="mt-1 text-sm font-bold text-white/70">Variety: {visualProfile.breedAssessment.variety}</p>
+              <p className="mt-3 text-sm leading-6 text-white/72">
+                Mixed-breed likelihood: <span className="font-black text-[#ffb878]">{visualProfile.breedAssessment.mixedLikelihood}</span>. {visualProfile.breedAssessment.mixedNotes}
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-[#fff8f1] p-4">
+                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Breed candidates</p>
+                <div className="mt-3 space-y-3">
+                  {(visualProfile.breedCandidates.length ? visualProfile.breedCandidates : [{ breed: "Mixed / unclear", confidence: 0, note: "No reliable breed candidate was detected from this photo." }]).map((candidate) => (
+                    <div key={candidate.breed}>
+                      <div className="flex items-center justify-between gap-3 text-sm font-black text-[#171514]">
+                        <span>{candidate.breed}</span>
+                        <span className="text-[#d96612]">{Math.round(candidate.confidence * 100)}%</span>
+                      </div>
+                      {candidate.note ? <p className="mt-1 text-xs leading-5 text-[#7a6d63]">{candidate.note}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-[#fff8f1] p-4">
+                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Coat and color</p>
+                <p className="mt-2 text-base font-black text-[#171514]">{[visualProfile.coat.color, visualProfile.coat.pattern, visualProfile.coat.length].filter(Boolean).join(" / ")}</p>
+                <p className="mt-2 text-xs leading-5 text-[#7a6d63]">Texture: {visualProfile.coat.texture}</p>
+              </div>
+              <div className="rounded-2xl bg-[#fff8f1] p-4">
+                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Face and eyes</p>
+                <p className="mt-2 text-sm font-bold leading-6 text-[#171514]">{visualProfile.face.eyeExpression}</p>
+                <p className="mt-2 text-xs leading-5 text-[#7a6d63]">Muzzle: {visualProfile.face.muzzleShape}</p>
+                <p className="mt-1 text-xs leading-5 text-[#7a6d63]">Ears: {visualProfile.face.earPosition} / Direction: {visualProfile.face.faceDirection}</p>
+              </div>
+              <div className="rounded-2xl bg-[#fff8f1] p-4">
+                <p className="text-xs font-black uppercase tracking-[.12em] text-[#a36d42]">Body and posture</p>
+                <p className="mt-2 text-sm font-bold leading-6 text-[#171514]">{visualProfile.bodyLanguage.posture}</p>
+                <p className="mt-2 text-xs leading-5 text-[#7a6d63]">Energy cue: {visualProfile.bodyLanguage.energyCue}</p>
+                <p className="mt-1 text-xs leading-5 text-[#7a6d63]">Photo quality: {visualProfile.photoQuality.score}/100</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {visualProfile.visualTags.map((tag) => (
+                <span key={tag} className="rounded-full bg-[#fff0e4] px-3 py-1.5 text-xs font-black text-[#d96612]">{tag}</span>
+              ))}
+            </div>
+            {visualProfile.photoQuality.issues.length ? (
+              <p className="mt-4 rounded-2xl bg-[#fff8f1] px-4 py-3 text-xs font-bold leading-5 text-[#7a6d63]">Photo notes: {visualProfile.photoQuality.issues.join(" / ")}</p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="rounded-2xl bg-[#fff8f1] px-4 py-3 text-sm font-bold leading-6 text-[#7a6d63]">
+            {visualProfileChecked
+              ? "The photo is still being analyzed in the background. Refresh this result later to see breed, coat, facial, and body-structure identification."
+              : "Checking the background visual analysis result..."}
+          </p>
+        )}
       </div>
 
       <div className="mt-6 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
