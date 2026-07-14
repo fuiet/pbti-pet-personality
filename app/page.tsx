@@ -361,7 +361,7 @@ export default function Home() {
           <img
             src="/hero-pets.png?v=2"
             alt="A happy cat and dog together wearing PBTI tags"
-            className="relative z-10 h-auto w-[112%] max-w-[760px] object-contain drop-shadow-[0_28px_58px_rgba(52,34,20,.18)] lg:w-[118%] lg:max-w-[840px]"
+            className="relative z-10 h-auto w-[200%] max-w-[1320px] object-contain drop-shadow-[0_28px_58px_rgba(52,34,20,.18)] lg:w-[220%] lg:max-w-[1540px]"
           />
         </div>
       </section>
