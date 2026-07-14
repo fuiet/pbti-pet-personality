@@ -52,6 +52,7 @@ export default function UploadPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
   const [visualFallback, setVisualFallback] = useState(false);
+  const [analysisPromptVisible, setAnalysisPromptVisible] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -140,6 +141,7 @@ export default function UploadPage() {
     setPreview(primaryPhoto);
     setPhotoPreviews(usableUrls);
     setAnalysisState("background");
+    setAnalysisPromptVisible(true);
     setAnalysisProgress(8);
     setVisualProfile(null);
     setVisualFallback(false);
@@ -192,6 +194,7 @@ export default function UploadPage() {
     setPreview("");
     setPhotoPreviews([]);
     setAnalysisState("idle");
+    setAnalysisPromptVisible(false);
     setAnalysisProgress(0);
     setVisualProfile(null);
     setVisualFallback(false);
@@ -464,6 +467,39 @@ export default function UploadPage() {
         </aside>
       </div>
 
+      {analysisPromptVisible && analysisState === "background" ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#171514]/45 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[1.75rem] border border-white/10 bg-[#24211f] p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,.28)]">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#ff7a1a] text-white shadow-[0_16px_35px_rgba(255,122,26,.28)]">
+                <CameraIcon className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black tracking-[-.035em]">Background analysis is running.</h2>
+                <p className="mt-3 text-sm leading-6 text-white/72">
+                  We are identifying breed cues, coat details, facial features, and body structure from your photos. You can continue to the behavior test now; visual findings will appear in the final report.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setAnalysisPromptVisible(false)}
+                className="rounded-full border border-white/12 bg-white/8 px-5 py-3 text-sm font-black text-white transition hover:bg-white/12"
+              >
+                Stay here
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push(`/quiz?petId=${pet?.id || ""}`)}
+                className="flex-1 rounded-full bg-[#ff7a1a] px-5 py-3 text-sm font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.24)] transition hover:bg-[#ee6b10]"
+              >
+                Continue to behavior test
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="mt-7 flex flex-col gap-3 sm:flex-row">
         <button
           onClick={() => router.push("/create")}
