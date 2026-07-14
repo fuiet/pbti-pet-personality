@@ -115,7 +115,8 @@ export default function QuizPage() {
 
   const questions = pet?.species === "dog" ? dogQuestions : catQuestions;
   const currentQuestion = questions[current];
-  const questionNumber = Math.min(current + 1, questions.length);
+  const displayQuestionIndex = Math.min(Math.max(current, answers.length), questions.length - 1);
+  const questionNumber = displayQuestionIndex + 1;
   const progress = Math.round((questionNumber / questions.length) * 100);
   const stage = stageAssets[Math.min(stageAssets.length - 1, Math.floor(current / 6))];
   const helperStage = stageAssets[(Math.floor(current / 6) + 2) % stageAssets.length];
@@ -202,7 +203,7 @@ export default function QuizPage() {
               Answer based on your pet's usual behavior, not one rare moment. Each choice helps map a clearer personality pattern.
             </p>
           </div>
-          <div className="min-w-[240px] rounded-2xl bg-[#fff7ed] p-4">
+          <div key={`quiz-progress-${questionNumber}`} className="min-w-[240px] rounded-2xl bg-[#fff7ed] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-[#8c7b6d]">
               <span>Question {questionNumber}/{questions.length}</span>
               <span>{progress}%</span>
