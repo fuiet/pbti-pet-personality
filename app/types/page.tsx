@@ -3,6 +3,7 @@ import Link from "next/link";
 
 const typeDetails = [
   {
+    code: "IEVP",
     name: "Explorer",
     catImage: "/assets/personalities/cats/01-explorer-cat.webp",
     tone: "Curious, brave, and always first to inspect a new sound or scent.",
@@ -11,6 +12,7 @@ const typeDetails = [
     bg: "bg-[#f7eadc]",
   },
   {
+    code: "ASVG",
     name: "Guardian",
     catImage: "/assets/personalities/cats/02-guardian-cat.webp",
     tone: "Steady, loyal, and deeply tuned to the safety of their home base.",
@@ -19,6 +21,7 @@ const typeDetails = [
     bg: "bg-[#edf0f2]",
   },
   {
+    code: "ISCP",
     name: "Dreamer",
     catImage: "/assets/personalities/cats/03-dreamer-cat.webp",
     tone: "Gentle, soft-hearted, and happiest in quiet comfort.",
@@ -27,6 +30,7 @@ const typeDetails = [
     bg: "bg-[#ece7f8]",
   },
   {
+    code: "IEVG",
     name: "Maverick",
     catImage: "/assets/personalities/cats/04-maverick-cat.webp",
     tone: "Independent, bold, and likely to do things in their own unmistakable style.",
@@ -35,6 +39,7 @@ const typeDetails = [
     bg: "bg-[#f2e2d6]",
   },
   {
+    code: "IECG",
     name: "Scholar",
     catImage: "/assets/personalities/cats/05-scholar-cat.webp",
     tone: "Observant, thoughtful, and quietly clever before making a move.",
@@ -43,6 +48,7 @@ const typeDetails = [
     bg: "bg-[#e8ece8]",
   },
   {
+    code: "AEVG",
     name: "Leader",
     catImage: "/assets/personalities/cats/06-leader-cat.webp",
     tone: "Confident, expressive, and clear about what they want from the room.",
@@ -51,6 +57,7 @@ const typeDetails = [
     bg: "bg-[#f7e3d5]",
   },
   {
+    code: "ASCP",
     name: "Companion",
     catImage: "/assets/personalities/cats/07-companion-cat.webp",
     tone: "Warm, attached, and happiest when connection feels close and familiar.",
@@ -59,6 +66,7 @@ const typeDetails = [
     bg: "bg-[#e8eee3]",
   },
   {
+    code: "ASCG",
     name: "Healer",
     catImage: "/assets/personalities/cats/08-healer-cat.webp",
     tone: "Soothing, sensitive, and emotionally grounding for the people around them.",
@@ -67,6 +75,7 @@ const typeDetails = [
     bg: "bg-[#e7eee4]",
   },
   {
+    code: "AEVP",
     name: "Sunny",
     catImage: "/assets/personalities/cats/09-sunny-cat.webp",
     tone: "Bright, social, and quick to turn ordinary moments into joy.",
@@ -75,6 +84,7 @@ const typeDetails = [
     bg: "bg-[#fff0c9]",
   },
   {
+    code: "ISCG",
     name: "Sentinel",
     catImage: "/assets/personalities/cats/10-sentinel-cat.webp",
     tone: "Watchful, patient, and alert to tiny shifts in the environment.",
@@ -83,6 +93,7 @@ const typeDetails = [
     bg: "bg-[#e7e3df]",
   },
   {
+    code: "AECP",
     name: "Player",
     catImage: "/assets/personalities/cats/11-player-cat.webp",
     tone: "Interactive, mischievous, and always ready to turn attention into a game.",
@@ -91,6 +102,7 @@ const typeDetails = [
     bg: "bg-[#f7e0db]",
   },
   {
+    code: "ISVG",
     name: "Noble",
     catImage: "/assets/personalities/cats/12-noble-cat.webp",
     tone: "Calm, poised, and quietly confident with a strong sense of personal space.",
@@ -120,14 +132,23 @@ export default function TypesPage() {
                 12 pet personality types
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-[#655a51]">
-                A clean reference for the full PBTI system. Each profile shows the core temperament, behavior cues, and care style behind the result your pet may receive.
+A clean reference for the full PBTI code system. Each profile uses a four-letter type as the main identity, with the personality name, behavior cues, and care style behind the result your pet may receive.
               </p>
             </div>
-            <div className="grid gap-3 rounded-[1.5rem] bg-[#fff9f2] p-4">
+            <div className="grid gap-4 rounded-[1.5rem] bg-[#fff9f2] p-4">
+              <div className="rounded-[1.2rem] border border-[#eaded2] bg-white p-4 shadow-sm">
+                <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">Code logic</div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-[#6b5f55]">
+                  <div className="rounded-xl bg-[#fff8ef] px-3 py-2"><span className="text-[#ff7a1a]">A/I</span> Bond vs independence</div>
+                  <div className="rounded-xl bg-[#fff8ef] px-3 py-2"><span className="text-[#ff7a1a]">E/S</span> Explore vs stable</div>
+                  <div className="rounded-xl bg-[#fff8ef] px-3 py-2"><span className="text-[#ff7a1a]">V/C</span> Vital vs calm</div>
+                  <div className="rounded-xl bg-[#fff8ef] px-3 py-2"><span className="text-[#ff7a1a]">P/G</span> Play vs guard</div>
+                </div>
+              </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-[1rem] bg-white px-3 py-4 shadow-sm">
                   <div className="text-2xl font-black text-[#ff7a1a]">12</div>
-                  <div className="mt-1 text-xs font-black text-[#6b5f55]">Types</div>
+                  <div className="mt-1 text-xs font-black text-[#6b5f55]">Codes</div>
                 </div>
                 <div className="rounded-[1rem] bg-white px-3 py-4 shadow-sm">
                   <div className="text-2xl font-black text-[#ff7a1a]">2</div>
@@ -158,7 +179,7 @@ export default function TypesPage() {
               <div className={`relative h-48 overflow-hidden ${type.bg}`}>
                 <Image
                   src={type.catImage}
-                  alt={`${type.name} cat personality artwork`}
+                  alt={`${type.code} ${type.name} cat personality artwork`}
                   fill
                   unoptimized
                   sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
@@ -172,7 +193,8 @@ export default function TypesPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{String(index + 1).padStart(2, "0")}</div>
-                    <h2 className="mt-1 text-2xl font-black tracking-[-.04em] text-[#171514]">{type.name}</h2>
+                    <h2 className="mt-1 text-[2.6rem] font-black leading-none tracking-[-.06em] text-[#171514]">{type.code}</h2>
+                    <div className="mt-2 text-lg font-black tracking-[-.03em] text-[#d96612]">{type.name}</div>
                   </div>
                   <SpeciesStatus />
                 </div>

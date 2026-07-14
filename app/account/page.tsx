@@ -125,7 +125,7 @@ export default function AccountPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-xl font-black text-[#171514]">{pet?.name || "Unnamed pet"}</h3>
-                          <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-black text-[#d96612]">{personality.name}</span>
+                          <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-black text-[#d96612]">{personality.code} 路 {personality.name}</span>
                         </div>
                         <p className="mt-1 text-sm text-[#7a6d63]">
                           {speciesLabel(pet?.species)}
@@ -165,7 +165,7 @@ export default function AccountPage() {
                 return (
                   <Link key={record.id} href={`/report/${record.pbti_id}`} className="rounded-2xl border border-white/10 bg-white/8 p-4 transition hover:bg-white/12">
                     <div className="text-sm font-black">{record.pet?.name || "Unnamed pet"}</div>
-                    <div className="mt-1 text-xs text-white/62">{personality.name} portrait pack</div>
+                    <div className="mt-1 text-xs text-white/62">{personality.code} 路 {personality.name} portrait pack</div>
                   </Link>
                 );
               })}

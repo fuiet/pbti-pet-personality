@@ -81,18 +81,18 @@ export const dimensionDefinitions: Omit<DimensionScore, "value">[] = [
 ];
 
 export const personalityPrototypes: PersonalityPrototype[] = [
-  { code: "EXPLORER", name: "Explorer", vector: { attachment: 48, exploration: 88, vitality: 62, playfulness: 72 }, rationale: "High novelty-seeking with playful investigation." },
-  { code: "GUARDIAN", name: "Guardian", vector: { attachment: 72, exploration: 34, vitality: 42, playfulness: 18 }, rationale: "Bonded, stable, and protective of familiar routines." },
-  { code: "DREAMER", name: "Dreamer", vector: { attachment: 44, exploration: 28, vitality: 24, playfulness: 46 }, rationale: "Calm, comfort-oriented, and low-pressure in social contact." },
-  { code: "MAVERICK", name: "Maverick", vector: { attachment: 24, exploration: 82, vitality: 68, playfulness: 58 }, rationale: "Independent, bold, and self-directed in new situations." },
-  { code: "SCHOLAR", name: "Scholar", vector: { attachment: 36, exploration: 42, vitality: 30, playfulness: 36 }, rationale: "Observant, measured, and cognitively engaged before acting." },
-  { code: "LEADER", name: "Leader", vector: { attachment: 58, exploration: 70, vitality: 76, playfulness: 24 }, rationale: "Confident, expressive, and structured in social space." },
-  { code: "COMPANION", name: "Companion", vector: { attachment: 90, exploration: 42, vitality: 48, playfulness: 62 }, rationale: "Strong social bonding with warm, everyday participation." },
-  { code: "HEALER", name: "Healer", vector: { attachment: 78, exploration: 30, vitality: 26, playfulness: 34 }, rationale: "Soothing attachment, low reactivity, and emotional steadiness." },
-  { code: "SUNNY", name: "Sunny", vector: { attachment: 86, exploration: 70, vitality: 86, playfulness: 78 }, rationale: "High social joy, high expressiveness, and easy play." },
-  { code: "SENTINEL", name: "Sentinel", vector: { attachment: 46, exploration: 24, vitality: 34, playfulness: 12 }, rationale: "Watchful, routine-oriented, and careful with change." },
-  { code: "PLAYER", name: "Player", vector: { attachment: 64, exploration: 66, vitality: 82, playfulness: 90 }, rationale: "Interactive, energetic, and strongly game-oriented." },
-  { code: "NOBLE", name: "Noble", vector: { attachment: 22, exploration: 38, vitality: 22, playfulness: 20 }, rationale: "Composed, independent, and dignified with clear boundaries." },
+  { code: "IEVP", name: "Explorer", vector: { attachment: 48, exploration: 88, vitality: 62, playfulness: 72 }, rationale: "High novelty-seeking with playful investigation." },
+  { code: "ASVG", name: "Guardian", vector: { attachment: 72, exploration: 34, vitality: 42, playfulness: 18 }, rationale: "Bonded, stable, and protective of familiar routines." },
+  { code: "ISCP", name: "Dreamer", vector: { attachment: 44, exploration: 28, vitality: 24, playfulness: 46 }, rationale: "Calm, comfort-oriented, and low-pressure in social contact." },
+  { code: "IEVG", name: "Maverick", vector: { attachment: 24, exploration: 82, vitality: 68, playfulness: 58 }, rationale: "Independent, bold, and self-directed in new situations." },
+  { code: "IECG", name: "Scholar", vector: { attachment: 36, exploration: 42, vitality: 30, playfulness: 36 }, rationale: "Observant, measured, and cognitively engaged before acting." },
+  { code: "AEVG", name: "Leader", vector: { attachment: 58, exploration: 70, vitality: 76, playfulness: 24 }, rationale: "Confident, expressive, and structured in social space." },
+  { code: "ASCP", name: "Companion", vector: { attachment: 90, exploration: 42, vitality: 48, playfulness: 62 }, rationale: "Strong social bonding with warm, everyday participation." },
+  { code: "ASCG", name: "Healer", vector: { attachment: 78, exploration: 30, vitality: 26, playfulness: 34 }, rationale: "Soothing attachment, low reactivity, and emotional steadiness." },
+  { code: "AEVP", name: "Sunny", vector: { attachment: 86, exploration: 70, vitality: 86, playfulness: 78 }, rationale: "High social joy, high expressiveness, and easy play." },
+  { code: "ISCG", name: "Sentinel", vector: { attachment: 46, exploration: 24, vitality: 34, playfulness: 12 }, rationale: "Watchful, routine-oriented, and careful with change." },
+  { code: "AECP", name: "Player", vector: { attachment: 64, exploration: 66, vitality: 82, playfulness: 90 }, rationale: "Interactive, energetic, and strongly game-oriented." },
+  { code: "ISVG", name: "Noble", vector: { attachment: 22, exploration: 38, vitality: 22, playfulness: 20 }, rationale: "Composed, independent, and dignified with clear boundaries." },
 ];
 
 function emptyTraitScores(): Record<Trait, number> {

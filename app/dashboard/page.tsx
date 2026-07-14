@@ -102,7 +102,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="hidden text-right sm:block">
-                    <div className="text-sm font-bold text-[#ff7a1a]">{personality.name}</div>
+                    <div className="text-sm font-bold text-[#ff7a1a]">{personality.code} 路 {personality.name}</div>
                     <div className="text-xs text-[#7a6d63]">{personality.title}</div>
                   </div>
                 </div>

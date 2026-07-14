@@ -14,11 +14,11 @@ export interface PersonalityShowcaseItem {
   blurb: string;
 }
 
-export const defaultPersonalityCode = "GUARDIAN";
+export const defaultPersonalityCode = "ASVG";
 
 const twelvePersonalities: Record<string, Personality> = {
   EXPLORER: {
-    code: "EXPLORER",
+    code: "IEVP",
     name: "Explorer",
     title: "Curious Pathfinder",
     emoji: "EX",
@@ -28,7 +28,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Exploration with moderate Playfulness.",
   },
   GUARDIAN: {
-    code: "GUARDIAN",
+    code: "ASVG",
     name: "Guardian",
     title: "Steady Protector",
     emoji: "GU",
@@ -38,7 +38,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Attachment, high Stability, and high Guardianship.",
   },
   DREAMER: {
-    code: "DREAMER",
+    code: "ISCP",
     name: "Dreamer",
     title: "Soft Comfort Seeker",
     emoji: "DR",
@@ -48,7 +48,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Composure with lower novelty-seeking.",
   },
   MAVERICK: {
-    code: "MAVERICK",
+    code: "IEVG",
     name: "Maverick",
     title: "Independent Scout",
     emoji: "MA",
@@ -58,7 +58,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Exploration and Independence.",
   },
   SCHOLAR: {
-    code: "SCHOLAR",
+    code: "IECG",
     name: "Scholar",
     title: "Thoughtful Observer",
     emoji: "SC",
@@ -68,7 +68,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Composure with careful, moderate Stability.",
   },
   LEADER: {
-    code: "LEADER",
+    code: "AEVG",
     name: "Leader",
     title: "Confident Director",
     emoji: "LE",
@@ -78,7 +78,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Vitality with confident Exploration and lower Playfulness than Player.",
   },
   COMPANION: {
-    code: "COMPANION",
+    code: "ASCP",
     name: "Companion",
     title: "Warm Everyday Partner",
     emoji: "CO",
@@ -88,7 +88,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "Very high Attachment with balanced emotional expression.",
   },
   HEALER: {
-    code: "HEALER",
+    code: "ASCG",
     name: "Healer",
     title: "Gentle Grounding Presence",
     emoji: "HE",
@@ -98,7 +98,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Attachment and Composure.",
   },
   SUNNY: {
-    code: "SUNNY",
+    code: "AEVP",
     name: "Sunny",
     title: "Joyful Social Spark",
     emoji: "SU",
@@ -108,7 +108,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Attachment, Exploration, Vitality, and Playfulness.",
   },
   SENTINEL: {
-    code: "SENTINEL",
+    code: "ISCG",
     name: "Sentinel",
     title: "Watchful Pattern Keeper",
     emoji: "SE",
@@ -118,7 +118,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Stability and Guardianship with controlled expression.",
   },
   PLAYER: {
-    code: "PLAYER",
+    code: "AECP",
     name: "Player",
     title: "Interactive Game Maker",
     emoji: "PL",
@@ -128,7 +128,7 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "Very high Playfulness and Vitality.",
   },
   NOBLE: {
-    code: "NOBLE",
+    code: "ISVG",
     name: "Noble",
     title: "Composed Independent Spirit",
     emoji: "NO",
@@ -145,23 +145,25 @@ export const personalityShowcase: PersonalityShowcaseItem[] = Object.values(twel
 }));
 
 export const personalities: Record<string, Personality> = {
-  ...twelvePersonalities,
+  ASVG: twelvePersonalities.GUARDIAN,
+  ISCP: twelvePersonalities.DREAMER,
+  IEVG: twelvePersonalities.MAVERICK,
+  IECG: twelvePersonalities.SCHOLAR,
+  AEVG: twelvePersonalities.LEADER,
+  ASCP: twelvePersonalities.COMPANION,
+  ASCG: twelvePersonalities.HEALER,
   AEVP: twelvePersonalities.SUNNY,
-  AEVG: twelvePersonalities.EXPLORER,
+  ISCG: twelvePersonalities.SENTINEL,
   AECP: twelvePersonalities.PLAYER,
+  ISVG: twelvePersonalities.NOBLE,
+  IEVP: twelvePersonalities.EXPLORER,
+  ...twelvePersonalities,
   AECG: twelvePersonalities.GUARDIAN,
   ASEP: twelvePersonalities.COMPANION,
   ASEG: twelvePersonalities.HEALER,
-  ASCP: twelvePersonalities.DREAMER,
-  ASCG: twelvePersonalities.SENTINEL,
-  IEVP: twelvePersonalities.MAVERICK,
-  IEVG: twelvePersonalities.LEADER,
   IECP: twelvePersonalities.SCHOLAR,
-  IECG: twelvePersonalities.NOBLE,
   ISEP: twelvePersonalities.EXPLORER,
   ISEG: twelvePersonalities.GUARDIAN,
-  ISCP: twelvePersonalities.DREAMER,
-  ISCG: twelvePersonalities.SENTINEL,
 };
 
 export function resolvePersonality(code: string): Personality {
