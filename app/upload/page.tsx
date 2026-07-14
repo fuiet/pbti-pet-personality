@@ -8,6 +8,7 @@ import type { PetVisualProfile } from "@/lib/visualProfile";
 
 type AnalysisState = "idle" | "background" | "complete";
 
+const REQUIRED_PHOTO_COUNT = 3;
 const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Assigning PBTI visual tags"];
 
 const photoRequirements = [
@@ -74,8 +75,8 @@ export default function UploadPage() {
         setPet(record);
         setPreview(record.photo_url || "");
         setPhotoPreviews(record.photo_url ? [record.photo_url] : []);
-        setAnalysisState(record.photo_url ? "background" : "idle");
-        setAnalysisProgress(record.photo_url ? 100 : 0);
+        setAnalysisState("idle");
+        setAnalysisProgress(0);
       } catch {
         if (active) {
           setError("Unable to load your pet profile.");
@@ -113,49 +114,17 @@ export default function UploadPage() {
     return () => window.clearInterval(interval);
   }, [analysisState]);
 
-  async function handleFiles(fileList: FileList | File[]) {
-    if (!pet) return;
-
-    const files = Array.from(fileList)
-      .filter((file) => file.type.startsWith("image/"))
-      .slice(0, 3);
-
-    if (!files.length) return;
-
-    const dataUrls = await Promise.all(
-      files.map(
-        (file) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (event) => resolve(typeof event.target?.result === "string" ? event.target.result : "");
-            reader.readAsDataURL(file);
-          })
-      )
-    );
-
-    const usableUrls = dataUrls.filter(Boolean);
-    const primaryPhoto = usableUrls[0];
-    if (!primaryPhoto) return;
-
-    setError("");
-    setPreview(primaryPhoto);
-    setPhotoPreviews(usableUrls);
+  function startBackgroundAnalysis(currentPet: PetRecord) {
     setAnalysisState("background");
     setAnalysisPromptVisible(true);
     setAnalysisProgress(8);
     setVisualProfile(null);
     setVisualFallback(false);
 
-    try {
-      await updatePetPhoto(pet.id, primaryPhoto);
-    } catch {
-      setError("Unable to save the front photo right now. You can continue and try again later.");
-    }
-
     void fetch("/api/visual-profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ petId: pet.id }),
+      body: JSON.stringify({ petId: currentPet.id }),
       keepalive: true,
     })
       .then(async (response) => {
@@ -174,10 +143,67 @@ export default function UploadPage() {
         setAnalysisState("complete");
       })
       .catch((analysisError) => {
+        setAnalysisState("idle");
+        setAnalysisProgress(0);
         setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo in the background right now.");
       });
   }
 
+  async function handleFiles(fileList: FileList | File[]) {
+    if (!pet) return;
+
+    const remainingSlots = Math.max(REQUIRED_PHOTO_COUNT - photoPreviews.length, 0);
+    const files = Array.from(fileList)
+      .filter((file) => file.type.startsWith("image/"))
+      .slice(0, remainingSlots || REQUIRED_PHOTO_COUNT);
+
+    if (!files.length) return;
+
+    const dataUrls = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => resolve(typeof event.target?.result === "string" ? event.target.result : "");
+            reader.readAsDataURL(file);
+          })
+      )
+    );
+
+    const newPhotoUrls = dataUrls.filter(Boolean);
+    const usableUrls = photoPreviews.length >= REQUIRED_PHOTO_COUNT
+      ? newPhotoUrls.slice(0, REQUIRED_PHOTO_COUNT)
+      : [...photoPreviews, ...newPhotoUrls].slice(0, REQUIRED_PHOTO_COUNT);
+    const primaryPhoto = usableUrls[0];
+    if (!primaryPhoto) return;
+
+    const hasFullPhotoSet = usableUrls.length >= REQUIRED_PHOTO_COUNT;
+
+    setError("");
+    setPreview(primaryPhoto);
+    setPhotoPreviews(usableUrls);
+    setVisualProfile(null);
+    setVisualFallback(false);
+
+    if (!hasFullPhotoSet) {
+      setAnalysisState("idle");
+      setAnalysisPromptVisible(false);
+      setAnalysisProgress(0);
+    }
+
+    try {
+      await updatePetPhoto(pet.id, primaryPhoto);
+    } catch {
+      setError("Unable to save the front photo right now. You can continue and try again later.");
+      return;
+    }
+
+    if (hasFullPhotoSet) {
+      startBackgroundAnalysis(pet);
+    }
+
+    if (inputRef.current) inputRef.current.value = "";
+  }
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (files?.length) handleFiles(files);
@@ -209,6 +235,12 @@ export default function UploadPage() {
     }
   }
 
+  const uploadedPhotoCount = photoPreviews.filter(Boolean).length;
+  const missingPhotoCount = Math.max(REQUIRED_PHOTO_COUNT - uploadedPhotoCount, 0);
+  const hasFullPhotoSet = uploadedPhotoCount >= REQUIRED_PHOTO_COUNT;
+  const uploadStatusText = hasFullPhotoSet
+    ? "3/3 photos uploaded. Background analysis starts automatically."
+    : `${uploadedPhotoCount}/3 photos uploaded. Add ${missingPhotoCount} more for the best identification.`;
   const activeStepIndex = analysisState === "complete" ? 2 : analysisState === "background" ? Math.min(2, Math.floor(analysisProgress / 28)) : 0;
   const canStartQuiz = Boolean(pet);
 
@@ -288,7 +320,7 @@ export default function UploadPage() {
                   ) : null}
 
                   <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
-                    {analysisState === "complete" ? "Visual identification saved" : analysisState === "background" ? "Background analysis running" : "Photo selected"}
+                    {analysisState === "complete" ? "Visual identification saved" : analysisState === "background" ? "Background analysis running" : `${uploadedPhotoCount}/3 photos uploaded`}
                   </div>
                 </div>
               ) : (
@@ -297,7 +329,7 @@ export default function UploadPage() {
                     <CameraIcon className="h-9 w-9" />
                   </div>
                   <h2 className="mt-7 text-3xl font-black tracking-[-.04em] text-[#171514]">Upload front, left, and right photos</h2>
-                  <p className="mt-3 text-sm leading-6 text-[#756960]">Choose up to 3 images from your device</p>
+                  <p className="mt-3 text-sm leading-6 text-[#756960]">Add front, left, and right images from your device</p>
                   <div className="mt-7 inline-flex rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white shadow-[0_16px_34px_rgba(255,122,26,.26)]">
                     Choose photos
                   </div>
@@ -322,7 +354,7 @@ export default function UploadPage() {
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1">
               <div>
                 <p className="text-sm font-black text-[#171514]">{pet?.name ? `${pet.name}'s photo set` : "Photo set"}</p>
-                <p className="text-xs font-semibold text-[#8c7b6d]">Front photo is saved as the main image. Side photos help guide visual identification.</p>
+                <p className="text-xs font-semibold text-[#8c7b6d]">{uploadStatusText}</p>
               </div>
               <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:min-w-[260px]">
                 {photoRequirements.map((item, index) => (
@@ -343,7 +375,7 @@ export default function UploadPage() {
                   onClick={() => inputRef.current?.click()}
                   className="rounded-full border border-[#eaded2] bg-white px-5 py-2.5 text-xs font-black text-[#4f463f] transition hover:border-[#ff7a1a]/50 hover:bg-[#fff7ed]"
                 >
-                  Replace
+                  {hasFullPhotoSet ? "Replace set" : "Add photos"}
                 </button>
                 <button
                   type="button"
@@ -370,19 +402,20 @@ export default function UploadPage() {
 
           <div className="mt-7 rounded-[1.25rem] border border-white/10 bg-white/[.06] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-white/58">
-              <span>{analysisState === "idle" ? "Waiting for photo" : analysisState === "background" ? "Background scan" : "Ready"}</span>
-              <span>{analysisProgress}%</span>
+              <span>{analysisState === "idle" ? (hasFullPhotoSet ? "Ready to scan" : "Waiting for 3 photos") : analysisState === "background" ? "Background scan" : "Ready"}</span>
+              <span>{analysisState === "idle" ? `${uploadedPhotoCount}/3` : `${analysisProgress}%`}</span>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-[#ff7a1a] shadow-[0_0_18px_rgba(255,122,26,.72)] transition-all duration-200"
-                style={{ width: `${analysisProgress}%` }}
+                style={{ width: `${analysisState === "idle" ? Math.round((uploadedPhotoCount / REQUIRED_PHOTO_COUNT) * 100) : analysisProgress}%` }}
               />
             </div>
           </div>
 
           <div className="mt-6 space-y-3">
             {analysisSteps.map((step, index) => {
+              const isWaiting = analysisState === "idle" && !hasFullPhotoSet;
               const isDone = analysisState === "complete" || (analysisState === "background" && index < activeStepIndex);
               const isActive = analysisState === "background" && index === activeStepIndex;
 
@@ -390,7 +423,7 @@ export default function UploadPage() {
                 <div key={step} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3">
                   <div
                     className={`grid h-8 w-8 place-items-center rounded-full text-xs font-black ${
-                      isDone ? "bg-[#2fd07f] text-[#07140d]" : isActive ? "bg-[#ff7a1a] text-white pbti-data-pulse" : "bg-white/10 text-white/48"
+                      isDone ? "bg-[#2fd07f] text-[#07140d]" : isActive ? "bg-[#ff7a1a] text-white pbti-data-pulse" : isWaiting ? "bg-white/10 text-white/32" : "bg-white/10 text-white/48"
                     }`}
                   >
                     {isDone ? "OK" : index + 1}
@@ -402,13 +435,15 @@ export default function UploadPage() {
           </div>
 
           <div className={`mt-6 rounded-[1.25rem] p-4 ${analysisState === "complete" ? "bg-[#10351f] text-[#c9f8db]" : "bg-white/[.06] text-white/68"}`}>
-            <p className="text-sm font-black text-white">{analysisState === "complete" ? "Visual identification saved." : analysisState === "background" ? "Background analysis is running." : "Upload a clear photo to start the visual scan."}</p>
+            <p className="text-sm font-black text-white">{analysisState === "complete" ? "Visual identification saved." : analysisState === "background" ? "Background analysis is running." : hasFullPhotoSet ? "Photo set ready for analysis." : "Upload 3 photos before visual analysis starts."}</p>
             <p className="mt-2 text-sm leading-6 opacity-80">
               {analysisState === "complete"
                 ? "Your pet photo is ready. Please start the personality test."
                 : analysisState === "background"
                 ? "We are identifying breed cues, coat details, facial features, and body structure in the background. You can continue answering now; the result will appear with the final report."
-                : "The scan checks photo clarity and prepares the visual profile used in the report experience."}
+                : hasFullPhotoSet
+                ? "Your front, left, and right photos are ready. Analysis starts automatically when the full set is uploaded."
+                : `Add ${missingPhotoCount} more photo${missingPhotoCount === 1 ? "" : "s"}. You can still skip ahead, but complete photos improve breed, coat, and mixed-trait identification.`}
             </p>
           </div>
 
@@ -512,7 +547,7 @@ export default function UploadPage() {
           disabled={!canStartQuiz}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:bg-[#ffc397] disabled:shadow-none disabled:hover:translate-y-0"
         >
-          {analysisState === "idle" ? "Skip photo and continue" : "Continue to personality test"}
+          {analysisState === "idle" && !hasFullPhotoSet ? "Skip and continue" : analysisState === "background" ? "Continue while analysis runs" : "Continue to personality test"}
         </button>
       </div>
     </div>

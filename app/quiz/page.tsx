@@ -115,7 +115,8 @@ export default function QuizPage() {
 
   const questions = pet?.species === "dog" ? dogQuestions : catQuestions;
   const currentQuestion = questions[current];
-  const progress = Math.round(((current + 1) / questions.length) * 100);
+  const questionNumber = Math.min(current + 1, questions.length);
+  const progress = Math.round((questionNumber / questions.length) * 100);
   const stage = stageAssets[Math.min(stageAssets.length - 1, Math.floor(current / 6))];
   const helperStage = stageAssets[(Math.floor(current / 6) + 2) % stageAssets.length];
   const species = pet?.species || "cat";
@@ -203,7 +204,7 @@ export default function QuizPage() {
           </div>
           <div className="min-w-[240px] rounded-2xl bg-[#fff7ed] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-[#8c7b6d]">
-              <span>Question {current + 1} of {questions.length}</span>
+              <span>Question {questionNumber}/{questions.length}</span>
               <span>{progress}%</span>
             </div>
             <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#eaded2]">
@@ -276,7 +277,7 @@ export default function QuizPage() {
             </div>
 
             <div key={current} className="animate-slide-in">
-              <p className="mt-10 text-sm font-black uppercase tracking-[.16em] text-[#d96612]">Question {String(current + 1).padStart(2, "0")}</p>
+              <p className="mt-10 text-sm font-black uppercase tracking-[.16em] text-[#d96612]">Question {String(questionNumber).padStart(2, "0")}</p>
               <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight tracking-[-.045em] text-[#171514] sm:text-4xl">
                 {currentQuestion?.question || ""}
               </h2>

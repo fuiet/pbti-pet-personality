@@ -97,6 +97,14 @@ function isResultReportSchemaError(error: { message?: string } | null | undefine
   );
 }
 
+function isResultUserSchemaError(error: { message?: string } | null | undefined) {
+  const message = error?.message?.toLowerCase() || "";
+
+  return (
+    message.includes("user_id") &&
+    (message.includes("schema cache") || message.includes("could not find") || message.includes("column"))
+  );
+}
 async function requireCurrentUser() {
   const user = await getCurrentUser();
 
@@ -344,11 +352,15 @@ export async function savePersonalityResult(
     answers,
   };
 
-  const insertPayload = {
+  const legacyInsertPayload = {
     pet_id: pet.id,
     pbti_id: makeRecordId(),
     personality_type: result.code,
     scores: result.scores,
+  };
+  const insertPayload = {
+    ...legacyInsertPayload,
+    user_id: user.id,
   };
 
   let response: any = await supabase
@@ -360,10 +372,29 @@ export async function savePersonalityResult(
     .select(RESULT_COLUMNS_RECORD)
     .single();
 
+  if (response.error && isResultUserSchemaError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .insert({
+        ...legacyInsertPayload,
+        report,
+      })
+      .select(RESULT_COLUMNS_RECORD)
+      .single();
+  }
+
   if (response.error && isResultReportSchemaError(response.error)) {
     response = await supabase
       .from("personality_results")
       .insert(insertPayload)
+      .select(RESULT_COLUMNS_RECORD_NO_REPORT)
+      .single();
+  }
+
+  if (response.error && isResultUserSchemaError(response.error)) {
+    response = await supabase
+      .from("personality_results")
+      .insert(legacyInsertPayload)
       .select(RESULT_COLUMNS_RECORD_NO_REPORT)
       .single();
   }

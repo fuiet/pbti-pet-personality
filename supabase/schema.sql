@@ -17,6 +17,7 @@ create table pets (
 
 create table personality_results (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
   pet_id uuid references pets(id) on delete cascade,
   pbti_id text unique not null,
   personality_type text not null,
