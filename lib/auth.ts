@@ -11,6 +11,27 @@ export interface EmailAuthResult {
   sessionActive: boolean;
 }
 
+function clearSupabaseAuthCache() {
+  if (typeof window === "undefined") return;
+
+  const storageKeyPrefixes = ["sb-", "supabase.auth.token"];
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    for (let index = storage.length - 1; index >= 0; index -= 1) {
+      const key = storage.key(index);
+      if (key && storageKeyPrefixes.some((prefix) => key.startsWith(prefix))) {
+        storage.removeItem(key);
+      }
+    }
+  }
+
+  document.cookie.split(";").forEach((cookie) => {
+    const name = cookie.split("=")[0]?.trim();
+    if (name?.startsWith("sb-")) {
+      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+    }
+  });
+}
+
 function mapUser(user: { id: string; email?: string | null } | null | undefined): AuthUser | null {
   if (!user?.id || !user.email) {
     return null;
@@ -38,8 +59,13 @@ export async function signInWithGoogle(nextPath = "/dashboard") {
   const safeNextPath = normalizeNextPath(nextPath);
   const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`;
 
-  // Avoid linking a new Google OAuth identity onto a previously signed-in account.
-  await supabase.auth.signOut({ scope: "local" });
+  // Avoid reusing or linking against a previously signed-in browser session.
+  try {
+    await supabase.auth.signOut({ scope: "global" });
+  } catch {
+    // A stale session can fail server sign-out; the local cleanup below is still required.
+  }
+  clearSupabaseAuthCache();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -73,9 +99,13 @@ export async function signInWithEmail(email: string, password: string): Promise<
     throw new Error(error.message);
   }
 
+  if (!data.session) {
+    throw new Error("Sign-in did not create an active session. Please confirm your email or try another sign-in method.");
+  }
+
   return {
     user: mapUser(data.user),
-    sessionActive: Boolean(data.session),
+    sessionActive: true,
   };
 }
 
@@ -103,7 +133,8 @@ export async function signUpWithEmail(email: string, password: string, nextPath 
 
 export async function signOut() {
   const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: "global" });
+  clearSupabaseAuthCache();
 
   if (error) {
     throw new Error(error.message);

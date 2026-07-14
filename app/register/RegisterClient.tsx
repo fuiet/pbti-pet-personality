@@ -1,9 +1,9 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getCurrentUser, signInWithGoogle, signUpWithEmail } from "@/lib/auth";
+import { signInWithGoogle, signUpWithEmail } from "@/lib/auth";
 import { normalizeNextPath } from "@/lib/nextPath";
 
 export default function RegisterClient() {
@@ -17,16 +17,6 @@ export default function RegisterClient() {
   );
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
-
-  useEffect(() => {
-    getCurrentUser()
-      .then((user) => {
-        if (user) {
-          router.replace(nextPath);
-        }
-      })
-      .catch(() => undefined);
-  }, [router, nextPath]);
 
   async function handleGoogleRegister() {
     if (isGoogleSubmitting || isEmailSubmitting) {
