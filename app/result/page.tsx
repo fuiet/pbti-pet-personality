@@ -136,10 +136,10 @@ export default function ResultPage() {
       </section>
 
       <section className="mt-6 rounded-[2rem] border border-[#ff7a1a]/25 bg-[#171514] p-6 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)] sm:p-8">
-        <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Premium deep report</div>
-        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Unlock the full 10+ page report</h2>
+        <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Launch month premium access</div>
+        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Your full 10+ page report is open</h2>
         <p className="mt-3 text-sm leading-7 text-white/72">
-          Your free result shows the cover summary. Premium expands it into a complete pet personality dossier with behavior scoring, photo-based appearance analysis, care guidance, and shareable poster assets.
+          Premium is free during the launch month. Deep reports, photo-based appearance notes, care guidance, portrait posters, and multi-pet profiles are included for early users.
         </p>
         <div className="mt-6 grid gap-2 sm:grid-cols-2">
           {premiumSections.map((section, index) => (
@@ -153,7 +153,7 @@ export default function ResultPage() {
           onClick={() => router.push("/premium")}
           className="mt-7 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] sm:w-auto"
         >
-          Unlock Premium Report - $9.99
+          View full report access
         </button>
       </section>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -161,7 +161,7 @@ export default function ResultPage() {
           onClick={() => router.push("/premium")}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          Unlock Premium Report
+          View early access details
         </button>
         <button
           onClick={() => router.push("/dashboard")}

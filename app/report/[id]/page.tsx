@@ -146,13 +146,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       <div className="mt-6 rounded-3xl border border-[#ff7a1a]/30 bg-gradient-to-br from-[#fff0e4] to-white p-6 text-center shadow-sm">
         <div className="text-3xl font-black text-[#ff7a1a]">PBTI</div>
-        <h3 className="mt-3 text-xl font-bold text-[#171514]">Unlock the Full Premium Report</h3>
-        <p className="mt-2 text-sm text-[#655a51]">Get AI deep dive, personalized care guide, shareable personality card, and more.</p>
+        <h3 className="mt-3 text-xl font-bold text-[#171514]">Launch Month Premium Included</h3>
+        <p className="mt-2 text-sm text-[#655a51]">Full report access, portrait poster assets, and multi-pet profile tools are free for early users this month.</p>
         <button
           onClick={() => router.push("/premium")}
           className="mt-4 rounded-full bg-[#ff7a1a] px-8 py-3 font-black text-white shadow-[0_12px_28px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"
         >
-          Upgrade Now - $9.99
+          Early access is active
         </button>
       </div>
 

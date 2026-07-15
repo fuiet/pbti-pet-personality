@@ -350,7 +350,7 @@ export default function Home() {
             <Link href="/" className="transition hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
             <a href="#method" className="transition hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</a>
             <Link href="/types" className="transition hover:text-[#ff7a1a]">{"\u6027\u683c\u5206\u7c7b"}</Link>
-            <Link href="/premium" className="transition hover:text-[#ff7a1a]">{"\u5b9a\u4ef7"}</Link>
+            <Link href="/premium" className="transition hover:text-[#ff7a1a]">Early Access</Link>
             <Link href="/account" className="transition hover:text-[#ff7a1a]">{"\u7528\u6237\u4e2d\u5fc3"}</Link>
           </div>
           <div className="flex items-center gap-3">

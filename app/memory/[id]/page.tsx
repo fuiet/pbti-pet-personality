@@ -84,10 +84,10 @@ export default function MemoryBookPage({ params }: { params: Promise<{ id: strin
         <h3 className="mt-3 text-lg font-bold text-[#171514]">Add More Memories</h3>
         <p className="mt-1 text-sm text-[#7a6d63]">Upload photos and create a rich timeline of your pet's life</p>
         <button
-          onClick={() => router.push("/premium")}
+          onClick={() => router.push("/create")}
           className="mt-4 rounded-full bg-[#ff7a1a] px-8 py-3 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"
         >
-          Unlock via Premium
+          Included in Early Access
         </button>
       </div>
 

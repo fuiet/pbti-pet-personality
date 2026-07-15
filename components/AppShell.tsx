@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/", label: "\u9996\u9875" },
   { href: "/#method", label: "\u6d4b\u8bd5\u65b9\u6cd5" },
   { href: "/types", label: "\u6027\u683c\u5206\u7c7b" },
-  { href: "/premium", label: "\u5b9a\u4ef7" },
+  { href: "/premium", label: "Early Access" },
   { href: "/account", label: "\u7528\u6237\u4e2d\u5fc3" },
 ];
 
@@ -53,7 +53,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex gap-6">
             <Link href="/" className="hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
             <Link href="/#method" className="hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</Link>
-            <Link href="/premium" className="hover:text-[#ff7a1a]">{"\u5b9a\u4ef7"}</Link>
+            <Link href="/premium" className="hover:text-[#ff7a1a]">Early Access</Link>
           </div>
         </div>
       </footer>

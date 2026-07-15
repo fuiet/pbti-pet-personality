@@ -1,9 +1,9 @@
-export function canAccessPremium(isPremium:boolean){
- return isPremium;
+export function canAccessPremium(_isPremium: boolean) {
+  return true;
 }
 
-export function unlockPremium(){
- return {
-  isPremium:true
- };
+export function unlockPremium() {
+  return {
+    isPremium: true,
+  };
 }
