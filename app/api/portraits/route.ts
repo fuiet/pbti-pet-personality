@@ -9,6 +9,7 @@ export const runtime = "edge";
 const IMAGE_MODEL = process.env.QWEN_IMAGE_MODEL || "wan2.7-image";
 const IMAGE_ENDPOINT = process.env.QWEN_IMAGE_ENDPOINT || "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
 const PORTRAIT_BUCKET = process.env.PBTI_PORTRAIT_BUCKET || "pet-portraits";
+const IMAGE_SIZE = process.env.QWEN_IMAGE_SIZE || "4K";
 
 function isMissingPortraitTable(error: { message?: string; code?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
@@ -42,7 +43,7 @@ async function savePortraitAsset(
       const bytes = await imageResponse.arrayBuffer();
       storagePath = `${userId}/${petId}/${crypto.randomUUID()}.png`;
       const upload = await supabase.storage.from(PORTRAIT_BUCKET).upload(storagePath, bytes, {
-        contentType: "image/png",
+        contentType: imageResponse.headers.get("content-type") || "image/png",
         cacheControl: "31536000",
         upsert: false,
       });
@@ -150,7 +151,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: IMAGE_MODEL,
         input: { messages: [{ role: "user", content: [...photos.map((image: string) => ({ image })), { text: prompt }] }] },
-        parameters: { size: "2K", n: 1, watermark: false },
+        parameters: { size: IMAGE_SIZE, n: 1, watermark: false },
       }),
     });
     const data = await response.json();

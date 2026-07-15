@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 
 const typeDetails = [
   {
@@ -112,15 +116,17 @@ const typeDetails = [
   },
 ] as const;
 
-function SpeciesStatus() {
+function SpeciesStatus({ species }: { species: PetSpecies }) {
   return (
     <div className="shrink-0 rounded-full border border-[#eaded2] bg-white/78 px-3 py-1.5 text-xs font-black text-[#6b5f55]">
-      <span>Cat & dog type</span>
+      <span>{species === "dog" ? "Dog profile" : "Cat profile"}</span>
     </div>
   );
 }
 
 export default function TypesPage() {
+  const [species, setSpecies] = useState<PetSpecies>("cat");
+
   return (
     <main className="bg-[#fff9f2] text-[#171514]">
       <section className="mx-auto max-w-7xl px-6 pb-8 pt-14">
@@ -134,6 +140,18 @@ export default function TypesPage() {
               <p className="mt-6 max-w-2xl text-base leading-8 text-[#655a51]">
 A clean reference for the full PBTI code system. Each profile uses a four-letter type as the main identity, with the personality name, behavior cues, and care style behind the result your pet may receive.
               </p>
+            <div className="mt-6 inline-flex rounded-full border border-[#eaded2] bg-white p-1 shadow-sm" aria-label="Choose species artwork">
+              {(["cat", "dog"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setSpecies(option)}
+                  className={"rounded-full px-5 py-2 text-sm font-black transition " + (species === option ? "bg-[#ff7a1a] text-white shadow-sm" : "text-[#6b5f55] hover:bg-[#fff0e4]")}
+                >
+                  {option === "dog" ? "Dog artwork" : "Cat artwork"}
+                </button>
+              ))}
+            </div>
             </div>
             <div className="grid gap-4 rounded-[1.5rem] bg-[#fff9f2] p-4">
               <div className="rounded-[1.2rem] border border-[#eaded2] bg-white p-4 shadow-sm">
@@ -178,15 +196,15 @@ A clean reference for the full PBTI code system. Each profile uses a four-letter
             <article key={type.name} className="group overflow-hidden rounded-[1.4rem] border border-[#eaded2] bg-white shadow-[0_18px_48px_rgba(52,34,20,.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_70px_rgba(52,34,20,.1)]">
               <div className={`relative h-48 overflow-hidden ${type.bg}`}>
                 <Image
-                  src={type.catImage}
-                  alt={`${type.code} ${type.name} cat personality artwork`}
+                  src={getPersonalityAsset(type.code, species)}
+                  alt={`${type.code} ${type.name} species personality artwork`}
                   fill
                   unoptimized
                   sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   className="object-contain p-3 transition duration-300 group-hover:scale-105"
                 />
                 <div className="absolute left-4 top-4 rounded-full bg-white/86 px-3 py-1 text-xs font-black text-[#6b5f55]">
-                  Cat profile
+                  {species === "dog" ? "Dog profile" : "Cat profile"}
                 </div>
               </div>
               <div className="p-5">
@@ -196,7 +214,7 @@ A clean reference for the full PBTI code system. Each profile uses a four-letter
                     <h2 className="mt-1 text-[2.6rem] font-black leading-none tracking-[-.06em] text-[#171514]">{type.code}</h2>
                     <div className="mt-2 text-lg font-black tracking-[-.03em] text-[#d96612]">{type.name}</div>
                   </div>
-                  <SpeciesStatus />
+                  <SpeciesStatus species={species} />
                 </div>
                 <p className="mt-4 min-h-[72px] text-sm leading-6 text-[#655a51]">{type.tone}</p>
                 <div className="mt-5 flex flex-wrap gap-2">

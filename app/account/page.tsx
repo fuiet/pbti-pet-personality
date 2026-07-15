@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
+import { getPersonalityAsset } from "@/data/personalityAssets";
 import { listCurrentUserPortraits, listCurrentUserResults, type PetPortraitRecord, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
@@ -126,8 +128,18 @@ export default function AccountPage() {
                 return (
                   <article key={record.id} className="rounded-[1.5rem] border border-[#eaded2] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(52,34,20,.08)]">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                      <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#fff0e4] text-sm font-black text-[#d96612]">
-                        {speciesLabel(pet?.species)}
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-[#fff0e4]">
+                        <Image
+                          src={getPersonalityAsset(personality.code, pet?.species === "dog" ? "dog" : "cat")}
+                          alt={personality.name + " personality artwork"}
+                          fill
+                          unoptimized
+                          sizes="80px"
+                          className="object-contain p-1"
+                        />
+                        <span className="absolute bottom-1 left-1 rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-black text-[#d96612]">
+                          {speciesLabel(pet?.species)}
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

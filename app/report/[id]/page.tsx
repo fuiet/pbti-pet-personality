@@ -3,8 +3,10 @@
 export const runtime = "edge";
 
 import { use, useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
+import { getPersonalityAsset } from "@/data/personalityAssets";
 import { dimensionScoresFromTraitScores, generatePetReport } from "@/lib/reportGenerator";
 import { getLatestVisualProfileForPet, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import type { PetVisualProfile } from "@/lib/visualProfile";
@@ -71,6 +73,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }
 
   const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
+  const species = record.pet.species === "dog" ? "dog" : "cat";
+  const typeArtwork = getPersonalityAsset(personality.code, species);
   const scores = record.scores || {};
   const dimensionScores = dimensionScoresFromTraitScores(scores);
   const generatedReport = generatePetReport({
@@ -95,6 +99,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-[#eaded2] bg-white p-5 shadow-sm">
+        <div className="relative z-10 max-w-[72%]">
+          <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{species === "dog" ? "Dog profile" : "Cat profile"}</div>
+          <div className="mt-2 text-2xl font-black text-[#171514]">{personality.code} / {personality.name}</div>
+          <p className="mt-2 text-sm leading-6 text-[#655a51]">The artwork shown here follows this pet's species and PBTI type.</p>
+        </div>
+        <div className="pointer-events-none absolute -right-2 -bottom-8 h-36 w-36 sm:h-44 sm:w-44">
+          <Image src={typeArtwork} alt="" fill unoptimized sizes="176px" className="object-contain drop-shadow-[0_14px_24px_rgba(52,34,20,.16)]" />
+        </div>
+      </div>
       <ShareCard
         petName={record.pet.name}
         pbtiId={record.pbti_id}

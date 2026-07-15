@@ -111,11 +111,15 @@ const createPageDecorations = [
     className: "left-[7%] top-24 w-28 -rotate-12 md:w-36",
   },
   {
-    image: "/assets/personalities/cats/04-maverick-cat.webp",
+    image: "/assets/personalities/dogs/01-explorer-dog.png",
     className: "right-[8%] top-36 w-32 rotate-6 md:w-44",
   },
   {
-    image: "/assets/personalities/cats/11-player-cat.webp",
+    image: "/assets/personalities/cats/03-dreamer-cat.webp",
+    className: "left-[10%] bottom-12 w-24 rotate-6 md:w-36",
+  },
+  {
+    image: "/assets/personalities/dogs/11-player-dog.png",
     className: "right-[14%] bottom-14 w-28 -rotate-6 md:w-40",
   },
 ] as const;

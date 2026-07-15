@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import PersonalityCard from "@/components/PersonalityCard";
+import { getPersonalityAsset } from "@/data/personalityAssets";
 import { dimensionScoresFromTraitScores, generatePetReport } from "@/lib/reportGenerator";
 import { getLatestResultForCurrentUser, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
@@ -66,6 +68,8 @@ export default function ResultPage() {
   }
 
   const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
+  const species = record.pet.species === "dog" ? "dog" : "cat";
+  const typeArtwork = getPersonalityAsset(personality.code, species);
   const scores = record.scores || {};
   const dimensionScores = dimensionScoresFromTraitScores(scores);
   const report = record.report || generatePetReport({
@@ -100,7 +104,7 @@ export default function ResultPage() {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-[2rem] border border-[#eaded2] bg-white shadow-[0_24px_70px_rgba(52,34,20,.08)]">
+      <section className="relative overflow-hidden rounded-[2rem] border border-[#eaded2] bg-white shadow-[0_24px_70px_rgba(52,34,20,.08)]">
         {record.pet.photo_url ? (
           <div className="relative h-72 bg-[#fff0e4] sm:h-96">
             <img src={record.pet.photo_url} alt={`${record.pet.name} profile photo`} className="h-full w-full object-cover" />
@@ -111,8 +115,10 @@ export default function ResultPage() {
           </div>
         ) : null}
 
-        <div className="p-8 text-center">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff0e4] text-2xl font-black text-[#ff7a1a]">{personality.emoji}</div>
+        <div className="relative p-8 text-center">
+                    <div className="pointer-events-none absolute right-3 top-3 hidden h-28 w-28 opacity-90 sm:block">
+            <Image src={typeArtwork} alt="" fill unoptimized sizes="112px" className="object-contain drop-shadow-[0_12px_20px_rgba(52,34,20,.16)]" />
+          </div><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff0e4] text-2xl font-black text-[#ff7a1a]">{personality.emoji}</div>
           <div className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-[#a3968a]">Cover / result summary</div>
           <h1 className="mt-3 text-7xl font-black leading-none tracking-[-.08em] text-[#171514]">{personality.code}</h1>
           <div className="mt-3 text-3xl font-black tracking-[-.05em] text-[#d96612]">{personality.name}</div>

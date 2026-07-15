@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { catQuestions } from "@/data/catQuestions";
+import { getPersonalityAsset } from "@/data/personalityAssets";
 import { dogQuestions } from "@/data/dogQuestions";
 import { calculatePBTI, type Trait } from "@/lib/pbtiEngine";
 import { getLatestPetRecord, getPetRecord, savePersonalityResult, type PetRecord } from "@/lib/pbtiRecords";
@@ -23,13 +24,13 @@ const signalDescriptions: Record<string, string> = {
 };
 
 const stageAssets = [
-  { name: "Explorer", file: "01-explorer" },
-  { name: "Guardian", file: "02-guardian" },
-  { name: "Dreamer", file: "03-dreamer" },
-  { name: "Scholar", file: "05-scholar" },
-  { name: "Sunny", file: "09-sunny" },
-  { name: "Noble", file: "12-noble" },
-];
+  { code: "IEVP", name: "Explorer" },
+  { code: "ASVG", name: "Guardian" },
+  { code: "ISCP", name: "Dreamer" },
+  { code: "IECG", name: "Scholar" },
+  { code: "AEVP", name: "Sunny" },
+  { code: "ISVG", name: "Noble" },
+] as const;
 
 function getPetIdFromLocation() {
   if (typeof window === "undefined") return null;
@@ -38,16 +39,6 @@ function getPetIdFromLocation() {
 
 function speciesLabel(species?: string) {
   return species === "dog" ? "Dog" : "Cat";
-}
-
-function personalityAssetPath(species: "cat" | "dog", file: string) {
-  const folder = species === "dog" ? "dogs" : "cats";
-  const suffix = species === "dog" ? "dog" : "cat";
-  return `/assets/personalities/${folder}/${file}-${suffix}.webp`;
-}
-
-function fallbackCatPath(file: string) {
-  return `/assets/personalities/cats/${file}-cat.webp`;
 }
 
 function ArrowIcon({ className = "" }: { className?: string }) {
@@ -228,10 +219,7 @@ export default function QuizPage() {
             ) : (
               <div className="grid h-56 place-items-center">
                 <img
-                  src={personalityAssetPath(species, "01-explorer")}
-                  onError={(event) => {
-                    event.currentTarget.src = fallbackCatPath("01-explorer");
-                  }}
+                  src={getPersonalityAsset("IEVP", species)}
                   alt="Personality guide"
                   className="h-44 w-44 object-contain drop-shadow-[0_18px_30px_rgba(52,34,20,.16)]"
                 />
@@ -259,10 +247,7 @@ export default function QuizPage() {
         <main className="relative overflow-hidden rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-[0_24px_70px_rgba(52,34,20,.08)] sm:p-8 lg:min-h-[560px]">
           <div className="pointer-events-none absolute -right-10 bottom-0 hidden h-56 w-56 sm:block">
             <img
-              src={personalityAssetPath(species, stage.file)}
-              onError={(event) => {
-                event.currentTarget.src = fallbackCatPath(stage.file);
-              }}
+              src={getPersonalityAsset(stage.code, species)}
               alt=""
               className="h-full w-full object-contain drop-shadow-[0_22px_36px_rgba(52,34,20,.18)]"
             />
@@ -318,10 +303,7 @@ export default function QuizPage() {
               <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Behavior map</h2>
             </div>
             <img
-              src={personalityAssetPath(species, helperStage.file)}
-              onError={(event) => {
-                event.currentTarget.src = fallbackCatPath(helperStage.file);
-              }}
+              src={getPersonalityAsset(helperStage.code, species)}
               alt=""
               className="h-20 w-20 object-contain drop-shadow-[0_18px_30px_rgba(255,122,26,.2)]"
             />

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import HeaderAccountActions from "@/components/HeaderAccountActions";
 import LanguageSelector from "@/components/LanguageSelector";
+import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 
 
 const premiumFreeUntil = new Date("2026-08-15T23:59:59+08:00").getTime();
@@ -109,18 +110,18 @@ const methodDecorations = [
 ] as const;
 
 const catPersonalityTypes = [
-  { image: "/assets/personalities/cats/01-explorer-cat.webp", code: "IEVP", name: "Explorer", desc: "Curious", tint: "bg-[#f7eadc]" },
-  { image: "/assets/personalities/cats/02-guardian-cat.webp", code: "ASVG", name: "Guardian", desc: "Loyal", tint: "bg-[#edf0f2]" },
-  { image: "/assets/personalities/cats/03-dreamer-cat.webp", code: "ISCP", name: "Dreamer", desc: "Gentle", tint: "bg-[#ece7f8]" },
-  { image: "/assets/personalities/cats/04-maverick-cat.webp", code: "IEVG", name: "Maverick", desc: "Independent", tint: "bg-[#f2e2d6]" },
-  { image: "/assets/personalities/cats/05-scholar-cat.webp", code: "IECG", name: "Scholar", desc: "Thoughtful", tint: "bg-[#e8ece8]" },
-  { image: "/assets/personalities/cats/06-leader-cat.webp", code: "AEVG", name: "Leader", desc: "Confident", tint: "bg-[#f7e3d5]" },
-  { image: "/assets/personalities/cats/07-companion-cat.webp", code: "ASCP", name: "Companion", desc: "Affectionate", tint: "bg-[#e8eee3]" },
-  { image: "/assets/personalities/cats/08-healer-cat.webp", code: "ASCG", name: "Healer", desc: "Caring", tint: "bg-[#e7eee4]" },
-  { image: "/assets/personalities/cats/09-sunny-cat.webp", code: "AEVP", name: "Sunny", desc: "Optimistic", tint: "bg-[#fff0c9]" },
-  { image: "/assets/personalities/cats/10-sentinel-cat.webp", code: "ISCG", name: "Sentinel", desc: "Watchful", tint: "bg-[#e7e3df]" },
-  { image: "/assets/personalities/cats/11-player-cat.webp", code: "AECP", name: "Player", desc: "Playful", tint: "bg-[#f7e0db]" },
-  { image: "/assets/personalities/cats/12-noble-cat.webp", code: "ISVG", name: "Noble", desc: "Graceful", tint: "bg-[#f8e2e6]" },
+  { species: "cat", code: "IEVP", name: "Explorer", desc: "Curious", tint: "bg-[#f7eadc]" },
+  { species: "dog", code: "ASVG", name: "Guardian", desc: "Loyal", tint: "bg-[#edf0f2]" },
+  { species: "cat", code: "ISCP", name: "Dreamer", desc: "Gentle", tint: "bg-[#ece7f8]" },
+  { species: "dog", code: "IEVG", name: "Maverick", desc: "Independent", tint: "bg-[#f2e2d6]" },
+  { species: "cat", code: "IECG", name: "Scholar", desc: "Thoughtful", tint: "bg-[#e8ece8]" },
+  { species: "dog", code: "AEVG", name: "Leader", desc: "Confident", tint: "bg-[#f7e3d5]" },
+  { species: "cat", code: "ASCP", name: "Companion", desc: "Affectionate", tint: "bg-[#e8eee3]" },
+  { species: "dog", code: "ASCG", name: "Healer", desc: "Caring", tint: "bg-[#e7eee4]" },
+  { species: "cat", code: "AEVP", name: "Sunny", desc: "Optimistic", tint: "bg-[#fff0c9]" },
+  { species: "dog", code: "ISCG", name: "Sentinel", desc: "Watchful", tint: "bg-[#e7e3df]" },
+  { species: "cat", code: "AECP", name: "Player", desc: "Playful", tint: "bg-[#f7e0db]" },
+  { species: "dog", code: "ISVG", name: "Noble", desc: "Graceful", tint: "bg-[#f8e2e6]" },
 ] as const;
 
 const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
@@ -134,12 +135,12 @@ const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
 );
 
 
-const PersonalityShowcaseCard = ({ image, code, name, desc, tint }: { image: string; code: string; name: string; desc: string; tint: string }) => (
+const PersonalityShowcaseCard = ({ species, code, name, desc, tint }: { species: PetSpecies; code: string; name: string; desc: string; tint: string }) => (
   <article className="min-w-0 overflow-hidden rounded-[1.8rem] border border-[#eaded2] bg-white shadow-[0_20px_55px_rgba(52,34,20,.08)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_26px_65px_rgba(52,34,20,.13)]">
     <div className={"relative h-40 overflow-hidden sm:h-44 " + tint}>
       <Image
-        src={image}
-        alt={code + " " + name + " Cat personality character"}
+        src={getPersonalityAsset(code, species)}
+        alt={code + " " + name + " " + (species === "dog" ? "dog" : "cat") + " personality character"}
         fill
         unoptimized
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 17vw"
