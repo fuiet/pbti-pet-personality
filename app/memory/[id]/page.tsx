@@ -87,7 +87,7 @@ export default function MemoryBookPage({ params }: { params: Promise<{ id: strin
           onClick={() => router.push("/create")}
           className="mt-4 rounded-full bg-[#ff7a1a] px-8 py-3 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"
         >
-          Included in Early Access
+          Create another memory
         </button>
       </div>
 

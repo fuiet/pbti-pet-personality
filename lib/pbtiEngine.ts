@@ -36,9 +36,9 @@ export interface PBTIResult {
 const MODEL_VERSION = "PBTI Behavior Model v2.0";
 
 export const researchBasis = [
-  "Cat dimensions are informed by Feline Five research: neuroticism, extraversion, dominance, impulsiveness, and agreeableness.",
-  "Dog dimensions are informed by validated owner-observed dog behavior instruments such as C-BARQ and dog personality trait research.",
-  "PBTI is a behavior-based indicator, not a medical diagnosis. Owner-observed daily behavior drives the result; breed, age, and photo context personalize the report.",
+  "Feline Five research: owner-rated cat personality work identified Neuroticism, Extraversion, Dominance, Impulsiveness, and Agreeableness as reliable factors. PBTI uses this as conceptual background, not as a direct scoring copy.",
+  "C-BARQ research: a validated owner/handler dog behavior instrument covering domains such as attachment and attention-seeking, fear, excitability, trainability, chasing, and energy. PBTI is not C-BARQ and does not use its population norms.",
+  "PBTI evidence policy: repeated owner-observed behavior drives the personality result; photo analysis is a separate visible-trait layer and must not be used to infer real personality, health, or ancestry.",
 ];
 
 export const dimensionDefinitions: Omit<DimensionScore, "value">[] = [

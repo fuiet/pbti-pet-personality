@@ -20,18 +20,19 @@ function getCountdownParts() {
 }
 
 function PremiumCountdown() {
-  const [timeLeft, setTimeLeft] = useState(getCountdownParts);
+  const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getCountdownParts> | null>(null);
 
   useEffect(() => {
+    setTimeLeft(getCountdownParts());
     const timer = window.setInterval(() => setTimeLeft(getCountdownParts()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
   const parts = [
-    { label: "Days", value: timeLeft.days },
-    { label: "Hours", value: timeLeft.hours },
-    { label: "Minutes", value: timeLeft.minutes },
-    { label: "Seconds", value: timeLeft.seconds },
+    { label: "Days", value: timeLeft?.days ?? 0 },
+    { label: "Hours", value: timeLeft?.hours ?? 0 },
+    { label: "Minutes", value: timeLeft?.minutes ?? 0 },
+    { label: "Seconds", value: timeLeft?.seconds ?? 0 },
   ];
 
   return (
@@ -79,17 +80,17 @@ const researchPillars = [
   {
     label: "Cat basis",
     title: "Feline Five trait map",
-    body: "Uses owner-observed cat traits from the Feline Five framework: sociability, neuroticism, impulsiveness, dominance, and agreeableness. PBTI translates them into comfort with people, sensitivity to change, activity level, confidence, and tolerance.",
+    body: "Uses owner-observed cat personality research as conceptual background. PBTI uses related behavior cues, but does not reproduce the Feline Five scale or claim equivalent validation.",
   },
   {
     label: "Dog basis",
     title: "C-BARQ behavior signals",
-    body: "Uses the same observation style as canine behavior questionnaires such as C-BARQ: social contact, fearfulness, excitability, trainability, play behavior, attachment, and vigilance. These become behavior clues rather than breed stereotypes.",
+    body: "Uses everyday behavior cues related to domains measured by instruments such as C-BARQ. PBTI is a separate educational model and does not use C-BARQ norms or diagnose behavior problems.",
   },
   {
     label: "PBTI scoring",
     title: "4 axes, 12 prototypes",
-    body: "The 36 answers are scored on A/I, E/S, V/C, and P/G. The final profile is selected by matching the pet's four-axis pattern to twelve fixed prototypes shared across cats and dogs.",
+    body: "The 36 answers are scored on A/I, E/S, V/C, and P/G, then matched to twelve custom prototypes shared across cats and dogs.",
   },
 ] as const;
 const methodDecorations = [
@@ -350,7 +351,6 @@ export default function Home() {
             <Link href="/" className="transition hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
             <a href="#method" className="transition hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</a>
             <Link href="/types" className="transition hover:text-[#ff7a1a]">{"\u6027\u683c\u5206\u7c7b"}</Link>
-            <Link href="/premium" className="transition hover:text-[#ff7a1a]">Early Access</Link>
             <Link href="/account" className="transition hover:text-[#ff7a1a]">{"\u7528\u6237\u4e2d\u5fc3"}</Link>
           </div>
           <div className="flex items-center gap-3">
@@ -364,7 +364,7 @@ export default function Home() {
         <div className="relative z-10">
           <h1 className="max-w-3xl text-[54px] font-black leading-[.92] tracking-[-.07em] text-[#171514] md:text-[78px]">
             Discover who they really are
-            <span className="mt-3 block text-[#ff7a1a]">Science-backed, thoughtful, and fun</span>
+            <span className="mt-3 block text-[#ff7a1a]">Research-informed, thoughtful, and fun</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#655a51]">
             PBTI turns pet behavior research into a clear personality readout with a 36-question assessment, a 12-type framework, a deep report, and portrait-style share cards.

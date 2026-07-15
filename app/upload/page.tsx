@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { getLatestPetRecord, getPetRecord, updatePetPhoto, type PetRecord } from "@/lib/pbtiRecords";
+import { getLatestPetRecord, getPetRecord, updatePetPhotos, updatePetPhoto, type PetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import type { PetVisualProfile } from "@/lib/visualProfile";
 
@@ -128,8 +128,9 @@ export default function UploadPage() {
         }
 
         setPet(record);
-        setPreview(record.photo_url || "");
-        setPhotoPreviews(record.photo_url ? [record.photo_url] : []);
+        const savedPhotos = record.photo_urls?.length ? record.photo_urls : record.photo_url ? [record.photo_url] : [];
+        setPreview(savedPhotos[0] || "");
+        setPhotoPreviews(savedPhotos);
         setAnalysisState("idle");
         setAnalysisProgress(0);
       } catch {
@@ -250,7 +251,7 @@ export default function UploadPage() {
     }
 
     try {
-      await updatePetPhoto(pet.id, primaryPhoto);
+      await updatePetPhotos(pet.id, usableUrls);
     } catch {
       setError("Unable to save the front photo right now. You can continue and try again later.");
       analysisAttemptedKeyRef.current = nextPhotoSetKey;

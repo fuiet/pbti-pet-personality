@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
-import { listCurrentUserResults, type ResultRecord } from "@/lib/pbtiRecords";
+import { listCurrentUserPortraits, listCurrentUserResults, type PetPortraitRecord, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
 function formatDate(value: string) {
@@ -21,6 +21,7 @@ function speciesLabel(species?: string) {
 export default function AccountPage() {
   const { user, loading: authLoading } = useRequireAuth();
   const [records, setRecords] = useState<ResultRecord[]>([]);
+  const [portraits, setPortraits] = useState<PetPortraitRecord[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
 
   useEffect(() => {
@@ -28,12 +29,18 @@ export default function AccountPage() {
 
     let active = true;
 
-    listCurrentUserResults()
-      .then((results) => {
-        if (active) setRecords(results);
+    Promise.all([listCurrentUserResults(), listCurrentUserPortraits()])
+      .then(([results, savedPortraits]) => {
+        if (active) {
+          setRecords(results);
+          setPortraits(savedPortraits);
+        }
       })
       .catch(() => {
-        if (active) setRecords([]);
+        if (active) {
+          setRecords([]);
+          setPortraits([]);
+        }
       })
       .finally(() => {
         if (active) setLoadingRecords(false);
@@ -158,22 +165,14 @@ export default function AccountPage() {
             <p className="mt-3 text-sm leading-7 text-white/72">
               Generated portrait posters will appear here so users can revisit, download, and share them.
             </p>
-            <div className="mt-5 grid gap-3">
-              {records.slice(0, 3).map((record) => {
-                const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
-
-                return (
-                  <Link key={record.id} href={`/report/${record.pbti_id}`} className="rounded-2xl border border-white/10 bg-white/8 p-4 transition hover:bg-white/12">
-                    <div className="text-sm font-black">{record.pet?.name || "Unnamed pet"}</div>
-                    <div className="mt-1 text-xs text-white/62">{personality.code} / {personality.name} portrait pack</div>
-                  </Link>
-                );
-              })}
-              {records.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-white/8 p-4 text-sm text-white/64">
-                  No poster assets yet.
-                </div>
-              ) : null}
+            <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
+              {portraits.slice(0, 6).map((portrait) => (
+                <a key={portrait.id} href={portrait.image_url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-2xl border border-white/10 bg-white/8 transition hover:bg-white/12">
+                  <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="aspect-[4/5] w-full object-cover transition group-hover:scale-[1.02]" />
+                  <div className="p-3 text-xs font-black text-white/78">{portrait.style_name}</div>
+                </a>
+              ))}
+              {portraits.length === 0 ? <div className="rounded-2xl border border-white/10 bg-white/8 p-4 text-sm text-white/64 sm:col-span-3 lg:col-span-2">No generated portraits yet. Open a report to create your first three.</div> : null}
             </div>
           </section>
 
@@ -185,9 +184,6 @@ export default function AccountPage() {
               </Link>
               <Link href="/types" className="rounded-2xl bg-[#f7f0e8] px-5 py-4 text-sm font-black text-[#4f463f]">
                 Explore 12 personality types
-              </Link>
-              <Link href="/premium" className="rounded-2xl bg-[#f7f0e8] px-5 py-4 text-sm font-black text-[#4f463f]">
-                View early access benefits
               </Link>
             </div>
           </section>

@@ -5,21 +5,21 @@ export const runtime = "edge";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
-import { generatePetReport } from "@/lib/reportGenerator";
-import { getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
+import { dimensionScoresFromTraitScores, generatePetReport } from "@/lib/reportGenerator";
+import { getLatestVisualProfileForPet, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
+import type { PetVisualProfile } from "@/lib/visualProfile";
 import ShareCard from "@/components/ShareCard";
+import PortraitGenerator from "@/components/PortraitGenerator";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
-function scoreValue(scores: Record<string, number>, key: string, fallback: number) {
-  const value = scores[key];
-  return typeof value === "number" ? value : fallback;
-}
+
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { loading: authLoading } = useRequireAuth();
   const [record, setRecord] = useState<ResultRecord | null>(null);
+  const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,17 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           return;
         }
 
+        let visual: PetVisualProfile | null = null;
+        if (saved.pet?.id) {
+          try {
+            visual = await getLatestVisualProfileForPet(saved.pet.id);
+          } catch {
+            // A missing visual profile should not block the behavior report.
+          }
+        }
+
         setRecord(saved);
+        setVisualProfile(visual);
       } catch {
         if (active) {
           router.replace("/dashboard");
@@ -62,23 +72,20 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
   const scores = record.scores || {};
-  const rawTotal = (scores.A || 0) + (scores.I || 0) + (scores.E || 0) + (scores.S || 0) + (scores.V || 0) + (scores.C || 0) + (scores.P || 0) + (scores.G || 0) || 1;
-  const report = record.report || generatePetReport({
+  const dimensionScores = dimensionScoresFromTraitScores(scores);
+  const generatedReport = generatePetReport({
     petName: record.pet.name,
     pbtiType: personality.code,
     personalityName: personality.name,
     traits: personality.traits,
     advice: personality.advice,
-    dimensionScores: {
-      attachment: scoreValue(scores, "attachment", Math.round(((scores.A || 0) / rawTotal) * 100)),
-      exploration: scoreValue(scores, "exploration", Math.round(((scores.E || 0) / rawTotal) * 100)),
-      vitality: scoreValue(scores, "vitality", Math.round(((scores.V || 0) / rawTotal) * 100)),
-      playfulness: scoreValue(scores, "playfulness", Math.round(((scores.P || 0) / rawTotal) * 100)),
-    },
+    dimensionScores,
     fitScore: scores.fit,
     modelVersion: "PBTI Behavior Model v2.0",
     modelCue: personality.modelCue,
+    visualProfile,
   });
+  const report = { ...generatedReport, answers: record.report?.answers };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
@@ -110,14 +117,56 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-3 text-lg font-bold text-[#171514]">Methodology</h3>
+        <h3 className="mb-3 text-lg font-bold text-[#171514]">Research Basis</h3>
         <p className="text-sm leading-7 text-[#655a51]">{report.methodology}</p>
-        {report.confidence ? <p className="mt-3 text-sm font-black text-[#d96612]">{report.confidence}</p> : null}
+        <ul className="mt-4 space-y-3">
+          {(report.researchBasis || []).map((basis) => (
+            <li key={basis} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ff7a1a]" />
+              {basis}
+            </li>
+          ))}
+        </ul>
+        {report.fitIndex ? <p className="mt-4 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-black leading-6 text-[#d96612]">{report.fitIndex}</p> : null}
+      </div>
+
+      <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
+        <h3 className="mb-3 text-lg font-bold text-[#171514]">Custom Model Boundary</h3>
+        <ul className="space-y-3">
+          {(report.modelBoundary || []).map((boundary) => (
+            <li key={boundary} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#d8c3b2]" />
+              {boundary}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
         <h3 className="mb-3 text-lg font-bold text-[#171514]">Appearance Analysis</h3>
         <p className="text-sm leading-7 text-[#655a51]">{report.appearance}</p>
+        {report.visualAnalysis ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-[#fff7ed] p-4">
+              <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">Breed estimate</div>
+              <div className="mt-2 font-bold text-[#171514]">{report.visualAnalysis.breedAssessment.primaryBreed}</div>
+              <div className="mt-1 text-sm text-[#655a51]">{report.visualAnalysis.breedAssessment.variety}</div>
+            </div>
+            <div className="rounded-2xl bg-[#fff7ed] p-4">
+              <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">Mixed-breed likelihood</div>
+              <div className="mt-2 font-bold capitalize text-[#171514]">{report.visualAnalysis.breedAssessment.mixedLikelihood}</div>
+            </div>
+            <div className="rounded-2xl bg-[#fff7ed] p-4">
+              <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">Visible coat</div>
+              <div className="mt-2 text-sm leading-6 text-[#655a51]">{[report.visualAnalysis.coat.color, report.visualAnalysis.coat.length, report.visualAnalysis.coat.pattern, report.visualAnalysis.coat.texture].filter((value) => value !== "unclear").join(", ") || "Unclear"}</div>
+            </div>
+            <div className="rounded-2xl bg-[#fff7ed] p-4">
+              <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">Photo quality</div>
+              <div className="mt-2 font-bold text-[#171514]">{report.visualAnalysis.photoQuality.score}/100</div>
+              {report.visualAnalysis.photoQuality.issues.length ? <div className="mt-1 text-sm leading-6 text-[#655a51]">{report.visualAnalysis.photoQuality.issues.join(", ")}</div> : null}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
@@ -146,15 +195,18 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       <div className="mt-6 rounded-3xl border border-[#ff7a1a]/30 bg-gradient-to-br from-[#fff0e4] to-white p-6 text-center shadow-sm">
         <div className="text-3xl font-black text-[#ff7a1a]">PBTI</div>
-        <h3 className="mt-3 text-xl font-bold text-[#171514]">Launch Month Premium Included</h3>
-        <p className="mt-2 text-sm text-[#655a51]">Full report access, portrait poster assets, and multi-pet profile tools are free for early users this month.</p>
-        <button
-          onClick={() => router.push("/premium")}
-          className="mt-4 rounded-full bg-[#ff7a1a] px-8 py-3 font-black text-white shadow-[0_12px_28px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"
-        >
-          Early access is active
-        </button>
+        <h3 className="mt-3 text-xl font-bold text-[#171514]">Your complete report is included</h3>
+        <p className="mt-2 text-sm text-[#655a51]">This report includes the full behavior analysis, visual notes, care guidance, and portrait-ready materials for {record.pet.name}.</p>
+
       </div>
+
+      <PortraitGenerator
+        petId={record.pet.id}
+        resultId={record.pbti_id}
+        petName={record.pet.name}
+        pbtiCode={personality.code}
+        personalityName={personality.name}
+      />
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button

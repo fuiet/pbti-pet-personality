@@ -8,7 +8,7 @@ const VISUAL_MODEL_PROVIDER = process.env.VISUAL_MODEL_PROVIDER || "qwen";
 const QWEN_MODEL = process.env.QWEN_MODEL || "qwen-vl-plus";
 const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
-const visualProfilePrompt = (species: "cat" | "dog" | "unknown") => `Analyze this ${species} photo for PBTI Visual Model v1.
+const visualProfilePrompt = (species: "cat" | "dog" | "unknown") => `Analyze these reference photos of the same ${species} for PBTI Visual Model v1.
 
 Return strict JSON only, with no markdown, no code fence, and exactly these top-level fields:
 {
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 
     const { data: pet, error: petError } = await supabase
       .from("pets")
-      .select("id,user_id,species,photo_url")
+      .select("*")
       .eq("id", petId)
       .eq("user_id", userResult.user.id)
       .maybeSingle();
@@ -140,9 +140,10 @@ export async function POST(request: Request) {
 
 const dashscopeKey = process.env.DASHSCOPE_API_KEY;
     const species = pet.species === "dog" ? "dog" : pet.species === "cat" ? "cat" : "unknown";
-    const photoUrl = typeof imageUrl === "string" && imageUrl ? imageUrl : pet.photo_url;
+    const savedPhotos = Array.isArray(pet.photo_urls) ? pet.photo_urls.filter(Boolean).slice(0, 3) : [];
+    const photoSources = typeof imageUrl === "string" && imageUrl ? [imageUrl] : savedPhotos.length ? savedPhotos : pet.photo_url ? [pet.photo_url] : [];
 
-    if (!photoUrl || typeof photoUrl !== "string") {
+    if (!photoSources.length) {
       return NextResponse.json({ error: "A pet photo is required before visual analysis." }, { status: 400 });
     }
 
@@ -165,7 +166,7 @@ const dashscopeKey = process.env.DASHSCOPE_API_KEY;
             role: "user",
             content: [
               { type: "text", text: visualProfilePrompt(species) },
-              { type: "image_url", image_url: { url: photoUrl } },
+              ...photoSources.map((url: string) => ({ type: "image_url", image_url: { url } })),
             ],
           },
         ],

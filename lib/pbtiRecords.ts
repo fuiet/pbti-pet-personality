@@ -12,6 +12,7 @@ export interface PetRecord {
   breed: string | null;
   age: string | null;
   photo_url: string | null;
+  photo_urls: string[];
   created_at: string;
 }
 
@@ -37,6 +38,13 @@ export interface PetProfileInput {
   breed?: string;
   age?: string;
 }
+export interface PetPortraitRecord {
+  id: string;
+  pet_id: string;
+  style_name: string;
+  image_url: string;
+  created_at: string;
+}
 export interface PetVisualProfileRecord extends PetVisualProfile {
   id: string;
   pet_id: string;
@@ -61,7 +69,7 @@ interface RawVisualProfileRecord {
 }
 
 
-const PET_COLUMNS_FULL = "id,user_id,name,species,breed,age,photo_url,created_at";
+const PET_COLUMNS_FULL = "id,user_id,name,species,breed,age,photo_url,photo_urls,created_at";
 const PET_COLUMNS_NO_AGE = "id,user_id,name,species,breed,photo_url,created_at";
 const PET_COLUMNS_MINIMAL = "id,user_id,name,species,breed,created_at";
 const RESULT_COLUMNS_FULL =
@@ -77,7 +85,7 @@ const RESULT_COLUMNS_RECORD_NO_REPORT = "id,pbti_id,personality_type,scores,crea
 
 function isPetSchemaColumnError(error: { message?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
-  const mentionsPetOptionalColumn = message.includes("age") || message.includes("photo_url");
+  const mentionsPetOptionalColumn = message.includes("age") || message.includes("photo_url") || message.includes("photo_urls");
 
   return (
     mentionsPetOptionalColumn &&
@@ -121,6 +129,7 @@ function normalizePetRow(row: PetRecord): PetRecord {
     breed: row.breed ?? null,
     age: row.age ?? null,
     photo_url: row.photo_url ?? null,
+    photo_urls: Array.isArray((row as any).photo_urls) ? (row as any).photo_urls.filter(Boolean) : row.photo_url ? [row.photo_url] : [],
   };
 }
 
@@ -244,25 +253,33 @@ export async function getLatestPetRecord() {
   return response.data ? normalizePetRow(response.data as PetRecord) : null;
 }
 
-export async function updatePetPhoto(petId: string, photoUrl: string | null) {
+export async function updatePetPhotos(petId: string, photoUrls: string[]) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
+  const normalizedUrls = photoUrls.filter(Boolean).slice(0, 3);
 
   const { error } = await supabase
     .from("pets")
-    .update({ photo_url: photoUrl })
+    .update({ photo_url: normalizedUrls[0] || null, photo_urls: normalizedUrls })
     .eq("id", petId)
     .eq("user_id", user.id);
 
   if (error && isPetSchemaColumnError(error)) {
+    const fallback = await supabase
+      .from("pets")
+      .update({ photo_url: normalizedUrls[0] || null })
+      .eq("id", petId)
+      .eq("user_id", user.id);
+    if (fallback.error && !isPetSchemaColumnError(fallback.error)) throw new Error(fallback.error.message);
     return;
   }
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 }
 
+export async function updatePetPhoto(petId: string, photoUrl: string | null) {
+  return updatePetPhotos(petId, photoUrl ? [photoUrl] : []);
+}
 function isMissingVisualProfilesTable(error: { message?: string; code?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
   return error?.code === "42P01" || message.includes("pet_visual_profiles") || message.includes("schema cache");
@@ -335,6 +352,13 @@ export async function savePersonalityResult(
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
+  let visualProfile: PetVisualProfile | null = null;
+  try {
+    visualProfile = await getLatestVisualProfileForPet(pet.id);
+  } catch {
+    // Visual analysis is optional; it must not prevent behavior results from being saved.
+  }
+
   const reportInput: ReportInput = {
     petName: pet.name,
     pbtiType: result.code,
@@ -345,6 +369,7 @@ export async function savePersonalityResult(
     fitScore: result.fitScore,
     modelVersion: result.modelVersion,
     modelCue: result.personality.modelCue,
+    visualProfile,
   };
 
   const report = {
@@ -607,4 +632,23 @@ export async function listCurrentUserResults() {
   return ((response.data || []) as RawResultRecord[])
     .map(normalizeResultRow)
     .filter((record) => record.pet?.user_id === user.id);
+}
+
+export async function listCurrentUserPortraits() {
+  const user = await requireCurrentUser();
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("pet_portraits")
+    .select("id,pet_id,style_name,image_url,created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    const message = error.message?.toLowerCase() || "";
+    if (error.code === "42P01" || message.includes("pet_portraits") || message.includes("schema cache")) return [];
+    throw new Error(error.message);
+  }
+
+  return (data || []) as PetPortraitRecord[];
 }

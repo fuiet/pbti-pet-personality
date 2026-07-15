@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import PersonalityCard from "@/components/PersonalityCard";
-import { generatePetReport } from "@/lib/reportGenerator";
+import { dimensionScoresFromTraitScores, generatePetReport } from "@/lib/reportGenerator";
 import { getLatestResultForCurrentUser, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
@@ -13,10 +13,7 @@ function getResultIdFromLocation() {
   return new URLSearchParams(window.location.search).get("resultId");
 }
 
-function scoreValue(scores: Record<string, number>, key: string, fallback: number) {
-  const value = scores[key];
-  return typeof value === "number" ? value : fallback;
-}
+
 
 export default function ResultPage() {
   const router = useRouter();
@@ -70,19 +67,14 @@ export default function ResultPage() {
 
   const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
   const scores = record.scores || {};
-  const rawTotal = (scores.A || 0) + (scores.I || 0) + (scores.E || 0) + (scores.S || 0) + (scores.V || 0) + (scores.C || 0) + (scores.P || 0) + (scores.G || 0) || 1;
+  const dimensionScores = dimensionScoresFromTraitScores(scores);
   const report = record.report || generatePetReport({
     petName: record.pet.name,
     pbtiType: personality.code,
     personalityName: personality.name,
     traits: personality.traits,
     advice: personality.advice,
-    dimensionScores: {
-      attachment: scoreValue(scores, "attachment", Math.round(((scores.A || 0) / rawTotal) * 100)),
-      exploration: scoreValue(scores, "exploration", Math.round(((scores.E || 0) / rawTotal) * 100)),
-      vitality: scoreValue(scores, "vitality", Math.round(((scores.V || 0) / rawTotal) * 100)),
-      playfulness: scoreValue(scores, "playfulness", Math.round(((scores.P || 0) / rawTotal) * 100)),
-    },
+    dimensionScores,
     fitScore: scores.fit,
     modelVersion: "PBTI Behavior Model v2.0",
     modelCue: personality.modelCue,
@@ -131,15 +123,15 @@ export default function ResultPage() {
             {record.pet.breed ? ` - ${record.pet.breed}` : ""}
           </p>
           <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-[#655a51]">{report.summary}</p>
-          {scores.fit ? <div className="mt-5 inline-flex rounded-full bg-[#fff0e4] px-4 py-2 text-sm font-black text-[#d96612]">{scores.fit}% profile match</div> : null}
+          {scores.fit ? <div className="mt-5 inline-flex rounded-full bg-[#fff0e4] px-4 py-2 text-sm font-black text-[#d96612]">Prototype fit index: {scores.fit}/100</div> : null}
         </div>
       </section>
 
       <section className="mt-6 rounded-[2rem] border border-[#ff7a1a]/25 bg-[#171514] p-6 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)] sm:p-8">
-        <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Launch month premium access</div>
-        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Your full 10+ page report is open</h2>
+        <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Complete report included</div>
+        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Your full 10+ page report is ready</h2>
         <p className="mt-3 text-sm leading-7 text-white/72">
-          Premium is free during the launch month. Deep reports, photo-based appearance notes, care guidance, portrait posters, and multi-pet profiles are included for early users.
+          Your complete report includes behavior patterns, photo-based appearance notes, care guidance, relationship insights, and portrait-ready materials.
         </p>
         <div className="mt-6 grid gap-2 sm:grid-cols-2">
           {premiumSections.map((section, index) => (
@@ -150,18 +142,18 @@ export default function ResultPage() {
           ))}
         </div>
         <button
-          onClick={() => router.push("/premium")}
+          onClick={() => router.push(`/report/${record.pbti_id}`)}
           className="mt-7 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] sm:w-auto"
         >
-          View full report access
+          Open full report
         </button>
       </section>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={() => router.push("/premium")}
+          onClick={() => router.push(`/report/${record.pbti_id}`)}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          View early access details
+          View complete report
         </button>
         <button
           onClick={() => router.push("/dashboard")}
