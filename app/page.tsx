@@ -109,18 +109,18 @@ const methodDecorations = [
 ] as const;
 
 const catPersonalityTypes = [
-  { image: "/assets/personalities/cats/01-explorer-cat.webp", name: "Explorer", desc: "Curious", tint: "bg-[#f7eadc]" },
-  { image: "/assets/personalities/cats/02-guardian-cat.webp", name: "Guardian", desc: "Loyal", tint: "bg-[#edf0f2]" },
-  { image: "/assets/personalities/cats/03-dreamer-cat.webp", name: "Dreamer", desc: "Gentle", tint: "bg-[#ece7f8]" },
-  { image: "/assets/personalities/cats/04-maverick-cat.webp", name: "Maverick", desc: "Independent", tint: "bg-[#f2e2d6]" },
-  { image: "/assets/personalities/cats/05-scholar-cat.webp", name: "Scholar", desc: "Thoughtful", tint: "bg-[#e8ece8]" },
-  { image: "/assets/personalities/cats/06-leader-cat.webp", name: "Leader", desc: "Confident", tint: "bg-[#f7e3d5]" },
-  { image: "/assets/personalities/cats/07-companion-cat.webp", name: "Companion", desc: "Affectionate", tint: "bg-[#e8eee3]" },
-  { image: "/assets/personalities/cats/08-healer-cat.webp", name: "Healer", desc: "Caring", tint: "bg-[#e7eee4]" },
-  { image: "/assets/personalities/cats/09-sunny-cat.webp", name: "Sunny", desc: "Optimistic", tint: "bg-[#fff0c9]" },
-  { image: "/assets/personalities/cats/10-sentinel-cat.webp", name: "Sentinel", desc: "Watchful", tint: "bg-[#e7e3df]" },
-  { image: "/assets/personalities/cats/11-player-cat.webp", name: "Player", desc: "Playful", tint: "bg-[#f7e0db]" },
-  { image: "/assets/personalities/cats/12-noble-cat.webp", name: "Noble", desc: "Graceful", tint: "bg-[#f8e2e6]" },
+  { image: "/assets/personalities/cats/01-explorer-cat.webp", code: "IEVP", name: "Explorer", desc: "Curious", tint: "bg-[#f7eadc]" },
+  { image: "/assets/personalities/cats/02-guardian-cat.webp", code: "ASVG", name: "Guardian", desc: "Loyal", tint: "bg-[#edf0f2]" },
+  { image: "/assets/personalities/cats/03-dreamer-cat.webp", code: "ISCP", name: "Dreamer", desc: "Gentle", tint: "bg-[#ece7f8]" },
+  { image: "/assets/personalities/cats/04-maverick-cat.webp", code: "IEVG", name: "Maverick", desc: "Independent", tint: "bg-[#f2e2d6]" },
+  { image: "/assets/personalities/cats/05-scholar-cat.webp", code: "IECG", name: "Scholar", desc: "Thoughtful", tint: "bg-[#e8ece8]" },
+  { image: "/assets/personalities/cats/06-leader-cat.webp", code: "AEVG", name: "Leader", desc: "Confident", tint: "bg-[#f7e3d5]" },
+  { image: "/assets/personalities/cats/07-companion-cat.webp", code: "ASCP", name: "Companion", desc: "Affectionate", tint: "bg-[#e8eee3]" },
+  { image: "/assets/personalities/cats/08-healer-cat.webp", code: "ASCG", name: "Healer", desc: "Caring", tint: "bg-[#e7eee4]" },
+  { image: "/assets/personalities/cats/09-sunny-cat.webp", code: "AEVP", name: "Sunny", desc: "Optimistic", tint: "bg-[#fff0c9]" },
+  { image: "/assets/personalities/cats/10-sentinel-cat.webp", code: "ISCG", name: "Sentinel", desc: "Watchful", tint: "bg-[#e7e3df]" },
+  { image: "/assets/personalities/cats/11-player-cat.webp", code: "AECP", name: "Player", desc: "Playful", tint: "bg-[#f7e0db]" },
+  { image: "/assets/personalities/cats/12-noble-cat.webp", code: "ISVG", name: "Noble", desc: "Graceful", tint: "bg-[#f8e2e6]" },
 ] as const;
 
 const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
@@ -134,12 +134,12 @@ const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
 );
 
 
-const PersonalityShowcaseCard = ({ image, name, desc, tint }: { image: string; name: string; desc: string; tint: string }) => (
+const PersonalityShowcaseCard = ({ image, code, name, desc, tint }: { image: string; code: string; name: string; desc: string; tint: string }) => (
   <article className="min-w-0 overflow-hidden rounded-[1.8rem] border border-[#eaded2] bg-white shadow-[0_20px_55px_rgba(52,34,20,.08)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_26px_65px_rgba(52,34,20,.13)]">
-    <div className={`relative h-40 overflow-hidden sm:h-44 ${tint}`}>
+    <div className={"relative h-40 overflow-hidden sm:h-44 " + tint}>
       <Image
         src={image}
-        alt={`${name} Cat personality character`}
+        alt={code + " " + name + " Cat personality character"}
         fill
         unoptimized
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 17vw"
@@ -147,8 +147,9 @@ const PersonalityShowcaseCard = ({ image, name, desc, tint }: { image: string; n
       />
     </div>
     <div className="p-5 text-center">
-      <div className="text-lg font-black tracking-[-.03em] text-[#171514]">{name}</div>
-      <div className="mt-1 text-sm text-[#7a6d63]">{desc}</div>
+      <div className="text-2xl font-black tracking-[.08em] text-[#171514]">{code}</div>
+      <div className="mt-1 text-sm font-black text-[#7a6d63]">{name}</div>
+      <div className="mt-1 text-xs text-[#9a8a7d]">{desc}</div>
     </div>
   </article>
 );
@@ -267,7 +268,7 @@ function SampleResultPreview() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">PBTI report</div>
-                <h3 className="mt-2 text-3xl font-black tracking-[-.05em] text-[#171514]">Guardian</h3>
+                <div className="mt-2 text-xs font-black uppercase tracking-[.16em] text-[#d96612]">ASVG</div><h3 className="mt-1 text-3xl font-black tracking-[-.05em] text-[#171514]">Guardian</h3>
                 <p className="mt-2 text-sm leading-6 text-[#655a51]">Steady, loyal, and happiest when their world feels familiar.</p>
               </div>
               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[1.2rem] bg-[#edf0f2]">
