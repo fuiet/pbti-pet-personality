@@ -11,6 +11,59 @@ type AnalysisState = "idle" | "background" | "complete";
 const REQUIRED_PHOTO_COUNT = 3;
 const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Assigning PBTI visual tags"];
 
+
+const MAX_UPLOAD_IMAGE_EDGE = 1600;
+const MAX_UPLOAD_DATA_URL_BYTES = 1_200_000;
+const IMAGE_QUALITY_STEPS = [0.82, 0.74, 0.66, 0.58];
+
+function estimateDataUrlBytes(dataUrl: string) {
+  const commaIndex = dataUrl.indexOf(",");
+  const payload = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+  return Math.ceil((payload.length * 3) / 4);
+}
+
+function loadImageFromFile(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Unable to read image file."));
+    reader.onload = () => {
+      const image = new window.Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Unable to load image file."));
+      image.src = typeof reader.result === "string" ? reader.result : "";
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressImageFile(file: File) {
+  const image = await loadImageFromFile(file);
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const scale = Math.min(1, MAX_UPLOAD_IMAGE_EDGE / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Unable to prepare image compression.");
+  }
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  let bestDataUrl = canvas.toDataURL("image/jpeg", IMAGE_QUALITY_STEPS[0]);
+  for (const quality of IMAGE_QUALITY_STEPS.slice(1)) {
+    if (estimateDataUrlBytes(bestDataUrl) <= MAX_UPLOAD_DATA_URL_BYTES) break;
+    bestDataUrl = canvas.toDataURL("image/jpeg", quality);
+  }
+
+  return bestDataUrl;
+}
 const photoRequirements = [
   { label: "Front face", detail: "Clear front-facing face photo" },
   { label: "Left side", detail: "Left profile / body angle" },
@@ -164,16 +217,14 @@ export default function UploadPage() {
 
     if (!files.length) return;
 
-    const dataUrls = await Promise.all(
-      files.map(
-        (file) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (event) => resolve(typeof event.target?.result === "string" ? event.target.result : "");
-            reader.readAsDataURL(file);
-          })
-      )
-    );
+    let dataUrls: string[];
+
+    try {
+      dataUrls = await Promise.all(files.map((file) => compressImageFile(file)));
+    } catch {
+      setError("Unable to compress one of the photos. Please try a clearer JPG or PNG image.");
+      return;
+    }
 
     const newPhotoUrls = dataUrls.filter(Boolean);
     const usableUrls = photoPreviews.length >= REQUIRED_PHOTO_COUNT
@@ -361,7 +412,7 @@ export default function UploadPage() {
                       </div>
                     ))}
                   </div>
-                  <p className="mt-4 text-xs font-semibold text-[#a3968a]">JPG, PNG or WebP up to 10MB each. Incomplete or unclear photos may affect identification and test results.</p>
+                  <p className="mt-4 text-xs font-semibold text-[#a3968a]">JPG, PNG or WebP up to 10MB each. Large photos are compressed automatically before analysis. Incomplete or unclear photos may affect identification and test results.</p>
                 </div>
               )}
             </div>
