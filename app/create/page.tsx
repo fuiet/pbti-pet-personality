@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 import { createPetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
@@ -107,22 +108,26 @@ const ageOptions = [
 
 const createPageDecorations = [
   {
-    image: "/assets/personalities/cats/02-guardian-cat.webp",
+    code: "ASVG",
+    species: "cat",
     className: "left-[7%] top-24 w-28 -rotate-12 md:w-36",
   },
   {
-    image: "/assets/personalities/dogs/01-explorer-dog.png",
+    code: "IEVP",
+    species: "dog",
     className: "right-[8%] top-36 w-32 rotate-6 md:w-44",
   },
   {
-    image: "/assets/personalities/cats/03-dreamer-cat.webp",
+    code: "ISCP",
+    species: "cat",
     className: "left-[10%] bottom-12 w-24 rotate-6 md:w-36",
   },
   {
-    image: "/assets/personalities/dogs/11-player-dog.png",
+    code: "AECP",
+    species: "dog",
     className: "right-[14%] bottom-14 w-28 -rotate-6 md:w-40",
   },
-] as const;
+] satisfies ReadonlyArray<{ code: string; species: PetSpecies; className: string }>;
 
 export default function CreatePet() {
   const router = useRouter();
@@ -173,8 +178,8 @@ export default function CreatePet() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,122,26,.10),transparent_28%),radial-gradient(circle_at_85%_28%,rgba(255,184,120,.18),transparent_28%),radial-gradient(circle_at_75%_88%,rgba(255,122,26,.08),transparent_30%)]" />
       {createPageDecorations.map((item) => (
         <img
-          key={item.image}
-          src={item.image}
+          key={`${item.species}-${item.code}`}
+          src={getPersonalityAsset(item.code, item.species)}
           alt=""
           aria-hidden="true"
           className={`pointer-events-none absolute hidden object-contain drop-shadow-[0_22px_35px_rgba(52,34,20,.18)] sm:block ${item.className}`}

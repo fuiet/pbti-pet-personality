@@ -144,3 +144,24 @@ export function choosePortraitStyles(count = 3, random = Math.random) {
 
   return selected;
 }
+
+export function choosePortraitStylesForPet(petId: string, count = 3) {
+  let hash = 2166136261;
+  for (let index = 0; index < petId.length; index += 1) {
+    hash ^= petId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  const pool = [...PORTRAIT_STYLES];
+  const selected: PortraitStyle[] = [];
+  let state = hash >>> 0;
+
+  while (selected.length < Math.min(count, pool.length)) {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    const index = state % pool.length;
+    const [style] = pool.splice(index, 1);
+    if (style) selected.push(style);
+  }
+
+  return selected;
+}

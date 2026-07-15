@@ -25,6 +25,13 @@ function extractImageUrl(data: any) {
   return typeof data?.output?.image === "string" ? data.output.image : null;
 }
 
+function extensionForContentType(contentType: string) {
+  if (contentType.includes("image/png")) return "png";
+  if (contentType.includes("image/webp")) return "webp";
+  if (contentType.includes("image/jpeg")) return "jpg";
+  return "img";
+}
+
 async function savePortraitAsset(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
@@ -41,9 +48,10 @@ async function savePortraitAsset(
     const imageResponse = await fetch(imageUrl);
     if (imageResponse.ok) {
       const bytes = await imageResponse.arrayBuffer();
-      storagePath = `${userId}/${petId}/${crypto.randomUUID()}.png`;
+      const contentType = imageResponse.headers.get("content-type") || "application/octet-stream";
+      storagePath = `${userId}/${petId}/${crypto.randomUUID()}.${extensionForContentType(contentType)}`;
       const upload = await supabase.storage.from(PORTRAIT_BUCKET).upload(storagePath, bytes, {
-        contentType: imageResponse.headers.get("content-type") || "image/png",
+        contentType,
         cacheControl: "31536000",
         upsert: false,
       });
@@ -72,6 +80,18 @@ async function savePortraitAsset(
     })
     .select("id,style_id,style_name,image_url,storage_path,created_at")
     .single();
+
+  if (error?.code === "23505") {
+    if (storagePath) await supabase.storage.from(PORTRAIT_BUCKET).remove([storagePath]);
+    const { data: existing } = await supabase
+      .from("pet_portraits")
+      .select("id,style_id,style_name,image_url,storage_path,created_at")
+      .eq("pet_id", petId)
+      .eq("user_id", userId)
+      .eq("style_id", style.id)
+      .maybeSingle();
+    if (existing) return existing;
+  }
 
   if (error && !isMissingPortraitTable(error)) throw new Error(error.message);
 
@@ -105,6 +125,25 @@ export async function POST(request: Request) {
     const photos = Array.isArray(pet.photo_urls) ? pet.photo_urls.filter(Boolean).slice(0, 3) : [];
     if (!photos.length && typeof pet.photo_url === "string" && pet.photo_url) photos.push(pet.photo_url);
     if (!photos.length) return NextResponse.json({ error: "Upload at least one pet photo before generating portraits." }, { status: 400 });
+
+    if (styleId) {
+      const { data: existing, error: existingError } = await supabase
+        .from("pet_portraits")
+        .select("id,style_id,style_name,image_url,storage_path,created_at")
+        .eq("pet_id", petId)
+        .eq("user_id", user.id)
+        .eq("style_id", styleId)
+        .maybeSingle();
+
+      if (existingError && isMissingPortraitTable(existingError)) {
+        return NextResponse.json({ error: "Portrait persistence is not configured. Run supabase/pet-portraits.sql before generating portraits." }, { status: 503 });
+      }
+      if (existingError) return NextResponse.json({ error: existingError.message }, { status: 500 });
+
+      if (existing) {
+        return NextResponse.json({ portrait: existing, style: { id: existing.style_id, name: existing.style_name }, petName: pet.name, reused: true });
+      }
+    }
 
     const { data: result } = resultId
       ? await supabase.from("personality_results").select("personality_type").eq("pbti_id", resultId).eq("user_id", user.id).maybeSingle()
@@ -164,5 +203,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ portrait: asset, style: { id: style.id, name: style.name }, petName: pet.name });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to generate portrait." }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const petId = new URL(request.url).searchParams.get("petId");
+    if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
+
+    const supabase = await createSupabaseServerClient();
+    const { data: userResult } = await supabase.auth.getUser();
+    const user = userResult.user;
+    if (!user) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+
+    const { data: pet } = await supabase.from("pets").select("id,name").eq("id", petId).eq("user_id", user.id).maybeSingle();
+    if (!pet) return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
+
+    const { data, error } = await supabase
+      .from("pet_portraits")
+      .select("id,style_id,style_name,image_url,storage_path,created_at")
+      .eq("pet_id", petId)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(3);
+
+    if (error && isMissingPortraitTable(error)) return NextResponse.json({ error: "Portrait persistence is not configured. Run supabase/pet-portraits.sql before opening reports." }, { status: 503 });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ portraits: data || [], petName: pet.name });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load portraits." }, { status: 500 });
   }
 }

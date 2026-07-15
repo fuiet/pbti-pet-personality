@@ -12,9 +12,10 @@ const REQUIRED_PHOTO_COUNT = 3;
 const analysisSteps = ["Reading image clarity", "Mapping visual profile", "Assigning PBTI visual tags"];
 
 
-const MAX_UPLOAD_IMAGE_EDGE = 1600;
-const MAX_UPLOAD_DATA_URL_BYTES = 1_200_000;
-const IMAGE_QUALITY_STEPS = [0.82, 0.74, 0.66, 0.58];
+const MAX_UPLOAD_IMAGE_EDGE = 1280;
+const MAX_UPLOAD_DATA_URL_BYTES = 800_000;
+const IMAGE_QUALITY_STEPS = [0.78, 0.68, 0.58, 0.5];
+const ANALYSIS_PROMPT_DELAY_MS = 3000;
 
 function estimateDataUrlBytes(dataUrl: string) {
   const commaIndex = dataUrl.indexOf(",");
@@ -96,6 +97,7 @@ export default function UploadPage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const analysisAttemptedKeyRef = useRef("");
+  const analysisPromptTimerRef = useRef<number | null>(null);
   const { loading: authLoading } = useRequireAuth();
   const [preview, setPreview] = useState<string>("");
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -152,6 +154,14 @@ export default function UploadPage() {
   }, [authLoading, router]);
 
   useEffect(() => {
+    return () => {
+      if (analysisPromptTimerRef.current !== null) {
+        window.clearTimeout(analysisPromptTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (analysisState !== "background") return;
 
     setAnalysisProgress(8);
@@ -175,10 +185,17 @@ export default function UploadPage() {
 
     analysisAttemptedKeyRef.current = photoSetKey;
     setAnalysisState("background");
-    setAnalysisPromptVisible(true);
+    setAnalysisPromptVisible(false);
     setAnalysisProgress(8);
     setVisualProfile(null);
     setVisualFallback(false);
+    if (analysisPromptTimerRef.current !== null) {
+      window.clearTimeout(analysisPromptTimerRef.current);
+    }
+    analysisPromptTimerRef.current = window.setTimeout(() => {
+      setAnalysisPromptVisible(true);
+      analysisPromptTimerRef.current = null;
+    }, ANALYSIS_PROMPT_DELAY_MS);
 
     void fetch("/api/visual-profile", {
       method: "POST",
@@ -202,6 +219,11 @@ export default function UploadPage() {
         setAnalysisState("complete");
       })
       .catch((analysisError) => {
+        if (analysisPromptTimerRef.current !== null) {
+          window.clearTimeout(analysisPromptTimerRef.current);
+          analysisPromptTimerRef.current = null;
+        }
+        setAnalysisPromptVisible(false);
         setAnalysisState("idle");
         setAnalysisProgress(0);
         setError(analysisError instanceof Error ? analysisError.message : "Unable to analyze photo in the background right now.");
@@ -277,6 +299,10 @@ export default function UploadPage() {
   }
 
   async function removePhoto() {
+    if (analysisPromptTimerRef.current !== null) {
+      window.clearTimeout(analysisPromptTimerRef.current);
+      analysisPromptTimerRef.current = null;
+    }
     setPreview("");
     setPhotoPreviews([]);
     setAnalysisState("idle");
@@ -350,7 +376,7 @@ export default function UploadPage() {
 
       {error ? <p className="mb-5 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-semibold text-[#d96612]">{error}</p> : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)] lg:items-stretch">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)] lg:items-start">
         <section
           className={`group relative overflow-hidden rounded-[2rem] border bg-white p-4 shadow-[0_24px_70px_rgba(52,34,20,.08)] transition ${
             dragOver ? "border-[#ff7a1a]" : preview ? "border-[#eaded2]" : "border-[#eaded2] hover:border-[#ff7a1a]/50"
@@ -368,12 +394,12 @@ export default function UploadPage() {
             className="block w-full text-left"
             aria-label="Choose up to 3 pet photos"
           >
-            <div className="relative grid min-h-[430px] place-items-center overflow-hidden rounded-[1.5rem] border border-[#f0dfcf] bg-[#fffaf5]">
+            <div className="relative grid h-[340px] place-items-center overflow-hidden rounded-[1.5rem] border border-[#f0dfcf] bg-[#fffaf5] sm:h-[420px]">
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,122,26,.06)_1px,transparent_1px),linear-gradient(0deg,rgba(255,122,26,.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-80" />
 
               {preview ? (
                 <div className="relative h-full w-full">
-                  <img src={preview} alt="Pet preview" className="h-full min-h-[430px] w-full object-cover" />
+                  <img src={preview} alt="Pet preview" className="h-full w-full object-contain" />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(23,21,20,.08),rgba(23,21,20,.36))]" />
 
                   {analysisState === "background" ? (
@@ -573,7 +599,7 @@ export default function UploadPage() {
         </aside>
       </div>
 
-      {analysisPromptVisible && analysisState === "background" ? (
+      {analysisPromptVisible && (analysisState === "background" || analysisState === "complete") ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#171514]/45 px-5 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[1.75rem] border border-white/10 bg-[#24211f] p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,.28)]">
             <div className="flex items-start gap-4">
@@ -581,9 +607,11 @@ export default function UploadPage() {
                 <CameraIcon className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-xl font-black tracking-[-.035em]">Background analysis is running.</h2>
+                <h2 className="text-xl font-black tracking-[-.035em]">{analysisState === "complete" ? "Photo analysis is ready." : "Background analysis is running."}</h2>
                 <p className="mt-3 text-sm leading-6 text-white/72">
-                  We are identifying breed cues, coat details, facial features, and body structure from your photos. You can continue to the behavior test now; visual findings will appear in the final report.
+                  {analysisState === "complete"
+                    ? "We finished reviewing breed cues, coat details, facial features, and body structure. Your visual findings will appear in the final report."
+                    : "We are identifying breed cues, coat details, facial features, and body structure from your photos. You can continue to the behavior test now; visual findings will appear in the final report."}
                 </p>
               </div>
             </div>

@@ -79,6 +79,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const dimensionScores = dimensionScoresFromTraitScores(scores);
   const generatedReport = generatePetReport({
     petName: record.pet.name,
+    species,
     pbtiType: personality.code,
     personalityName: personality.name,
     traits: personality.traits,
@@ -131,33 +132,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-3 text-lg font-bold text-[#171514]">Research Basis</h3>
-        <p className="text-sm leading-7 text-[#655a51]">{report.methodology}</p>
-        <ul className="mt-4 space-y-3">
-          {(report.researchBasis || []).map((basis) => (
-            <li key={basis} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
-              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ff7a1a]" />
-              {basis}
-            </li>
-          ))}
-        </ul>
-        {report.fitIndex ? <p className="mt-4 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-black leading-6 text-[#d96612]">{report.fitIndex}</p> : null}
-      </div>
-
-      <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-3 text-lg font-bold text-[#171514]">Custom Model Boundary</h3>
-        <ul className="space-y-3">
-          {(report.modelBoundary || []).map((boundary) => (
-            <li key={boundary} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
-              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#d8c3b2]" />
-              {boundary}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
-        <h3 className="mb-3 text-lg font-bold text-[#171514]">Appearance Analysis</h3>
+        <h3 className="mb-3 text-lg font-bold text-[#171514]">Pet Identification</h3>
         <p className="text-sm leading-7 text-[#655a51]">{report.appearance}</p>
         {report.visualAnalysis ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -175,9 +150,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               <div className="mt-2 text-sm leading-6 text-[#655a51]">{[report.visualAnalysis.coat.color, report.visualAnalysis.coat.length, report.visualAnalysis.coat.pattern, report.visualAnalysis.coat.texture].filter((value) => value !== "unclear").join(", ") || "Unclear"}</div>
             </div>
             <div className="rounded-2xl bg-[#fff7ed] p-4">
-              <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">Photo quality</div>
-              <div className="mt-2 font-bold text-[#171514]">{report.visualAnalysis.photoQuality.score}/100</div>
-              {report.visualAnalysis.photoQuality.issues.length ? <div className="mt-1 text-sm leading-6 text-[#655a51]">{report.visualAnalysis.photoQuality.issues.join(", ")}</div> : null}
+              <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">Face and structure</div>
+              <div className="mt-2 text-sm leading-6 text-[#655a51]">{report.visualAnalysis.face.muzzleShape}; {report.visualAnalysis.face.eyeExpression} eyes; {report.visualAnalysis.face.earPosition} ears; {report.visualAnalysis.bodyLanguage.posture} posture.</div>
             </div>
           </div>
         ) : null}
@@ -185,23 +159,27 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
         <h3 className="mb-3 text-lg font-bold text-[#171514]">Love Language</h3>
-        <p className="text-sm leading-7 text-[#655a51]">{report.loveLanguage}</p>
+        <div className="space-y-5">
+          {report.loveLanguage.map((section) => <div key={section.title}><h4 className="text-sm font-black text-[#4f463f]">{section.title}</h4><p className="mt-1 text-sm leading-7 text-[#655a51]">{section.body}</p></div>)}
+        </div>
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
         <h3 className="mb-3 text-lg font-bold text-[#171514]">Relationship</h3>
-        <p className="text-sm leading-7 text-[#655a51]">{report.relationship}</p>
+        <div className="space-y-5">
+          {report.relationship.map((section) => <div key={section.title}><h4 className="text-sm font-black text-[#4f463f]">{section.title}</h4><p className="mt-1 text-sm leading-7 text-[#655a51]">{section.body}</p></div>)}
+        </div>
       </div>
 
       <div className="mt-4 rounded-3xl border border-[#eaded2] bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-lg font-bold text-[#171514]">Recommendations</h3>
         <ul className="space-y-3">
           {report.recommendations.map((rec, index) => (
-            <li key={index} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
+            <li key={rec.title} className="flex items-start gap-3 text-sm leading-6 text-[#655a51]">
               <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#fff0e4] text-xs text-[#ff7a1a]">
                 {index + 1}
               </span>
-              {rec}
+              <div><h4 className="font-black text-[#4f463f]">{rec.title}</h4><p className="mt-1 leading-7">{rec.detail}</p></div>
             </li>
           ))}
         </ul>
@@ -221,6 +199,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         pbtiCode={personality.code}
         personalityName={personality.name}
       />
+
+      <div className="mt-6 rounded-3xl border border-[#eaded2] bg-[#fffaf5] p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-[#171514]">Important notice</h3>
+        <div className="mt-3 space-y-3 text-sm leading-7 text-[#655a51]">
+          <p>This service provides reference-only breed and appearance identification. It does not verify an animal&apos;s origin, ownership, breeding history, or the legality of keeping, rehoming, or trading the animal. Please comply with all applicable laws and animal-welfare requirements and make responsible decisions that respect life.</p>
+          <p className="font-bold text-[#4f463f]">Never abandon a pet. Every companion animal deserves a safe, stable, and caring home for life.</p>
+          <p>Health and care content is general educational information about feeding, husbandry, and everyday wellness. It is not a veterinary diagnosis, consultation, prescription, or treatment plan and cannot replace an in-person examination by a qualified veterinarian. Seek veterinary care promptly if a pet is unwell, injured, or shows sudden physical or behavioral changes.</p>
+        </div>
+      </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button

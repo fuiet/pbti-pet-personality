@@ -15,7 +15,8 @@ function isAllowedImageUrl(value: string) {
 }
 
 export async function GET(request: Request) {
-  const value = new URL(request.url).searchParams.get("url");
+  const requestUrl = new URL(request.url);
+  const value = requestUrl.searchParams.get("url");
   if (!value || !isAllowedImageUrl(value)) {
     return NextResponse.json({ error: "Unsupported portrait source." }, { status: 400 });
   }
@@ -25,11 +26,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Portrait source could not be loaded." }, { status: 502 });
   }
 
-  return new NextResponse(response.body, {
-    headers: {
+  const headers: Record<string, string> = {
       "Cache-Control": "public, max-age=3600",
       "Content-Type": response.headers.get("content-type") || "image/png",
       "Access-Control-Allow-Origin": "*",
-    },
+  };
+  const contentLength = response.headers.get("content-length");
+  if (contentLength) headers["Content-Length"] = contentLength;
+  if (requestUrl.searchParams.get("download") === "1") {
+    const filename = (requestUrl.searchParams.get("filename") || "portrait-original-4K")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .slice(0, 100);
+    headers["Content-Disposition"] = `attachment; filename="${filename}"`;
+  }
+
+  return new NextResponse(response.body, {
+    headers,
   });
 }

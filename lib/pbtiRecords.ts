@@ -44,6 +44,7 @@ export interface PetPortraitRecord {
   style_name: string;
   image_url: string;
   created_at: string;
+  pet?: { id: string; name: string; species: "cat" | "dog" } | null;
 }
 export interface PetVisualProfileRecord extends PetVisualProfile {
   id: string;
@@ -639,7 +640,7 @@ export async function listCurrentUserPortraits() {
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("pet_portraits")
-    .select("id,pet_id,style_name,image_url,created_at")
+    .select("id,pet_id,style_name,image_url,created_at,pet:pets(id,name,species)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(12);
@@ -650,5 +651,8 @@ export async function listCurrentUserPortraits() {
     throw new Error(error.message);
   }
 
-  return (data || []) as PetPortraitRecord[];
+  return (data || []).map((row) => ({
+    ...row,
+    pet: Array.isArray(row.pet) ? row.pet[0] || null : row.pet || null,
+  })) as PetPortraitRecord[];
 }

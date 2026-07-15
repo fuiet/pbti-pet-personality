@@ -8,6 +8,10 @@ import { getPersonalityAsset } from "@/data/personalityAssets";
 import { listCurrentUserPortraits, listCurrentUserResults, type PetPortraitRecord, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
+type DeleteTarget =
+  | { kind: "report"; recordId: string; petId: string; petName: string }
+  | { kind: "pet"; petId: string; petName: string };
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
@@ -25,6 +29,10 @@ export default function AccountPage() {
   const [records, setRecords] = useState<ResultRecord[]>([]);
   const [portraits, setPortraits] = useState<PetPortraitRecord[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteNotice, setDeleteNotice] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -55,6 +63,41 @@ export default function AccountPage() {
 
   const petCount = useMemo(() => new Set(records.map((record) => record.pet?.id).filter(Boolean)).size, [records]);
   const latestRecord = records[0];
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) return;
+
+    setDeleting(true);
+    setDeleteError("");
+    setDeleteNotice("");
+
+    try {
+      const response = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(deleteTarget.kind === "report"
+          ? { action: "report", recordId: deleteTarget.recordId }
+          : { action: "pet", petId: deleteTarget.petId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "Unable to delete this item.");
+
+      if (deleteTarget.kind === "report") {
+        setRecords((current) => current.filter((record) => record.id !== deleteTarget.recordId));
+        setDeleteNotice(`${deleteTarget.petName}'s report was deleted.`);
+      } else {
+        setRecords((current) => current.filter((record) => record.pet?.id !== deleteTarget.petId));
+        setPortraits((current) => current.filter((portrait) => portrait.pet_id !== deleteTarget.petId));
+        setDeleteNotice(data.storageWarning || `${deleteTarget.petName}'s profile and related records were deleted.`);
+      }
+
+      setDeleteTarget(null);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Unable to delete this item.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   if (authLoading || loadingRecords) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
@@ -112,6 +155,7 @@ export default function AccountPage() {
           </div>
 
           <div className="mt-6 space-y-4">
+            {deleteNotice ? <p className="rounded-2xl bg-[#edf9f1] px-4 py-3 text-sm font-bold text-[#247347]">{deleteNotice}</p> : null}
             {records.length === 0 ? (
               <div className="rounded-[1.5rem] border border-dashed border-[#e5d2bf] bg-[#fff9f2] p-10 text-center">
                 <h3 className="text-2xl font-black text-[#171514]">No saved reports yet</h3>
@@ -161,6 +205,12 @@ export default function AccountPage() {
                         <Link href={`/memory/${record.pbti_id}`} className="rounded-full border border-[#eaded2] px-5 py-2.5 text-xs font-black text-[#4f463f]">
                           Memory
                         </Link>
+                        <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget({ kind: "report", recordId: record.id, petId: pet?.id || "", petName: pet?.name || "This pet" }); }} className="rounded-full border border-[#e7b7aa] px-4 py-2.5 text-xs font-black text-[#b5482e] transition hover:bg-[#fff1ec]">
+                          Delete report
+                        </button>
+                        {pet?.id ? <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget({ kind: "pet", petId: pet.id, petName: pet.name || "This pet" }); }} className="rounded-full bg-[#7d2d1e] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#692416]">
+                          Delete pet
+                        </button> : null}
                       </div>
                     </div>
                   </article>
@@ -181,7 +231,10 @@ export default function AccountPage() {
               {portraits.slice(0, 6).map((portrait) => (
                 <a key={portrait.id} href={portrait.image_url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-2xl border border-white/10 bg-white/8 transition hover:bg-white/12">
                   <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="aspect-[4/5] w-full object-cover transition group-hover:scale-[1.02]" />
-                  <div className="p-3 text-xs font-black text-white/78">{portrait.style_name}</div>
+                  <div className="p-3">
+                    <div className="text-sm font-black text-white">{portrait.pet?.name || "Saved pet"}</div>
+                    <div className="mt-1 text-xs font-bold text-white/58">{portrait.pet?.species === "dog" ? "Dog" : "Cat"} · {portrait.style_name}</div>
+                  </div>
                 </a>
               ))}
               {portraits.length === 0 ? <div className="rounded-2xl border border-white/10 bg-white/8 p-4 text-sm text-white/64 sm:col-span-3 lg:col-span-2">No generated portraits yet. Open a report to create your first three.</div> : null}
@@ -201,6 +254,31 @@ export default function AccountPage() {
           </section>
         </aside>
       </section>
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#171514]/45 px-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+          <div className="w-full max-w-md rounded-[1.75rem] border border-[#eaded2] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,.24)]">
+            <div className="text-xs font-black uppercase tracking-[.16em] text-[#b5482e]">Permanent deletion</div>
+            <h2 id="delete-dialog-title" className="mt-3 text-2xl font-black tracking-[-.04em] text-[#171514]">
+              {deleteTarget.kind === "pet" ? `Delete ${deleteTarget.petName}'s profile?` : `Delete ${deleteTarget.petName}'s report?`}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#655a51]">
+              {deleteTarget.kind === "pet"
+                ? "This permanently removes the pet profile, every related personality report, visual identification, and saved portrait record. Stored portrait files will also be removed when available. This cannot be undone."
+                : "This permanently removes only this personality report. The pet profile and its other reports will remain. This cannot be undone."}
+            </p>
+            {deleteError ? <p className="mt-4 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-bold text-[#b5482e]">{deleteError}</p> : null}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" disabled={deleting} onClick={() => { setDeleteTarget(null); setDeleteError(""); }} className="rounded-full border border-[#eaded2] px-5 py-3 text-sm font-black text-[#4f463f] disabled:opacity-50">
+                Cancel
+              </button>
+              <button type="button" disabled={deleting} onClick={confirmDelete} className="rounded-full bg-[#7d2d1e] px-5 py-3 text-sm font-black text-white transition hover:bg-[#692416] disabled:cursor-wait disabled:opacity-60">
+                {deleting ? "Deleting..." : deleteTarget.kind === "pet" ? "Delete pet and records" : "Delete report"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

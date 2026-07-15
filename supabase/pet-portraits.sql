@@ -12,6 +12,7 @@ create table if not exists public.pet_portraits (
   prompt text not null,
   created_at timestamptz default now()
 );
+create unique index if not exists pet_portraits_pet_style_unique on public.pet_portraits (pet_id, style_id);
 
 grant select, insert, update, delete on public.pet_portraits to authenticated;
 alter table public.pet_portraits enable row level security;
