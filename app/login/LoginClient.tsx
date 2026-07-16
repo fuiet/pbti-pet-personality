@@ -47,6 +47,7 @@ export default function LoginClient() {
     try {
       await signInWithEmail(email.trim(), password);
       router.replace(nextPath);
+      router.refresh();
     } catch (authError) {
       setIsEmailSubmitting(false);
       setError(authError instanceof Error ? authError.message : "Unable to sign in with email.");

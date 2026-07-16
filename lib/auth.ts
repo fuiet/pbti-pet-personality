@@ -45,6 +45,12 @@ function mapUser(user: { id: string; email?: string | null } | null | undefined)
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const supabase = createSupabaseBrowserClient();
+  const { data: sessionData } = await supabase.auth.getSession();
+
+  if (sessionData.session?.user) {
+    return mapUser(sessionData.session.user);
+  }
+
   const { data, error } = await supabase.auth.getUser();
 
   if (error) {

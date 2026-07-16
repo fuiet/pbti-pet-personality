@@ -37,6 +37,14 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getUser();
-  return { response, user: data.user ?? null };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (claimsData?.claims?.sub) {
+    return { response, user: { id: claimsData.claims.sub } };
+  }
+
+  // Page navigation is also protected by client auth checks and database RLS.
+  // Preserve a locally established session when the Auth server or JWKS lookup
+  // is temporarily unavailable instead of bouncing a signed-in user to /login.
+  const { data: sessionData } = await supabase.auth.getSession();
+  return { response, user: sessionData.session?.user ?? null };
 }
