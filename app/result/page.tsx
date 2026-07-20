@@ -85,7 +85,7 @@ export default function ResultPage() {
   });
   const premiumSections = [
     "Four-dimension behavior score breakdown",
-    "36-answer behavior pattern analysis",
+    "28-answer behavior pattern analysis",
     "Visual breed, coat, face, and body identification",
     "Mixed-breed likelihood and appearance notes",
     "Emotional and social style report",

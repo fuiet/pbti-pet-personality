@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import { getPersonalityAsset } from "@/data/personalityAssets";
@@ -168,18 +167,22 @@ export default function AccountPage() {
               records.map((record) => {
                 const personality = personalities[record.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
                 const pet = record.pet;
+                const fallbackArtwork = getPersonalityAsset(personality.code, pet?.species === "dog" ? "dog" : "cat");
+                const uploadedPhoto = pet?.photo_urls?.[0] || pet?.photo_url || "";
 
                 return (
                   <article key={record.id} className="rounded-[1.5rem] border border-[#eaded2] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(52,34,20,.08)]">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-[#fff0e4]">
-                        <Image
-                          src={getPersonalityAsset(personality.code, pet?.species === "dog" ? "dog" : "cat")}
-                          alt={personality.name + " personality artwork"}
-                          fill
-                          unoptimized
-                          sizes="80px"
-                          className="object-contain p-1"
+                        <img
+                          src={uploadedPhoto || fallbackArtwork}
+                          alt={uploadedPhoto ? `${pet?.name || "Pet"}'s uploaded photo` : personality.name + " personality artwork"}
+                          className={`h-full w-full ${uploadedPhoto ? "object-cover" : "object-contain p-1"}`}
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = fallbackArtwork;
+                            event.currentTarget.className = "h-full w-full object-contain p-1";
+                          }}
                         />
                         <span className="absolute bottom-1 left-1 rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-black text-[#d96612]">
                           {speciesLabel(pet?.species)}

@@ -173,7 +173,7 @@ A clean reference for the full PBTI code system. Each profile uses a four-letter
                   <div className="mt-1 text-xs font-black text-[#6b5f55]">Species</div>
                 </div>
                 <div className="rounded-[1rem] bg-white px-3 py-4 shadow-sm">
-                  <div className="text-2xl font-black text-[#ff7a1a]">36</div>
+                  <div className="text-2xl font-black text-[#ff7a1a]">28</div>
                   <div className="mt-1 text-xs font-black text-[#6b5f55]">Signals</div>
                 </div>
               </div>

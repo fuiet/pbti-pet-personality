@@ -64,7 +64,7 @@ const methodSteps = [
   },
   {
     index: "03",
-    title: "36 Behavior Signals",
+    title: "28 Behavior Signals",
     body: "Owner-observed reactions, routines, social contact, novelty response, activity level, and vigilance are mapped into the four PBTI behavior axes.",
     signal: "Behavior scoring",
     badge: "Scoring layer",
@@ -91,7 +91,7 @@ const researchPillars = [
   {
     label: "PBTI scoring",
     title: "4 axes, 12 prototypes",
-    body: "The 36 answers are scored on A/I, E/S, V/C, and P/G, then matched to twelve custom prototypes shared across cats and dogs.",
+    body: "The 28 answers are scored on A/I, E/S, V/C, and P/G, then matched to twelve custom prototypes shared across cats and dogs.",
   },
 ] as const;
 const methodDecorations = [
@@ -157,7 +157,7 @@ const PersonalityShowcaseCard = ({ species, code, name, desc, tint }: { species:
 
 const heroStats = [
   {
-    value: "36",
+    value: "28",
     unit: "questions",
     title: "Behavior assessment",
     body: "Map daily habits, routines, and reactions into a clearer personality baseline.",
@@ -434,21 +434,29 @@ export default function Home() {
             className={`pointer-events-none absolute hidden object-contain drop-shadow-[0_22px_35px_rgba(52,34,20,.18)] sm:block ${item.className}`}
           />
         ))}
-        <div className="relative z-10 mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-          <div className="lg:sticky lg:top-28">
-            <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">PBTI method</div>
-            <h2 className="mt-4 max-w-xl text-5xl font-black leading-[.95] tracking-[-.055em] text-[#171514]">
-              How PBTI turns behavior into a useful report
-            </h2>
-            <p className="mt-5 max-w-lg text-base leading-8 text-[#655a51]">
-              PBTI is a behavior-based personality indicator. It uses owner-observed daily behavior as the scoring source, with breed, age, and photo context used only to personalize the report experience.
-            </p>
-            <div className="mt-8 rounded-[1.35rem] border border-[#eaded2] bg-white p-4 text-sm leading-6 text-[#655a51] shadow-[0_16px_40px_rgba(52,34,20,.06)]">
-              Based on behavior research, not breed stereotypes. Educational indicator only, not a veterinary diagnosis.
+        <div className="relative z-10 mx-auto max-w-7xl px-6 py-16">
+          <div className="grid gap-8 border-b border-[#eaded2] pb-10 lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)] lg:items-end lg:gap-16">
+            <div>
+              <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">PBTI method</div>
+              <h2 className="mt-4 max-w-2xl text-5xl font-black leading-[.95] tracking-[-.055em] text-[#171514]">
+                How PBTI turns behavior into a useful report
+              </h2>
             </div>
-            <div className="mt-4 grid max-w-md grid-cols-3 overflow-hidden rounded-[1.35rem] border border-[#eaded2] bg-white shadow-[0_16px_40px_rgba(52,34,20,.06)]">
+            <div>
+              <p className="text-base leading-8 text-[#655a51]">
+                PBTI is a behavior-based personality indicator. It uses owner-observed daily behavior as the scoring source, with breed, age, and photo context used only to personalize the report experience.
+              </p>
+              <div className="mt-5 rounded-[1.35rem] border border-[#eaded2] bg-white p-4 text-sm leading-6 text-[#655a51] shadow-[0_16px_40px_rgba(52,34,20,.06)]">
+                Based on behavior research, not breed stereotypes. Educational indicator only, not a veterinary diagnosis.
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,.78fr)_minmax(0,1.22fr)] lg:items-stretch lg:gap-10">
+            <div className="flex h-full flex-col">
+              <div className="grid grid-cols-3 overflow-hidden rounded-[1.35rem] border border-[#eaded2] bg-white shadow-[0_16px_40px_rgba(52,34,20,.06)]">
               <div className="border-r border-[#eaded2] p-4">
-                <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">36</div>
+                <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">28</div>
                 <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">questions</div>
               </div>
               <div className="border-r border-[#eaded2] p-4">
@@ -460,7 +468,7 @@ export default function Home() {
                 <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">pages</div>
               </div>
             </div>
-            <div className="mt-5 grid max-w-xl gap-3">
+              <div className="mt-4 grid flex-1 gap-4 lg:grid-rows-3">
               {researchPillars.map((pillar) => (
                 <article key={pillar.title} className="rounded-[1.35rem] border border-[#eaded2] bg-white/92 p-5 shadow-[0_16px_40px_rgba(52,34,20,.05)]">
                   <div className="text-[11px] font-black uppercase tracking-[.14em] text-[#d96612]">{pillar.label}</div>
@@ -471,12 +479,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative lg:pt-14 xl:pt-20">
-            <div className="absolute left-[1.65rem] top-10 hidden h-[calc(100%-5rem)] w-px bg-[#f2d8bf] md:block lg:top-24 xl:top-28" />
+            <div className="relative h-full">
+              <div className="absolute bottom-7 left-[1.65rem] top-7 hidden w-px bg-[#f2d8bf] md:block" />
 
-            <div className="grid gap-4">
+              <div className="grid h-full gap-4 lg:grid-rows-4">
               {methodSteps.map((step) => (
-                <article key={step.index} className="relative rounded-[1.6rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_48px_rgba(52,34,20,.06)] md:ml-14 md:grid md:grid-cols-[1fr_auto] md:items-center md:gap-8">
+                <article key={step.index} className="relative h-full rounded-[1.6rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_48px_rgba(52,34,20,.06)] md:ml-14 md:grid md:grid-cols-[1fr_auto] md:items-center md:gap-8">
                   <div className="absolute -left-14 top-6 hidden h-14 w-14 items-center justify-center rounded-full border border-[#f4d8bd] bg-[#fff3e2] text-sm font-black text-[#ff7a1a] shadow-sm md:flex">
                     {step.index}
                   </div>
@@ -496,6 +504,7 @@ export default function Home() {
               ))}
             </div>
           </div>
+        </div>
         </div>
       </section>
 
