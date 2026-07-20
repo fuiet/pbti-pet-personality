@@ -117,7 +117,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
   };
 }
 
-export async function signUpWithEmail(email: string, password: string, nextPath = "/dashboard"): Promise<EmailAuthResult> {
+export async function signUpWithEmail(email: string, password: string, username: string, nextPath = "/dashboard"): Promise<EmailAuthResult> {
   const supabase = createSupabaseBrowserClient();
   const safeNextPath = normalizeNextPath(nextPath);
   const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`;
@@ -126,6 +126,7 @@ export async function signUpWithEmail(email: string, password: string, nextPath 
     password,
     options: {
       emailRedirectTo,
+      data: { username },
     },
   });
 
@@ -137,39 +138,6 @@ export async function signUpWithEmail(email: string, password: string, nextPath 
     user: mapUser(data.user),
     sessionActive: Boolean(data.session),
   };
-}
-
-export async function sendRegistrationOtp(email: string, username: string) {
-  const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: true,
-      data: { username },
-    },
-  });
-
-  if (error) throw new Error(error.message);
-}
-
-export async function completeRegistrationWithOtp(input: { email: string; token: string; username: string; password: string }): Promise<EmailAuthResult> {
-  const supabase = createSupabaseBrowserClient();
-  const { data: verified, error: verifyError } = await supabase.auth.verifyOtp({
-    email: input.email,
-    token: input.token,
-    type: "email",
-  });
-
-  if (verifyError) throw new Error(verifyError.message);
-  if (!verified.session || !verified.user) throw new Error("Verification did not create an active session.");
-
-  const { data: updated, error: updateError } = await supabase.auth.updateUser({
-    password: input.password,
-    data: { username: input.username },
-  });
-
-  if (updateError) throw new Error(updateError.message);
-  return { user: mapUser(updated.user), sessionActive: true };
 }
 
 export async function signOut() {
