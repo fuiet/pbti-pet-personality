@@ -11,6 +11,7 @@ export interface PetRecord {
   species: "cat" | "dog";
   breed: string | null;
   age: string | null;
+  gender: "male" | "female" | null;
   photo_url: string | null;
   photo_urls: string[];
   created_at: string;
@@ -37,6 +38,7 @@ export interface PetProfileInput {
   species: "cat" | "dog";
   breed?: string;
   age?: string;
+  gender?: "male" | "female";
 }
 export interface PetPortraitRecord {
   id: string;
@@ -86,7 +88,7 @@ const RESULT_COLUMNS_RECORD_NO_REPORT = "id,pbti_id,personality_type,scores,crea
 
 function isPetSchemaColumnError(error: { message?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
-  const mentionsPetOptionalColumn = message.includes("age") || message.includes("photo_url") || message.includes("photo_urls");
+  const mentionsPetOptionalColumn = message.includes("age") || message.includes("gender") || message.includes("photo_url") || message.includes("photo_urls");
 
   return (
     mentionsPetOptionalColumn &&
@@ -95,6 +97,11 @@ function isPetSchemaColumnError(error: { message?: string } | null | undefined) 
       message.includes("column") ||
       message.includes("invalid input syntax"))
   );
+}
+
+function isGenderSchemaColumnError(error: { message?: string } | null | undefined) {
+  const message = error?.message?.toLowerCase() || "";
+  return message.includes("gender") && (message.includes("schema cache") || message.includes("could not find") || message.includes("column"));
 }
 
 function isResultReportSchemaError(error: { message?: string } | null | undefined) {
@@ -129,6 +136,7 @@ function normalizePetRow(row: PetRecord): PetRecord {
     ...row,
     breed: row.breed ?? null,
     age: row.age ?? null,
+    gender: row.gender ?? null,
     photo_url: row.photo_url ?? null,
     photo_urls: Array.isArray((row as any).photo_urls) ? (row as any).photo_urls.filter(Boolean) : row.photo_url ? [row.photo_url] : [],
   };
@@ -160,9 +168,21 @@ export async function createPetRecord(profile: PetProfileInput) {
     .insert({
       ...insertPayload,
       age: profile.age?.trim() || null,
+      gender: profile.gender || null,
     })
     .select(PET_COLUMNS_MINIMAL)
     .single();
+
+  if (response.error && isGenderSchemaColumnError(response.error)) {
+    response = await supabase
+      .from("pets")
+      .insert({
+        ...insertPayload,
+        age: profile.age?.trim() || null,
+      })
+      .select(PET_COLUMNS_MINIMAL)
+      .single();
+  }
 
   if (response.error && isPetSchemaColumnError(response.error)) {
     response = await supabase

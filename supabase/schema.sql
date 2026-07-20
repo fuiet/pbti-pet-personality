@@ -11,6 +11,7 @@ create table pets (
   species text check (species in ('cat','dog')),
   breed text,
   age text,
+  gender text check (gender in ('male', 'female')),
   photo_url text,
   photo_urls jsonb default '[]'::jsonb,
   created_at timestamp default now()

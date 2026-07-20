@@ -140,6 +140,7 @@ export default function CreatePet() {
   const [species, setSpecies] = useState<"cat" | "dog">("cat");
   const [breed, setBreed] = useState("");
   const [age, setAge] = useState("");
+  const [gender, setGender] = useState<"male" | "female" | "">("");
   const [step] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [breedMenuOpen, setBreedMenuOpen] = useState(false);
@@ -167,6 +168,7 @@ export default function CreatePet() {
         species,
         breed: breed.trim(),
         age: age.trim(),
+        gender: gender || undefined,
       });
 
       router.push(`/upload?petId=${pet.id}`);
@@ -313,9 +315,10 @@ export default function CreatePet() {
           </div>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "年龄（选填）" : "Age (optional)"}</label>
-          <div className="relative">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "年龄（选填）" : "Age (optional)"}</label>
+            <div className="relative">
             <input
               value={age}
               onChange={(e) => setAge(e.target.value)}
@@ -354,6 +357,24 @@ export default function CreatePet() {
                 ))}
               </div>
             ) : null}
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "性别（选填）" : "Sex (optional)"}</label>
+            <div className="grid h-[60px] grid-cols-2 gap-2 rounded-2xl border-2 border-[#eaded2] bg-white p-1.5">
+              {(["male", "female"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={gender === option}
+                  onClick={() => setGender((current) => current === option ? "" : option)}
+                  className={`rounded-xl text-sm font-black transition ${gender === option ? "bg-[#ff7a1a] text-white shadow-sm" : "bg-[#fff7ed] text-[#4f463f] hover:bg-[#fff0e4]"}`}
+                >
+                  {option === "male" ? (zh ? "公" : "Male") : (zh ? "母" : "Female")}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

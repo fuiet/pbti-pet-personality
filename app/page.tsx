@@ -173,9 +173,9 @@ const heroStats = [
     icon: "star",
   },
   {
-    value: "10+",
-    unit: "pages",
-    title: "Deep report",
+    value: "10",
+    unit: "chapters",
+    title: "Visual report",
     body: "Turn test signals into readable insights, behavior patterns, and care recommendations.",
     icon: "report",
   },
@@ -202,6 +202,126 @@ const previewTips = [
   "Use calm praise when your pet checks in with you.",
   "Offer puzzle play before guests arrive.",
 ] as const;
+
+const storyScenarios = [
+  { code: "ISCP", species: "cat", owner: "Emma & Mochi", ownerZh: "林晴和麻薯", pet: "Mochi", petZh: "麻薯", body: "I used to think Mochi was distant. The report helped me notice that sharing a room, slow blinking, and choosing the chair beside me were already her way of showing trust.", bodyZh: "以前我总觉得麻薯不够亲人。看完报告才发现，待在同一个房间、慢慢眨眼、主动睡在我旁边的椅子上，原来都是她表达信任的方式。", tag: "Finally understood her affection", tagZh: "终于读懂她的亲近" },
+  { code: "ASVG", species: "dog", owner: "Daniel & Milo", ownerZh: "周屿和麦洛", pet: "Milo", petZh: "麦洛", body: "The result described Milo's need for predictable routines so accurately. Small changes to our leaving-home ritual have made both of us noticeably calmer.", bodyZh: "报告把麦洛对规律和安全感的需要说得很准确。我们只是调整了出门前的固定流程，它的情绪就稳定了很多，我们也轻松多了。", tag: "Found a calmer routine", tagZh: "找到了更安心的相处节奏" },
+  { code: "AECP", species: "cat", owner: "Sophie & Cookie", ownerZh: "许安和曲奇", pet: "Cookie", petZh: "曲奇", body: "Cookie was not being difficult—she needed shorter, more rewarding play. Once we changed the timing, the restless evenings became our favorite part of the day.", bodyZh: "曲奇并不是故意捣乱，她只是需要更短、更有成就感的互动游戏。调整时间以后，原本手忙脚乱的晚上，反而成了我们最期待的相处时刻。", tag: "Turned chaos into connection", tagZh: "把忙乱变成了默契" },
+] as const;
+
+const faqItems = [
+  { q: "How is PBTI different from MBTI?", qZh: "PBTI 和 MBTI 有什么区别？", a: "PBTI is a custom educational indicator for pets. It uses owner-observed animal behavior across four PBTI dimensions and does not apply a human MBTI questionnaire to cats or dogs.", aZh: "PBTI 是面向宠物的自定义教育性行为指标，通过主人对日常行为的观察，在四个 PBTI 维度上计分；它不是把人类 MBTI 问卷直接套用到猫狗身上。" },
+  { q: "How long does the assessment take?", qZh: "完成测试需要多长时间？", a: "The assessment contains 28 questions and usually takes several minutes. Answer from repeated daily behavior rather than one unusual event.", aZh: "测试共 28 道题，通常几分钟可以完成。请根据爱宠长期、反复出现的日常表现作答，不要只参考某一次特殊情况。" },
+  { q: "Is the result scientifically validated?", qZh: "测试结果有科学依据吗？", a: "The item design is informed by owner-observed cat and dog behavior research, including concepts related to Feline Five and C-BARQ. PBTI remains a separate custom model and is not a clinical diagnosis or a validated reproduction of those instruments.", aZh: "题目设计参考了猫狗主人观察型行为研究，包括与 Feline Five 和 C-BARQ 相关的行为概念。但 PBTI 是独立的自定义模型，不是这些量表的复制品，也不属于临床诊断工具。" },
+  { q: "Can photos determine personality or breed with certainty?", qZh: "照片能准确判断性格或品种吗？", a: "No. Photos are used only to describe visible appearance and possible breed cues. Personality comes from the behavior assessment, and visual identification cannot prove ancestry, health, or temperament.", aZh: "不能。照片仅用于描述可见外观和可能的品种线索；性格结果来自行为测试。外观鉴定不能证明血统、健康状况或真实性格。" },
+  { q: "Is PBTI suitable for pets of every age?", qZh: "多大年龄的宠物适合测试？", a: "Most owners can complete it once they have observed stable daily patterns. Very young, newly adopted, unwell, or recently relocated pets may need more observation time before the result is representative.", aZh: "只要主人已经观察到相对稳定的日常行为，大多数年龄阶段都可以测试。幼龄、刚领养、身体不适或刚换环境的宠物，建议多观察一段时间后再作答。" },
+  { q: "Can I create profiles for more than one pet?", qZh: "家里有多只宠物怎么办？", a: "Create a separate profile and answer the assessment independently for each pet. Do not combine the behavior of several animals into one result.", aZh: "请为每只宠物分别建立档案并独立作答，不要把多只宠物的表现混合在同一份测试中。" },
+] as const;
+
+function StoriesAndFaq({ zh }: { zh: boolean }) {
+  const [feedback, setFeedback] = useState({ name: "", petName: "", species: "cat", rating: 5, message: "" });
+  const [savedFeedback, setSavedFeedback] = useState<typeof feedback[]>([]);
+  const [feedbackSent, setFeedbackSent] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("pbti-home-feedback");
+      if (saved) setSavedFeedback(JSON.parse(saved));
+    } catch {
+      // A private browsing policy may disable local storage; the form still works for this visit.
+    }
+  }, []);
+
+  function submitFeedback(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const next = [feedback, ...savedFeedback].slice(0, 6);
+    setSavedFeedback(next);
+    setFeedbackSent(true);
+    setFeedback({ name: "", petName: "", species: "cat", rating: 5, message: "" });
+    try {
+      window.localStorage.setItem("pbti-home-feedback", JSON.stringify(next));
+    } catch {
+      // Keep the newly submitted review in memory when storage is unavailable.
+    }
+  }
+
+  return (
+    <>
+      <section className="border-y border-[#eaded2] bg-white py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "真实用户故事" : "Real user stories"}</div>
+            <h2 className="mt-4 text-4xl font-black tracking-[-.05em] text-[#171514] sm:text-5xl">{zh ? "从日常细节，重新认识它" : "See familiar behavior differently"}</h2>
+            <p className="mt-5 text-base leading-8 text-[#655a51]">{zh ? "从日常行为里发现被忽略的信任、需要和爱。" : "Finding overlooked signs of trust, needs, and affection in everyday behavior."}</p>
+            <p className="mt-3 text-xs text-[#9a8d83]">{zh ? "以下为页面展示用模拟用户故事，正式上线前将替换为经授权的真实反馈。" : "Demo stories for layout preview; they will be replaced with authorized customer feedback before final publication."}</p>
+          </div>
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            {storyScenarios.map((story) => (
+              <article key={story.code} className="rounded-[1.8rem] border border-[#eaded2] bg-[#fffdfb] p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
+                <div className="flex items-center gap-4 border-b border-[#f0e6dc] pb-5">
+                  <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-[#fff0e4]"><Image src={getPersonalityAsset(story.code, story.species)} alt="" fill unoptimized sizes="64px" className="object-contain" /></div>
+                  <div><div className="text-[#ffad00]" aria-label="5 out of 5 stars">★★★★★</div><h3 className="mt-1 text-lg font-black text-[#171514]">{zh ? story.ownerZh : story.owner}</h3><div className="text-xs text-[#8a7c72]">{zh ? `${story.petZh} · ${story.code}` : `${story.pet} · ${story.code}`}</div></div>
+                </div>
+                <div className="mt-5 inline-flex rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-black text-[#d96612]">✓ {zh ? story.tagZh : story.tag}</div>
+                <p className="mt-4 text-sm leading-7 text-[#655a51]">“{zh ? story.bodyZh : story.body}”</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-8 grid overflow-hidden rounded-[1.8rem] border border-[#f0dfc8] bg-gradient-to-r from-[#fff7e8] to-[#f2fff8] sm:grid-cols-3">
+            {[
+              ["247,392", zh ? "累计完成评估" : "Assessments completed"],
+              ["98%", zh ? "模拟满意度" : "Demo satisfaction"],
+              ["1,000,000+", zh ? "行为数据点" : "Behavior data points"],
+            ].map(([value, label]) => <div key={label} className="border-b border-[#f0dfc8] px-6 py-7 text-center last:border-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><div className="text-3xl font-black tracking-tight text-[#ff6b00]">{value}</div><div className="mt-1 text-xs font-bold text-[#655a51]">{label}</div></div>)}
+          </div>
+          <p className="mt-3 text-center text-[11px] text-[#aa9d93]">{zh ? "以上统计数字为当前页面视觉演示数据。" : "Statistics shown above are visual demo data."}</p>
+
+          <div className="mt-16 overflow-hidden rounded-[2rem] border border-[#eaded2] bg-[#171514] text-white shadow-[0_28px_80px_rgba(52,34,20,.14)]">
+            <div className="grid lg:grid-cols-[.9fr_1.1fr]">
+              <div className="relative overflow-hidden border-b border-white/10 p-8 lg:border-b-0 lg:border-r lg:p-10">
+                <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#ff7a1a]/20 blur-3xl" />
+                <div className="relative">
+                  <div className="text-xs font-black uppercase tracking-[.18em] text-[#ff9a4f]">{zh ? "用户反馈" : "Your feedback"}</div>
+                  <h3 className="mt-4 text-3xl font-black tracking-[-.04em]">{zh ? "说说你和爱宠的发现" : "Share what you discovered"}</h3>
+                  <p className="mt-4 text-sm leading-7 text-white/65">{zh ? "你的体验会帮助我们继续改善题目、报告和使用流程。提交后的内容仅保存在当前浏览器中。" : "Your experience helps us improve the questions, report, and journey. Submitted feedback is stored only in this browser."}</p>
+                  {feedbackSent && <div className="mt-6 rounded-2xl border border-[#7ee0b5]/30 bg-[#163c2e] px-5 py-4 text-sm font-bold text-[#a9f2d1]">{zh ? "感谢你的反馈，已经保存到本机。" : "Thank you—your feedback has been saved on this device."}</div>}
+                  {savedFeedback[0] && (
+                    <blockquote className="mt-6 rounded-2xl bg-white/7 p-5">
+                      <div className="text-sm font-black text-[#ffb16f]">{"★".repeat(savedFeedback[0].rating)}</div>
+                      <p className="mt-3 text-sm leading-6 text-white/80">“{savedFeedback[0].message}”</p>
+                      <footer className="mt-3 text-xs text-white/50">{savedFeedback[0].name} · {savedFeedback[0].petName}</footer>
+                    </blockquote>
+                  )}
+                </div>
+              </div>
+
+              <form onSubmit={submitFeedback} className="grid gap-5 bg-[#fffaf5] p-8 text-[#2f2925] sm:grid-cols-2 lg:p-10">
+                <label className="text-sm font-bold">{zh ? "你的称呼" : "Your name"}<input required maxLength={40} value={feedback.name} onChange={(event) => setFeedback({ ...feedback, name: event.target.value })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none transition focus:border-[#ff7a1a] focus:ring-4 focus:ring-[#ff7a1a]/10" placeholder={zh ? "例如：林晴" : "e.g. Emma"} /></label>
+                <label className="text-sm font-bold">{zh ? "爱宠名字" : "Pet's name"}<input required maxLength={40} value={feedback.petName} onChange={(event) => setFeedback({ ...feedback, petName: event.target.value })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none transition focus:border-[#ff7a1a] focus:ring-4 focus:ring-[#ff7a1a]/10" placeholder={zh ? "例如：麻薯" : "e.g. Mochi"} /></label>
+                <label className="text-sm font-bold">{zh ? "物种" : "Species"}<select value={feedback.species} onChange={(event) => setFeedback({ ...feedback, species: event.target.value })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none focus:border-[#ff7a1a]"><option value="cat">{zh ? "猫" : "Cat"}</option><option value="dog">{zh ? "狗" : "Dog"}</option></select></label>
+                <fieldset><legend className="text-sm font-bold">{zh ? "评分" : "Rating"}</legend><div className="mt-2 flex h-[50px] items-center gap-1 rounded-2xl border border-[#e8d8ca] bg-white px-3">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" onClick={() => setFeedback({ ...feedback, rating })} className={`px-1 text-2xl transition hover:scale-110 ${rating <= feedback.rating ? "text-[#ffad00]" : "text-[#d9cec5]"}`} aria-label={`${rating} ${zh ? "星" : "stars"}`}>★</button>)}</div></fieldset>
+                <label className="text-sm font-bold sm:col-span-2">{zh ? "你的反馈" : "Your feedback"}<textarea required minLength={10} maxLength={500} rows={4} value={feedback.message} onChange={(event) => setFeedback({ ...feedback, message: event.target.value })} className="mt-2 w-full resize-none rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium leading-6 outline-none transition focus:border-[#ff7a1a] focus:ring-4 focus:ring-[#ff7a1a]/10" placeholder={zh ? "哪些内容让你更了解它？还有什么可以做得更好？" : "What helped you understand your pet, and what could be better?"} /></label>
+                <div className="flex items-center justify-between gap-4 sm:col-span-2"><span className="text-xs text-[#8a7c72]">{feedback.message.length}/500</span><button type="submit" className="rounded-full bg-[#ff6f12] px-7 py-3 text-sm font-black text-white shadow-[0_12px_30px_rgba(255,111,18,.25)] transition hover:-translate-y-0.5 hover:bg-[#e85e06]">{zh ? "提交评价" : "Submit review"}</button></div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 py-20">
+        <div className="text-center"><div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">FAQ</div><h2 className="mt-4 text-4xl font-black tracking-[-.05em] text-[#171514]">{zh ? "常见问题解答" : "Frequently asked questions"}</h2><p className="mt-4 text-[#7a6d63]">{zh ? "关于测试方法、适用范围和结果边界。" : "Clear answers about the method, suitable use, and result boundaries."}</p></div>
+        <div className="mt-10 divide-y divide-[#eaded2] border-y border-[#eaded2]">
+          {faqItems.map((item) => (
+            <details key={item.q} className="group py-1">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-left text-base font-black text-[#2f2925] marker:content-none"><span>{zh ? item.qZh : item.q}</span><span className="shrink-0 rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-black text-[#ff7a1a] group-open:hidden">{zh ? "展开" : "Open"}</span><span className="hidden shrink-0 rounded-full bg-[#171514] px-3 py-1 text-xs font-black text-white group-open:inline">{zh ? "收起" : "Close"}</span></summary>
+              <p className="max-w-3xl pb-6 pr-12 text-sm leading-7 text-[#655a51]">{zh ? item.aZh : item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
 
 function HeroStatIcon({ kind }: { kind: (typeof heroStats)[number]["icon"] }) {
   const common = "h-7 w-7 text-[#ff7a1a]";
@@ -487,8 +607,8 @@ export default function Home() {
                 <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">{t("common.types")}</div>
               </div>
               <div className="p-4">
-                <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">10+</div>
-                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">{t("common.pages")}</div>
+                <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">10</div>
+                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">{t("common.chapters")}</div>
               </div>
             </div>
               <div className="mt-4 grid flex-1 gap-4 lg:grid-rows-3">
@@ -550,6 +670,8 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      <StoriesAndFaq zh={language === "zh-CN"} />
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="relative overflow-hidden rounded-[2rem] border border-[#eaded2] bg-gradient-to-r from-white via-[#fff0df] to-[#ffd8ad] p-10 shadow-[0_30px_90px_rgba(52,34,20,.1)] md:p-12">

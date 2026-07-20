@@ -142,7 +142,7 @@ export default function ResultPage() {
 
       <section className="mt-6 rounded-[2rem] border border-[#ff7a1a]/25 bg-[#171514] p-6 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)] sm:p-8">
         <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "完整版报告" : "Complete report included"}</div>
-        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">{zh ? "你的完整深度报告已生成" : "Your full 10+ page report is ready"}</h2>
+        <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">{zh ? "你的 10 章深度报告已生成" : "Your 10-chapter visual report is ready"}</h2>
         <p className="mt-3 text-sm leading-7 text-white/72">
           {zh ? "完整报告包含行为模式、爱宠鉴定、养护建议、关系洞察和专属写真素材。" : "Your complete report includes behavior patterns, photo-based appearance notes, care guidance, relationship insights, and portrait-ready materials."}
         </p>

@@ -39,6 +39,7 @@ const messages = {
     "common.questions": "questions",
     "common.types": "types",
     "common.pages": "pages",
+    "common.chapters": "chapters",
   },
   "zh-CN": {
     "language.label": "语言",
@@ -71,6 +72,7 @@ const messages = {
     "common.questions": "道题",
     "common.types": "种类型",
     "common.pages": "页报告",
+    "common.chapters": "章报告",
   },
 } as const;
 

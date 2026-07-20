@@ -45,6 +45,7 @@ export interface ReportSection {
 export interface ReportRecommendation {
   title: string;
   detail: string;
+  basis?: string;
 }
 
 export const modelBoundary = [
@@ -120,6 +121,7 @@ export function generatePetReport(input: ReportInput): PetReport {
     const exploration = scoreText(input.dimensionScores?.exploration, "探索新鲜事物", "熟悉稳定的节奏");
     const vitality = scoreText(input.dimensionScores?.vitality, "积极外放", "冷静克制");
     const playfulness = scoreText(input.dimensionScores?.playfulness, "玩耍互动", "观察与守护");
+    const scoreBasis = (keys: Array<[string, number | undefined]>) => `测试依据：${keys.map(([label, value]) => `${label} ${value ?? 50}%`).join(" + ")}`;
     return {
       summary: `${name} 的行为表现与 ${input.pbtiType} / ${input.personalityName} 类型最接近。这个结果来自主人对日常行为的长期观察，而不是根据品种或某一次特殊表现下结论。`,
       dimensionNarrative: [
@@ -139,11 +141,11 @@ export function generatePetReport(input: ReportInput): PetReport {
         ? `${input.visualProfile.summary} 品种判断仅依据照片中的可见特征，不能作为血统、来源、健康或真实行为的证明。`
         : "目前没有可用的外观鉴定信息；性格结果仍以行为测试为主要依据。",
       recommendations: [
-        { title: "先优化生活环境", detail: "保留稳定的休息区、饮水与进食位置，并确保爱宠随时可以回到不被打扰的安全空间。" },
-        { title: "建立可持续的日常节奏", detail: `${name}${exploration}。一次只调整一项生活安排，并给它足够时间适应。` },
-        { title: "让活动强度匹配它的能量", detail: `${name}${vitality}，同时${playfulness}。选择难度适中的互动，在兴趣下降前结束，并轮换熟悉的活动。` },
-        { title: "观察趋势，而不是单次表现", detail: "持续关注食欲、睡眠、行动、排泄、梳理、叫声和社交变化，并记录行为发生前后的环境与恢复方式。" },
-        { title: "需要时及时寻求专业帮助", detail: "如果身体或行为突然改变、持续异常或影响生活，请尽快联系专业兽医；长期行为困扰可咨询采用正向训练方式的行为专业人士。" },
+        { title: "安排亲近与独处空间", detail: `${name}${attachment}。把主动亲近当作信任信号，也为它保留能够随时退出互动的安静位置。`, basis: scoreBasis([["亲近方式", input.dimensionScores?.attachment]]) },
+        { title: "建立可持续的日常节奏", detail: `${name}${exploration}。一次只调整一项生活安排，并给它足够时间适应。`, basis: scoreBasis([["适应变化", input.dimensionScores?.exploration]]) },
+        { title: "让活动强度匹配它的能量", detail: `${name}${vitality}，同时${playfulness}。选择难度适中的互动，在兴趣下降前结束，并轮换熟悉的活动。`, basis: scoreBasis([["情绪表达", input.dimensionScores?.vitality], ["玩心与守护", input.dimensionScores?.playfulness]]) },
+        { title: "用可预测的方式回应需求", detail: "把进食、活动、休息和互动安排成容易理解的节奏；用奖励和清晰提示引导行为，不因犹豫、害怕或压力信号惩罚它。", basis: scoreBasis([["亲近方式", input.dimensionScores?.attachment], ["适应变化", input.dimensionScores?.exploration]]) },
+        { title: "观察长期变化并及时求助", detail: "持续关注食欲、睡眠、行动、排泄、梳理、叫声和社交变化。若身体或行为突然改变、持续异常或影响生活，请尽快联系专业兽医。", basis: "依据：28 道日常行为观察仅反映性格倾向；健康异常不属于 PBTI 判断范围" },
       ],
       visualAnalysis: input.visualProfile || null,
       fitIndex: input.fitScore !== undefined ? `原型匹配指数：${input.fitScore}/100。该数值表示与 PBTI 原型的相似程度，不是统计置信度或医学诊断。` : undefined,
@@ -159,6 +161,7 @@ export function generatePetReport(input: ReportInput): PetReport {
     const value = input.dimensionScores?.[dimension.key];
     return `${dimension.label}: ${describeScore(value, dimension.leftLabel, dimension.rightLabel)}. Evidence layer: ${dimension.evidence}`;
   });
+  const scoreBasis = (keys: Array<[string, number | undefined]>) => `Assessment basis: ${keys.map(([label, value]) => `${label} ${value ?? 50}%`).join(" + ")}`;
 
   return {
     summary: `${input.petName} matches the ${input.personalityName} profile in the ${input.modelVersion || "PBTI Behavior Model"}. ${input.modelCue || "This profile is assigned from owner-observed behavior patterns rather than breed stereotypes."}`,
@@ -196,12 +199,11 @@ export function generatePetReport(input: ReportInput): PetReport {
         ? `${input.appearance.aura}. Expression: ${input.appearance.expression}. Eyes: ${input.appearance.eyes}.`
         : "No visual profile is available. The behavior assessment remains the primary scoring source.",
     recommendations: [
-      ...input.advice.map((detail, index) => ({ title: index === 0 ? "Start with the environment" : "Support the core personality pattern", detail })),
-      { title: "Create a sustainable daily rhythm", detail: `Balance ${exploration} with reliable rest and recovery time. Change one part of the routine at a time so ${input.petName} can adjust without losing a sense of safety.` },
-      { title: "Match enrichment to energy", detail: `Choose activities that support ${vitality} and ${playfulness}. Keep sessions short enough to finish successfully, rotate familiar options, and reduce difficulty when interest or confidence drops.` },
-      { title: "Protect a true retreat", detail: `Provide a quiet area where ${input.petName} can rest without being followed, handled, photographed, or disturbed. Make food, water, toileting, temperature, and sleeping arrangements appropriate for the species and individual.` },
-      { title: "Observe trends, not isolated moments", detail: `Track appetite, sleep, mobility, toileting, grooming, vocalization, and social behavior over time. Context matters: note what happened before a behavior, how long it lasted, and what helped your pet recover.` },
-      { title: "Know when to seek professional help", detail: `Contact a qualified veterinarian promptly for sudden or persistent physical or behavioral changes. For ongoing behavior concerns, use a credentialed, reward-based behavior professional working alongside veterinary care when appropriate.` },
+      { title: "Balance connection and personal space", detail: `${input.petName} shows ${attachment}. Invite contact, reward voluntary check-ins, and keep an easy retreat available.`, basis: scoreBasis([["Connection", input.dimensionScores?.attachment]]) },
+      { title: "Create a sustainable daily rhythm", detail: `Balance ${exploration} with reliable rest and recovery time. Change one part of the routine at a time so ${input.petName} can adjust without losing a sense of safety.`, basis: scoreBasis([["Adaptability", input.dimensionScores?.exploration]]) },
+      { title: "Match enrichment to energy", detail: `Choose activities that support ${vitality} and ${playfulness}. Keep sessions short enough to finish successfully, rotate familiar options, and reduce difficulty when interest or confidence drops.`, basis: scoreBasis([["Expression", input.dimensionScores?.vitality], ["Play style", input.dimensionScores?.playfulness]]) },
+      { title: "Respond in a predictable way", detail: `Use clear cues and rewards around meals, activity, rest, and interaction. Do not punish hesitation, fear, or stress signals.`, basis: scoreBasis([["Connection", input.dimensionScores?.attachment], ["Adaptability", input.dimensionScores?.exploration]]) },
+      { title: "Observe trends and seek help when needed", detail: `Track appetite, sleep, mobility, toileting, grooming, vocalization, and social behavior over time. Contact a qualified veterinarian promptly for sudden or persistent changes.`, basis: "Basis: the 28 owner-observed behavior items describe personality tendencies only; health changes are outside PBTI's scope" },
     ],
     methodology: `${input.modelVersion || "PBTI Behavior Model"} converts owner-observed behavior into four custom dimensions: Attachment vs Independence, Exploration vs Stability, Vitality vs Composure, and Playfulness vs Guardianship. The item design is informed by cat personality research such as the Feline Five and dog behavior instruments such as C-BARQ, but PBTI does not reproduce those instruments or their norms.`,
     dimensionNarrative,

@@ -33,7 +33,7 @@ Product claims currently used on the site:
 
 - 28 behavior questions
 - 12 personality types
-- 10+ page deep report
+- 10-chapter visual report
 - 3 portrait posters
 
 PBTI is an educational behavior indicator, not a veterinary diagnosis, validated clinical instrument, ancestry test, or legal certification.
