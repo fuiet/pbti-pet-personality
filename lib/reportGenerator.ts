@@ -121,9 +121,14 @@ export function generatePetReport(input: ReportInput): PetReport {
     const exploration = scoreText(input.dimensionScores?.exploration, "探索新鲜事物", "熟悉稳定的节奏");
     const vitality = scoreText(input.dimensionScores?.vitality, "积极外放", "冷静克制");
     const playfulness = scoreText(input.dimensionScores?.playfulness, "玩耍互动", "观察与守护");
+    const speciesLabel = input.species === "dog" ? "狗狗" : "猫咪";
+    const attachmentIdentity = (input.dimensionScores?.attachment ?? 50) >= 55 ? "亲人、重视陪伴" : (input.dimensionScores?.attachment ?? 50) <= 45 ? "独立、有自己的节奏" : "既亲近又懂得享受独处";
+    const explorationIdentity = (input.dimensionScores?.exploration ?? 50) >= 55 ? "好奇心强、乐于探索" : (input.dimensionScores?.exploration ?? 50) <= 45 ? "谨慎稳重、偏爱熟悉环境" : "对新鲜事物保持适度好奇";
+    const vitalityIdentity = (input.dimensionScores?.vitality ?? 50) >= 55 ? "精力充沛，情绪表达直接" : (input.dimensionScores?.vitality ?? 50) <= 45 ? "沉稳安静，习惯先观察再行动" : "活跃与安静之间切换自然";
+    const playIdentity = (input.dimensionScores?.playfulness ?? 50) >= 55 ? "也很享受游戏和共同互动" : (input.dimensionScores?.playfulness ?? 50) <= 45 ? "更擅长专注观察和守护熟悉的人与环境" : "既愿意玩耍，也能保持专注";
     const scoreBasis = (keys: Array<[string, number | undefined]>) => `测试依据：${keys.map(([label, value]) => `${label} ${value ?? 50}%`).join(" + ")}`;
     return {
-      summary: `${name} 的行为表现与 ${input.pbtiType} / ${input.personalityName} 类型最接近。这个结果来自主人对日常行为的长期观察，而不是根据品种或某一次特殊表现下结论。`,
+      summary: `${name} 是一只${attachmentIdentity}，同时${explorationIdentity}的${speciesLabel}。它${vitalityIdentity}，${playIdentity}，是一位很有自己想法的${input.personalityName}。`,
       dimensionNarrative: [
         `亲近方式：${attachment}。`, `适应变化：${exploration}。`, `情绪表达：${vitality}。`, `玩心与守护：${playfulness}。`,
       ],
@@ -157,6 +162,8 @@ export function generatePetReport(input: ReportInput): PetReport {
   const exploration = behavioralPreference(input.dimensionScores?.exploration, "novelty and discovery", "familiarity and predictable routines");
   const vitality = behavioralPreference(input.dimensionScores?.vitality, "active engagement", "calm, measured interaction");
   const playfulness = behavioralPreference(input.dimensionScores?.playfulness, "playful participation", "watchful and purposeful engagement");
+  const attachmentIdentity = (input.dimensionScores?.attachment ?? 50) >= 55 ? "affectionate and connection-oriented" : (input.dimensionScores?.attachment ?? 50) <= 45 ? "independent and comfortable setting its own pace" : "comfortable with both closeness and personal space";
+  const explorationIdentity = (input.dimensionScores?.exploration ?? 50) >= 55 ? "curious and eager to explore" : (input.dimensionScores?.exploration ?? 50) <= 45 ? "steady and happiest with familiar surroundings" : "thoughtfully curious about new experiences";
   const dimensionNarrative = dimensionDefinitions.map((dimension) => {
     const value = input.dimensionScores?.[dimension.key];
     return `${dimension.label}: ${describeScore(value, dimension.leftLabel, dimension.rightLabel)}. Evidence layer: ${dimension.evidence}`;
@@ -164,7 +171,7 @@ export function generatePetReport(input: ReportInput): PetReport {
   const scoreBasis = (keys: Array<[string, number | undefined]>) => `Assessment basis: ${keys.map(([label, value]) => `${label} ${value ?? 50}%`).join(" + ")}`;
 
   return {
-    summary: `${input.petName} matches the ${input.personalityName} profile in the ${input.modelVersion || "PBTI Behavior Model"}. ${input.modelCue || "This profile is assigned from owner-observed behavior patterns rather than breed stereotypes."}`,
+    summary: `${input.petName} is ${attachmentIdentity} and ${explorationIdentity}. This distinctive combination makes this ${speciesLabel} a thoughtful ${input.personalityName} with a character all their own.`,
     loveLanguage: [
       {
         title: "How trust may appear",

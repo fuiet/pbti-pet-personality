@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { choosePortraitStylesForPet, PORTRAIT_STYLES } from "@/lib/portraitPrompts";
+import { choosePortraitStylesForPet, getPortraitStyleDisplayName, PORTRAIT_PROMPT_VERSION, PORTRAIT_STYLES } from "@/lib/portraitPrompts";
 import { useLanguage } from "@/components/LanguageProvider";
 
 type PortraitAsset = { id: string; style_id: string; style_name: string; image_url: string };
@@ -127,11 +127,13 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
         const savedData = await savedResponse.json();
         if (!savedResponse.ok) throw new Error(savedData?.error || "Unable to load saved portraits.");
 
-        const saved = (savedData.portraits || []) as PortraitAsset[];
+        const saved = ((savedData.portraits || []) as PortraitAsset[])
+          .filter((portrait) => portrait.style_id.endsWith(`--${PORTRAIT_PROMPT_VERSION}`) && !portrait.style_id.startsWith("personality-cover-"))
+          .slice(0, 3);
         if (!active) return;
         setPortraits(saved);
 
-        const savedStyleIds = new Set(saved.map((portrait) => portrait.style_id));
+        const savedStyleIds = new Set(saved.map((portrait) => portrait.style_id.split("--")[0]));
         const missingStyles = styles.filter((style) => !savedStyleIds.has(style.id)).slice(0, Math.max(0, 3 - saved.length));
         const completed = [...saved];
 
@@ -139,7 +141,7 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
           const response = await fetch("/api/portraits", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ petId, resultId, styleId: style.id }),
+            body: JSON.stringify({ petId, resultId, styleId: `${style.id}--${PORTRAIT_PROMPT_VERSION}` }),
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data?.error || `Unable to generate ${style.name}.`);
@@ -212,18 +214,21 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {(portraits.length ? portraits : styles).map((item) => {
           const id = "style_id" in item ? item.style_id : item.id;
-          const style = PORTRAIT_STYLES.find((candidate) => candidate.id === id);
+          const baseStyleId = id.split("--")[0];
+          const style = PORTRAIT_STYLES.find((candidate) => candidate.id === baseStyleId);
+          const styleDisplayName = getPortraitStyleDisplayName(id, language, style?.name);
+          const aspectClass = baseStyleId === "white-sketch-avatar" ? "aspect-square" : baseStyleId === "landscape-campaign" ? "aspect-[3/2]" : "aspect-[4/5]";
           const imageUrl = "image_url" in item ? item.image_url : "";
           const portraitRecordId = "image_url" in item ? item.id : "";
           const brandedUrl = portraitRecordId ? compositedUrls[portraitRecordId] : "";
           return (
             <article key={id} className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[.06]">
-              <div className="relative aspect-[4/5] overflow-hidden bg-[#2a2522]">
-                {imageUrl ? <img src={brandedUrl || imageUrl} alt={`${petName} portrait in ${style?.name || "custom"} style`} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center px-5 text-center text-sm font-bold text-white/38">{loading ? (zh ? "正在生成…" : "Generating...") : (zh ? "写真准备中" : "Ready for a new portrait")}</div>}
+              <div className={`relative overflow-hidden bg-[#2a2522] ${aspectClass}`}>
+                {imageUrl ? <img src={brandedUrl || imageUrl} alt={`${petName} ${styleDisplayName}`} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center px-5 text-center text-sm font-bold text-white/38">{loading ? (zh ? "正在生成…" : "Generating...") : (zh ? "写真准备中" : "Ready for a new portrait")}</div>}
                 {imageUrl && !brandedUrl ? <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-black/58 px-3 py-2 text-center text-[10px] font-black text-white backdrop-blur-sm">{zh ? "正在添加名字与 PBTI Logo…" : "Adding name and PBTI logo..."}</div> : null}
               </div>
               <div className="p-4">
-                <div className="text-sm font-black text-white">{style?.name || (zh ? "写真风格" : "Portrait style")}</div>
+                <div className="text-sm font-black text-white">{styleDisplayName}</div>
                 <div className="mt-1 text-xs text-white/48">{pbtiCode} / {personalityName}</div>
                 {imageUrl ? (
                   <div className="mt-4 flex flex-wrap gap-2">

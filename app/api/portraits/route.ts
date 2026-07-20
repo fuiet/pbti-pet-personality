@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { personalities, defaultPersonalityCode } from "@/data/personalities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { buildPortraitPrompt, PORTRAIT_STYLES, type PortraitStyle } from "@/lib/portraitPrompts";
+import { buildPortraitPrompt, PORTRAIT_PROMPT_VERSION, PORTRAIT_STYLES, type PortraitStyle } from "@/lib/portraitPrompts";
 import { normalizeVisualProfile } from "@/lib/visualProfile";
 
 export const runtime = "edge";
@@ -165,7 +165,18 @@ export async function POST(request: Request) {
         })
       : null;
 
-    const style = PORTRAIT_STYLES.find((item) => item.id === styleId) || PORTRAIT_STYLES[Math.floor(Math.random() * PORTRAIT_STYLES.length)];
+    const baseStyleId = typeof styleId === "string" ? styleId.split("--")[0] : undefined;
+    const style: PortraitStyle = typeof styleId === "string" && styleId.startsWith("personality-cover-")
+      ? {
+          id: styleId,
+          name: `${personality.name} Signature Look`,
+          category: "editorial",
+          direction: "A premium full-height personality campaign portrait designed for the right side of a dark report cover. Keep the pet clearly visible from head through front body, use a saturated warm studio background with strong subject separation, and make the assigned personality wardrobe the visual centerpiece.",
+        }
+      : (() => {
+          const selected = PORTRAIT_STYLES.find((item) => item.id === baseStyleId) || PORTRAIT_STYLES[Math.floor(Math.random() * PORTRAIT_STYLES.length)];
+          return styleId?.endsWith(`--${PORTRAIT_PROMPT_VERSION}`) ? { ...selected, id: styleId } : selected;
+        })();
     const prompt = buildPortraitPrompt(style, {
       petName: pet.name,
       species,
@@ -216,8 +227,8 @@ export async function GET(request: Request) {
       .select("id,style_id,style_name,image_url,storage_path,created_at")
       .eq("pet_id", petId)
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(3);
+      .order("created_at", { ascending: false })
+      .limit(12);
 
     if (error && isMissingPortraitTable(error)) return NextResponse.json({ error: "Portrait persistence is not configured. Run supabase/pet-portraits.sql before opening reports." }, { status: 503 });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

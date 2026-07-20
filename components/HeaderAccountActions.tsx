@@ -7,7 +7,7 @@ import { getCurrentUser, signOut, type AuthUser } from "@/lib/auth";
 import { useLanguage } from "@/components/LanguageProvider";
 
 function displayName(user: AuthUser, accountLabel: string) {
-  return user.email || accountLabel;
+  return user.username || user.email || accountLabel;
 }
 
 export default function HeaderAccountActions() {

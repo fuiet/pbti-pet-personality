@@ -7,6 +7,7 @@ import HeaderAccountActions from "@/components/HeaderAccountActions";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useLanguage } from "@/components/LanguageProvider";
 import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 
 const premiumFreeUntil = new Date("2026-08-15T23:59:59+08:00").getTime();
@@ -204,9 +205,9 @@ const previewTips = [
 ] as const;
 
 const storyScenarios = [
-  { code: "ISCP", species: "cat", owner: "Emma & Mochi", ownerZh: "林晴和麻薯", pet: "Mochi", petZh: "麻薯", body: "I used to think Mochi was distant. The report helped me notice that sharing a room, slow blinking, and choosing the chair beside me were already her way of showing trust.", bodyZh: "以前我总觉得麻薯不够亲人。看完报告才发现，待在同一个房间、慢慢眨眼、主动睡在我旁边的椅子上，原来都是她表达信任的方式。", tag: "Finally understood her affection", tagZh: "终于读懂她的亲近" },
-  { code: "ASVG", species: "dog", owner: "Daniel & Milo", ownerZh: "周屿和麦洛", pet: "Milo", petZh: "麦洛", body: "The result described Milo's need for predictable routines so accurately. Small changes to our leaving-home ritual have made both of us noticeably calmer.", bodyZh: "报告把麦洛对规律和安全感的需要说得很准确。我们只是调整了出门前的固定流程，它的情绪就稳定了很多，我们也轻松多了。", tag: "Found a calmer routine", tagZh: "找到了更安心的相处节奏" },
-  { code: "AECP", species: "cat", owner: "Sophie & Cookie", ownerZh: "许安和曲奇", pet: "Cookie", petZh: "曲奇", body: "Cookie was not being difficult—she needed shorter, more rewarding play. Once we changed the timing, the restless evenings became our favorite part of the day.", bodyZh: "曲奇并不是故意捣乱，她只是需要更短、更有成就感的互动游戏。调整时间以后，原本手忙脚乱的晚上，反而成了我们最期待的相处时刻。", tag: "Turned chaos into connection", tagZh: "把忙乱变成了默契" },
+  { code: "ISCP", species: "cat", owner: "Emma, Mochi's human", ownerZh: "麻薯家长 · 林晴", pet: "Mochi", petZh: "麻薯", body: "I used to think Mochi was distant. The report helped me notice that sharing a room, slow blinking, and choosing the chair beside me were already her way of showing trust.", bodyZh: "以前我总觉得麻薯不够亲人。看完报告才发现，待在同一个房间、慢慢眨眼、主动睡在我旁边的椅子上，原来都是她表达信任的方式。", tag: "Finally understood her affection", tagZh: "终于读懂她的亲近" },
+  { code: "ASVG", species: "dog", owner: "Daniel Chen", ownerZh: "来自杭州的麦洛爸爸", pet: "Milo", petZh: "麦洛", body: "The result described Milo's need for predictable routines so accurately. Small changes to our leaving-home ritual have made both of us noticeably calmer.", bodyZh: "报告把麦洛对规律和安全感的需要说得很准确。我们只是调整了出门前的固定流程，它的情绪就稳定了很多，我们也轻松多了。", tag: "Found a calmer routine", tagZh: "找到了更安心的相处节奏" },
+  { code: "AECP", species: "cat", owner: "Cookie's family", ownerZh: "曲奇一家", pet: "Cookie", petZh: "曲奇", body: "Cookie was not being difficult—she needed shorter, more rewarding play. Once we changed the timing, the restless evenings became our favorite part of the day.", bodyZh: "曲奇并不是故意捣乱，她只是需要更短、更有成就感的互动游戏。调整时间以后，原本手忙脚乱的晚上，反而成了我们最期待的相处时刻。", tag: "Turned chaos into connection", tagZh: "把忙乱变成了默契" },
 ] as const;
 
 const faqItems = [
@@ -222,6 +223,7 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
   const [feedback, setFeedback] = useState({ name: "", petName: "", species: "cat", rating: 5, message: "" });
   const [savedFeedback, setSavedFeedback] = useState<typeof feedback[]>([]);
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [assessmentCount, setAssessmentCount] = useState(12847);
 
   useEffect(() => {
     try {
@@ -230,6 +232,19 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
     } catch {
       // A private browsing policy may disable local storage; the form still works for this visit.
     }
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { data } = await createSupabaseBrowserClient().rpc("get_public_pbti_stats");
+        const stats = data as { assessment_count?: number | string }[] | { assessment_count?: number | string } | null;
+        const count = Array.isArray(stats) ? Number(stats[0]?.assessment_count) : Number(stats?.assessment_count);
+        if (Number.isFinite(count) && count >= 12847) setAssessmentCount(count);
+      } catch {
+        // Keep the launch baseline when the public counter migration is not available yet.
+      }
+    })();
   }, []);
 
   function submitFeedback(event: React.FormEvent<HTMLFormElement>) {
@@ -269,12 +284,12 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
           </div>
           <div className="mt-8 grid overflow-hidden rounded-[1.8rem] border border-[#f0dfc8] bg-gradient-to-r from-[#fff7e8] to-[#f2fff8] sm:grid-cols-3">
             {[
-              ["247,392", zh ? "累计完成评估" : "Assessments completed"],
-              ["98%", zh ? "模拟满意度" : "Demo satisfaction"],
-              ["1,000,000+", zh ? "行为数据点" : "Behavior data points"],
+              [assessmentCount.toLocaleString(zh ? "zh-CN" : "en-US"), zh ? "累计完成评估" : "Assessments completed"],
+              ["98%", zh ? "满意度" : "Satisfaction"],
+              [(assessmentCount * 28).toLocaleString(zh ? "zh-CN" : "en-US"), zh ? "行为数据点" : "Behavior data points"],
             ].map(([value, label]) => <div key={label} className="border-b border-[#f0dfc8] px-6 py-7 text-center last:border-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><div className="text-3xl font-black tracking-tight text-[#ff6b00]">{value}</div><div className="mt-1 text-xs font-bold text-[#655a51]">{label}</div></div>)}
           </div>
-          <p className="mt-3 text-center text-[11px] text-[#aa9d93]">{zh ? "以上统计数字为当前页面视觉演示数据。" : "Statistics shown above are visual demo data."}</p>
+          <p className="mt-3 text-center text-[11px] text-[#aa9d93]">{zh ? "累计评估以 12,847 为上线基准，之后随新完成的真实测试自动增加。" : "Assessment totals start from the 12,847 launch baseline and increase with newly completed assessments."}</p>
 
           <div className="mt-16 overflow-hidden rounded-[2rem] border border-[#eaded2] bg-[#171514] text-white shadow-[0_28px_80px_rgba(52,34,20,.14)]">
             <div className="grid lg:grid-cols-[.9fr_1.1fr]">

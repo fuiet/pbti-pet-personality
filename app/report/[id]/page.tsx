@@ -8,11 +8,13 @@ import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import { localizePersonality } from "@/data/personalityLocalization";
 import { getPersonalityAsset } from "@/data/personalityAssets";
+import { getBreedDisplayName } from "@/data/breedLocalization";
 import { dimensionScoresFromTraitScores, generatePetReport } from "@/lib/reportGenerator";
 import { getLatestVisualProfileForPet, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
 import type { PetVisualProfile } from "@/lib/visualProfile";
 import ShareCard from "@/components/ShareCard";
 import PortraitGenerator from "@/components/PortraitGenerator";
+import { PORTRAIT_PROMPT_VERSION } from "@/lib/portraitPrompts";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -23,9 +25,30 @@ const visualTermsZh: Record<string, string> = {
   standing: "站立", sitting: "坐姿", lying: "趴卧", round: "圆润", narrow: "偏窄", broad: "宽阔",
 };
 
+const visualPhrasesZh: Record<string, string> = {
+  "white/silver": "白色与银色",
+  "silver shaded": "银渐层",
+  shaded: "渐层",
+  "dense and plush": "浓密蓬松",
+  "short coat": "短毛",
+  "long coat": "长毛",
+  rounded: "圆润",
+  "large and clear": "大而清澈",
+  "upright and alert": "竖立且警觉",
+  "relaxed and stable": "放松稳定",
+  "relaxed posture": "姿态放松",
+  "balanced body structure": "体态匀称",
+  white: "白色",
+  silver: "银色",
+  dense: "浓密",
+  plush: "蓬松",
+};
+
 function localizeVisualValue(value: string | undefined, zh: boolean) {
   if (!value) return zh ? "暂不明确" : "Unclear";
   if (!zh) return value;
+  const normalized = value.trim().toLowerCase().replaceAll("_", " ");
+  if (visualPhrasesZh[normalized]) return visualPhrasesZh[normalized];
   return value.split(/([,;/])/).map((part) => visualTermsZh[part.trim().toLowerCase().replaceAll(" ", "_")] || part).join("");
 }
 
@@ -54,6 +77,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const [record, setRecord] = useState<ResultRecord | null>(null);
   const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
+  const [coverPortraitUrl, setCoverPortraitUrl] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -99,6 +123,48 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     };
   }, [authLoading, id, router]);
 
+  useEffect(() => {
+    const petId = record?.pet?.id;
+    const resultId = record?.pbti_id;
+    const personalityCode = record?.personality_type;
+    if (!petId || !resultId || !personalityCode) return;
+    const stablePetId = petId;
+    const stableResultId = resultId;
+    const stablePersonalityCode = personalityCode;
+
+    let active = true;
+
+    async function loadCoverPortrait() {
+      try {
+        const response = await fetch(`/api/portraits?petId=${encodeURIComponent(stablePetId)}`);
+        const payload = await response.json();
+        const coverStyleId = `personality-cover-${stablePersonalityCode.toLowerCase()}--${PORTRAIT_PROMPT_VERSION}`;
+        const savedPortrait = Array.isArray(payload?.portraits)
+          ? payload.portraits.find((portrait: { style_id?: string }) => portrait.style_id === coverStyleId)
+          : null;
+        if (active && savedPortrait?.image_url) {
+          setCoverPortraitUrl(savedPortrait.image_url);
+          return;
+        }
+
+        const generatedResponse = await fetch("/api/portraits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ petId: stablePetId, resultId: stableResultId, styleId: coverStyleId }),
+        });
+        const generated = await generatedResponse.json();
+        if (active && generatedResponse.ok && generated?.portrait?.image_url) setCoverPortraitUrl(generated.portrait.image_url);
+      } catch {
+        // Keep the uploaded pet photo visible while the personality portrait is being prepared.
+      }
+    }
+
+    void loadCoverPortrait();
+    return () => {
+      active = false;
+    };
+  }, [record?.pbti_id, record?.personality_type, record?.pet?.id]);
+
   if (authLoading || loadingRecord || !record || !record.pet) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
@@ -107,6 +173,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const displayPersonality = localizePersonality(personality, language);
   const species = record.pet.species === "dog" ? "dog" : "cat";
   const typeArtwork = getPersonalityAsset(personality.code, species);
+  const coverArtworkSource = coverPortraitUrl || record.pet.photo_url || typeArtwork;
+  const coverArtwork = coverArtworkSource.startsWith("/")
+    ? coverArtworkSource
+    : `/api/portraits/asset?url=${encodeURIComponent(coverArtworkSource)}`;
   const scores = record.scores || {};
   const dimensionScores = dimensionScoresFromTraitScores(scores);
   const generatedReport = generatePetReport({
@@ -124,6 +194,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     visualProfile,
   });
   const report = { ...generatedReport, answers: record.report?.answers };
+  const visualBreed = report.visualAnalysis?.breedAssessment.primaryBreed || "";
+  const breedDisplay = getBreedDisplayName(visualBreed, language);
+  const appearanceDescription = zh && report.visualAnalysis
+    ? `${record.pet.name} 从照片中的可见特征来看，较接近${breedDisplay || "暂不明确的品种类型"}。毛发以${localizeVisualValue(report.visualAnalysis.coat.color, true)}为主，毛长为${localizeVisualValue(report.visualAnalysis.coat.length, true)}，整体呈现${localizeVisualValue(report.visualAnalysis.coat.pattern, true)}、${localizeVisualValue(report.visualAnalysis.coat.texture, true)}的特点；脸部轮廓${localizeVisualValue(report.visualAnalysis.face.muzzleShape, true)}，眼神${localizeVisualValue(report.visualAnalysis.face.eyeExpression, true)}，耳位${localizeVisualValue(report.visualAnalysis.face.earPosition, true)}，照片中的体态${localizeVisualValue(report.visualAnalysis.bodyLanguage.posture, true)}。以上结论仅基于照片中的可见外观，不作为血统、来源或健康状况的证明。`
+    : report.appearance;
   const dimensionVisuals = [
     { key: "attachment", code: "A / I", label: zh ? "亲近方式" : "Connection", left: zh ? "亲近" : "Attached", right: zh ? "独立" : "Independent", value: dimensionScores.attachment },
     { key: "exploration", code: "E / S", label: zh ? "适应变化" : "Adaptability", left: zh ? "探索" : "Explore", right: zh ? "稳定" : "Stable", value: dimensionScores.exploration },
@@ -153,8 +228,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             {displayPersonality.traits.map((trait) => <span key={trait} className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-xs font-black text-white/82">{trait}</span>)}
           </div>
         </div>
-        <div className="pointer-events-none absolute -right-4 -bottom-10 h-52 w-52 sm:h-72 sm:w-72">
-          <Image src={typeArtwork} alt="" fill unoptimized sizes="288px" className="object-contain drop-shadow-[0_20px_35px_rgba(255,122,26,.22)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[34%] min-w-52 overflow-hidden sm:w-[38%]">
+          <img src={coverArtwork} alt={`${record.pet.name} ${zh ? "性格造型照" : "personality portrait"}`} className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#171514] via-[#171514]/15 to-transparent" />
         </div>
       </div>
 
@@ -170,7 +246,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <section id="chapter-2" className="scroll-mt-24 rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-sm sm:p-8">
         <ReportHeading number="02" title={zh ? "性格速览" : "Personality at a glance"} subtitle={zh ? "先看结论，再进入测试证据与详细解释。" : "Start with the result, then explore the assessment evidence behind it."} />
         <div className="grid gap-3 sm:grid-cols-4">
-          <div className="rounded-2xl bg-[#171514] p-5 text-white sm:col-span-2">
+          <div className="rounded-2xl bg-[#171514] p-5 text-white">
             <div className="text-xs font-black text-[#ffb878]">PBTI TYPE</div>
             <div className="mt-3 text-3xl font-black">{personality.code}</div>
             <div className="mt-1 text-sm text-white/65">{displayPersonality.name} · {displayPersonality.title}</div>
@@ -182,6 +258,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           <div className="rounded-2xl bg-[#eef9f4] p-5">
             <div className="text-3xl font-black text-[#14835f]">4</div>
             <div className="mt-1 text-xs font-black text-[#547568]">{zh ? "核心行为维度" : "behavior dimensions"}</div>
+          </div>
+          <div className="rounded-2xl bg-[#eef2ff] p-5">
+            <div className="text-lg font-black tracking-[-.03em] text-[#4f46a5]">PBTI Vision</div>
+            <div className="mt-2 text-xs font-black leading-5 text-[#68659a]">{zh ? "自研视觉分析大模型" : "proprietary visual analysis model"}</div>
           </div>
         </div>
         <div className="mt-4 rounded-2xl border-l-4 border-[#ff7a1a] bg-[#fffaf5] p-5 text-sm leading-7 text-[#655a51]">
@@ -208,13 +288,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       <section id="chapter-4" className="mt-5 scroll-mt-24 rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-sm sm:p-8">
         <ReportHeading number="04" title={zh ? "爱宠鉴定" : "Pet identification"} subtitle={zh ? "这一章只描述三张照片中可见的外观，不参与性格评分。" : "This chapter describes visible features from the three photos and does not influence personality scoring."} />
-        <p className="text-sm leading-7 text-[#655a51]">{report.appearance}</p>
+        <p className="text-sm leading-7 text-[#655a51]">{appearanceDescription}</p>
         {report.visualAnalysis ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl bg-[#fff7ed] p-4">
               <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">{zh ? "品种判断" : "Breed estimate"}</div>
-              <div className="mt-2 font-bold text-[#171514]">{report.visualAnalysis.breedAssessment.primaryBreed}</div>
-              <div className="mt-1 text-sm text-[#655a51]">{report.visualAnalysis.breedAssessment.variety}</div>
+              <div className="mt-2 font-bold text-[#171514]">{breedDisplay}</div>
+              <div className="mt-1 text-sm text-[#655a51]">{localizeVisualValue(report.visualAnalysis.breedAssessment.variety, zh)}</div>
             </div>
             <div className="rounded-2xl bg-[#fff7ed] p-4">
               <div className="text-xs font-black uppercase tracking-[.12em] text-[#a3968a]">{zh ? "混血可能性" : "Mixed-breed likelihood"}</div>
@@ -276,7 +356,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <section id="chapter-9" className="mt-5 scroll-mt-24">
         <div className="mb-5 rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-sm sm:p-8">
           <ReportHeading number="09" title={zh ? "写真与分享" : "Portraits and sharing"} subtitle={zh ? "将本次测试结果整理成可保存、可分享的视觉档案。" : "Turn this assessment into a visual record that can be saved and shared."} />
-          <ShareCard petName={record.pet.name} pbtiId={record.pbti_id} type={personality.code} personality={`${personality.emoji} ${displayPersonality.name}`} />
+          <ShareCard
+            petName={record.pet.name}
+            pbtiId={record.pbti_id}
+            type={personality.code}
+            personality={displayPersonality.name}
+            imageUrl={coverArtwork}
+            summary={report.summary}
+            traits={displayPersonality.traits}
+            dimensions={dimensionVisuals.map((item) => ({ label: item.label, value: item.value }))}
+          />
         </div>
         <PortraitGenerator petId={record.pet.id} resultId={record.pbti_id} petName={record.pet.name} pbtiCode={personality.code} personalityName={displayPersonality.name} />
       </section>
