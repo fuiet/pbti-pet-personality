@@ -7,11 +7,11 @@ export interface Question {
   options: { text: string; value: DogTrait }[];
 }
 
-export const dogQuestions: Question[] = [
+const allDogQuestions: Question[] = [
   {
     id: 1,
     dimension: "A/I",
-    question: "When you come home, your dog usually:",
+    question: "How does your dog react when you return home?",
     options: [
       { text: "Greets you with close body contact, tail movement, or leaning", value: "A" },
       { text: "Checks in, then settles nearby", value: "A" },
@@ -21,7 +21,7 @@ export const dogQuestions: Question[] = [
   {
     id: 2,
     dimension: "A/I",
-    question: "When you move from room to room, your dog:",
+    question: "What does your dog do when you change rooms?",
     options: [
       { text: "Follows closely or waits at the doorway", value: "A" },
       { text: "Checks your location but does not always follow", value: "A" },
@@ -31,7 +31,7 @@ export const dogQuestions: Question[] = [
   {
     id: 3,
     dimension: "A/I",
-    question: "During rest time, your dog tends to:",
+    question: "Where does your dog rest during quiet time?",
     options: [
       { text: "Lie against people or within touching distance", value: "A" },
       { text: "Rest in the same room with some space", value: "A" },
@@ -41,7 +41,7 @@ export const dogQuestions: Question[] = [
   {
     id: 4,
     dimension: "A/I",
-    question: "When called by name, your dog usually:",
+    question: "How does your dog respond when you call its name?",
     options: [
       { text: "Turns and comes toward you quickly", value: "A" },
       { text: "Looks back, then decides whether to return", value: "I" },
@@ -51,7 +51,7 @@ export const dogQuestions: Question[] = [
   {
     id: 5,
     dimension: "A/I",
-    question: "When left alone for a short time, your dog:",
+    question: "How does your dog behave when briefly left alone?",
     options: [
       { text: "Waits near the door or watches for your return", value: "A" },
       { text: "Settles after checking the environment", value: "A" },
@@ -61,7 +61,7 @@ export const dogQuestions: Question[] = [
   {
     id: 6,
     dimension: "A/I",
-    question: "Around familiar people, your dog most often:",
+    question: "How much contact does your dog seek from familiar people?",
     options: [
       { text: "Seeks petting, eye contact, leaning, or shared space", value: "A" },
       { text: "Accepts contact briefly, then moves off", value: "I" },
@@ -81,7 +81,7 @@ export const dogQuestions: Question[] = [
   {
     id: 8,
     dimension: "A/I",
-    question: "On walks, your dog checks in with you by:",
+    question: "How often does your dog check on you during walks?",
     options: [
       { text: "Looking back often or staying close to your pace", value: "A" },
       { text: "Checking in sometimes while exploring", value: "A" },
@@ -102,7 +102,7 @@ export const dogQuestions: Question[] = [
   {
     id: 10,
     dimension: "E/S",
-    question: "In a new outdoor area, your dog:",
+    question: "How does your dog explore a new outdoor area?",
     options: [
       { text: "Moves forward to sniff and explore immediately", value: "E" },
       { text: "Studies the area before moving farther", value: "S" },
@@ -112,7 +112,7 @@ export const dogQuestions: Question[] = [
   {
     id: 11,
     dimension: "E/S",
-    question: "When meeting unfamiliar people, your dog:",
+    question: "How does your dog approach unfamiliar people?",
     options: [
       { text: "Approaches with curiosity or friendly interest", value: "E" },
       { text: "Watches body language before engaging", value: "S" },
@@ -122,7 +122,7 @@ export const dogQuestions: Question[] = [
   {
     id: 12,
     dimension: "E/S",
-    question: "When a walking route changes, your dog:",
+    question: "How does your dog react to a different walking route?",
     options: [
       { text: "Enjoys the new smells and moves forward", value: "E" },
       { text: "Pauses often to understand the route", value: "S" },
@@ -132,7 +132,7 @@ export const dogQuestions: Question[] = [
   {
     id: 13,
     dimension: "E/S",
-    question: "With a new toy, bowl, or bed, your dog:",
+    question: "How does your dog approach a new object?",
     options: [
       { text: "Investigates or uses it right away", value: "E" },
       { text: "Sniffs and tests it before accepting it", value: "S" },
@@ -142,7 +142,7 @@ export const dogQuestions: Question[] = [
   {
     id: 14,
     dimension: "E/S",
-    question: "When furniture or household setup changes, your dog:",
+    question: "How does your dog react when familiar items move?",
     options: [
       { text: "Checks the change and adapts quickly", value: "E" },
       { text: "Inspects carefully before relaxing", value: "S" },
@@ -152,7 +152,7 @@ export const dogQuestions: Question[] = [
   {
     id: 15,
     dimension: "E/S",
-    question: "When hearing an unfamiliar sound, your dog:",
+    question: "How does your dog react to an unfamiliar sound?",
     options: [
       { text: "Moves toward it to inspect", value: "E" },
       { text: "Stops, listens, and scans for context", value: "S" },
@@ -182,7 +182,7 @@ export const dogQuestions: Question[] = [
   {
     id: 18,
     dimension: "E/S",
-    question: "After a startling event, your dog:",
+    question: "How quickly does your dog recover after being startled?",
     options: [
       { text: "Recovers quickly and returns to normal behavior", value: "E" },
       { text: "Needs a few minutes to assess the situation", value: "S" },
@@ -193,7 +193,7 @@ export const dogQuestions: Question[] = [
   {
     id: 19,
     dimension: "V/C",
-    question: "When excited to see someone, your dog:",
+    question: "How does your dog show excitement when greeting someone?",
     options: [
       { text: "Jumps, wiggles, vocalizes, or moves with big energy", value: "V" },
       { text: "Greets warmly but settles quickly", value: "C" },
@@ -203,7 +203,7 @@ export const dogQuestions: Question[] = [
   {
     id: 20,
     dimension: "V/C",
-    question: "During play, your dog usually:",
+    question: "How does your dog behave during active play?",
     options: [
       { text: "Gets intense, fast, and highly animated", value: "V" },
       { text: "Plays in controlled rounds with pauses", value: "C" },
@@ -213,7 +213,7 @@ export const dogQuestions: Question[] = [
   {
     id: 21,
     dimension: "V/C",
-    question: "When your dog wants food, a toy, or access, it:",
+    question: "How does your dog ask for something it wants?",
     options: [
       { text: "Uses obvious barking, pawing, jumping, or repeated signals", value: "V" },
       { text: "Looks at you, waits near the item, or gives small signals", value: "C" },
@@ -223,7 +223,7 @@ export const dogQuestions: Question[] = [
   {
     id: 22,
     dimension: "V/C",
-    question: "When surprised by sudden movement, your dog:",
+    question: "How does your dog react to sudden movement?",
     options: [
       { text: "Reacts strongly with barking, jumping, or rapid movement", value: "V" },
       { text: "Startles, checks, and settles", value: "C" },
@@ -233,7 +233,7 @@ export const dogQuestions: Question[] = [
   {
     id: 23,
     dimension: "V/C",
-    question: "Your dog's emotional signals are usually:",
+    question: "How easy is it to read your dog's emotions?",
     options: [
       { text: "Very visible through body movement, sound, and facial expression", value: "V" },
       { text: "Readable but moderate", value: "C" },
@@ -243,7 +243,7 @@ export const dogQuestions: Question[] = [
   {
     id: 24,
     dimension: "V/C",
-    question: "When waiting for a walk or meal, your dog:",
+    question: "How does your dog behave while waiting for a walk or meal?",
     options: [
       { text: "Shows strong anticipation through pacing or vocalizing", value: "V" },
       { text: "Waits with some excitement but can settle", value: "C" },
@@ -253,7 +253,7 @@ export const dogQuestions: Question[] = [
   {
     id: 25,
     dimension: "V/C",
-    question: "When frustrated or blocked, your dog:",
+    question: "How does your dog behave when frustrated?",
     options: [
       { text: "Barks, paws, whines, or escalates visibly", value: "V" },
       { text: "Looks for another way and settles with guidance", value: "C" },
@@ -284,7 +284,7 @@ export const dogQuestions: Question[] = [
   {
     id: 28,
     dimension: "P/G",
-    question: "When at home, your dog most often:",
+    question: "What does your dog focus on while at home?",
     options: [
       { text: "Looks for games, toys, or interaction", value: "P" },
       { text: "Monitors entrances, sounds, and movement", value: "G" },
@@ -294,7 +294,7 @@ export const dogQuestions: Question[] = [
   {
     id: 29,
     dimension: "P/G",
-    question: "When someone passes the door or window, your dog:",
+    question: "How does your dog react when someone passes the home?",
     options: [
       { text: "May turn it into excitement or play behavior", value: "P" },
       { text: "Alerts, watches, or moves to check", value: "G" },
@@ -314,7 +314,7 @@ export const dogQuestions: Question[] = [
   {
     id: 31,
     dimension: "P/G",
-    question: "When family members move around the house, your dog:",
+    question: "What does your dog do when people move around the home?",
     options: [
       { text: "Tries to join the activity", value: "P" },
       { text: "Tracks movement and checks what is happening", value: "G" },
@@ -324,7 +324,7 @@ export const dogQuestions: Question[] = [
   {
     id: 32,
     dimension: "P/G",
-    question: "When unfamiliar dogs or people are nearby, your dog:",
+    question: "How does your dog react to unfamiliar animals or people?",
     options: [
       { text: "Attempts playful greeting or interaction", value: "P" },
       { text: "Assesses distance, posture, and movement", value: "G" },
@@ -334,7 +334,7 @@ export const dogQuestions: Question[] = [
   {
     id: 33,
     dimension: "P/G",
-    question: "With puzzle feeders or scent games, your dog:",
+    question: "How does your dog approach a food puzzle or scent game?",
     options: [
       { text: "Treats the task like a fun game", value: "P" },
       { text: "Works through it methodically", value: "G" },
@@ -344,7 +344,7 @@ export const dogQuestions: Question[] = [
   {
     id: 34,
     dimension: "P/G",
-    question: "If something unusual happens at home, your dog:",
+    question: "What does your dog do when something unusual happens?",
     options: [
       { text: "Turns the moment into movement, curiosity, or play", value: "P" },
       { text: "Checks the situation and monitors it", value: "G" },
@@ -364,7 +364,7 @@ export const dogQuestions: Question[] = [
   {
     id: 36,
     dimension: "P/G",
-    question: "Your dog's home role looks most like:",
+    question: "What role does your dog usually take at home?",
     options: [
       { text: "Play initiator and activity partner", value: "P" },
       { text: "Alert observer and household monitor", value: "G" },
@@ -372,3 +372,14 @@ export const dogQuestions: Question[] = [
     ],
   },
 ];
+
+// Seven observable behaviors per dimension keep the four-axis score balanced
+// while making the assessment meaningfully shorter.
+const selectedQuestionIds = new Set([
+  1, 2, 3, 4, 5, 6, 8,
+  10, 11, 12, 13, 14, 15, 18,
+  19, 20, 21, 22, 23, 24, 26,
+  28, 29, 31, 32, 33, 34, 36,
+]);
+
+export const dogQuestions = allDogQuestions.filter(({ id }) => selectedQuestionIds.has(id));

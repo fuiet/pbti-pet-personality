@@ -24,14 +24,14 @@ Core journey:
 2. Create a pet profile with name, species, breed, and age.
 3. Upload three photos: front face, left side, and right side.
 4. Qwen-VL analyzes visible breed, coat, face, body, and possible mixed-breed cues.
-5. Complete a species-specific 36-question behavior assessment.
+5. Complete a species-specific 28-question behavior assessment.
 6. Map answers to four custom PBTI dimensions and one of 12 profiles.
 7. Save the pet, answers, scores, result, visual profile, report, and portraits to the signed-in Supabase account.
 8. Show the full report and three identity-preserving portrait posters. Premium features are temporarily open during launch month.
 
 Product claims currently used on the site:
 
-- 36 behavior questions
+- 28 behavior questions
 - 12 personality types
 - 10+ page deep report
 - 3 portrait posters

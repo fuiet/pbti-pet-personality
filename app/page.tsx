@@ -369,7 +369,7 @@ export default function Home() {
             <span className="mt-3 block text-[#ff7a1a]">Research-informed, thoughtful, and fun</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#655a51]">
-            PBTI turns pet behavior research into a clear personality readout with a 36-question assessment, a 12-type framework, a deep report, and portrait-style share cards.
+            PBTI turns pet behavior research into a clear personality readout with a 28-question assessment, a 12-type framework, a deep report, and portrait-style share cards.
           </p>
           <div className="mt-6 max-w-3xl rounded-[1.5rem] border border-[#ff7a1a]/35 bg-[#171514] p-5 text-white shadow-[0_22px_55px_rgba(52,34,20,.14)]">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

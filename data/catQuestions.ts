@@ -7,11 +7,11 @@ export interface Question {
   options: { text: string; value: CatTrait }[];
 }
 
-export const catQuestions: Question[] = [
+const allCatQuestions: Question[] = [
   {
     id: 1,
     dimension: "A/I",
-    question: "When you return home, your cat usually:",
+    question: "How does your cat react when you return home?",
     options: [
       { text: "Comes to the door, tail up, or rubs against you", value: "A" },
       { text: "Looks at you first, then approaches when ready", value: "A" },
@@ -21,7 +21,7 @@ export const catQuestions: Question[] = [
   {
     id: 2,
     dimension: "A/I",
-    question: "During quiet time at home, your cat most often:",
+    question: "Where does your cat rest during quiet time?",
     options: [
       { text: "Chooses a place close to your body or within arm's reach", value: "A" },
       { text: "Stays in the same room but keeps a little distance", value: "A" },
@@ -31,7 +31,7 @@ export const catQuestions: Question[] = [
   {
     id: 3,
     dimension: "A/I",
-    question: "When you call your cat's name, it usually:",
+    question: "How does your cat respond when you call its name?",
     options: [
       { text: "Comes over, chirps, or clearly turns toward you", value: "A" },
       { text: "Looks at you and decides whether to come closer", value: "I" },
@@ -41,7 +41,7 @@ export const catQuestions: Question[] = [
   {
     id: 4,
     dimension: "A/I",
-    question: "If you sit on the sofa, your cat tends to:",
+    question: "Where does your cat settle when you sit on the sofa?",
     options: [
       { text: "Climb onto you or press against your side", value: "A" },
       { text: "Settle nearby after checking the space", value: "A" },
@@ -51,7 +51,7 @@ export const catQuestions: Question[] = [
   {
     id: 5,
     dimension: "A/I",
-    question: "When unfamiliar people enter the home, your cat:",
+    question: "How does your cat react to unfamiliar visitors?",
     options: [
       { text: "May approach, sniff, or stay visible near the group", value: "A" },
       { text: "Watches from a safe distance before deciding", value: "I" },
@@ -61,7 +61,7 @@ export const catQuestions: Question[] = [
   {
     id: 6,
     dimension: "A/I",
-    question: "Your cat's preferred physical contact is:",
+    question: "How much physical contact does your cat prefer?",
     options: [
       { text: "Frequent head bumps, rubbing, kneading, or lap time", value: "A" },
       { text: "Brief contact, then moving away when satisfied", value: "I" },
@@ -81,7 +81,7 @@ export const catQuestions: Question[] = [
   {
     id: 8,
     dimension: "A/I",
-    question: "At night or nap time, your cat often:",
+    question: "Where does your cat sleep or nap?",
     options: [
       { text: "Sleeps on the bed, beside you, or close to people", value: "A" },
       { text: "Starts nearby, then relocates to its own spot", value: "A" },
@@ -102,7 +102,7 @@ export const catQuestions: Question[] = [
   {
     id: 10,
     dimension: "E/S",
-    question: "When a new object appears on the floor, your cat:",
+    question: "How does your cat react to a new object?",
     options: [
       { text: "Walks over quickly to sniff, tap, or inspect it", value: "E" },
       { text: "Circles or watches before moving closer", value: "S" },
@@ -112,7 +112,7 @@ export const catQuestions: Question[] = [
   {
     id: 11,
     dimension: "E/S",
-    question: "When entering a new room or carrier space, your cat:",
+    question: "How does your cat enter an unfamiliar space?",
     options: [
       { text: "Explores corners, surfaces, and scent marks quickly", value: "E" },
       { text: "Moves slowly and checks exits before settling", value: "S" },
@@ -122,7 +122,7 @@ export const catQuestions: Question[] = [
   {
     id: 12,
     dimension: "E/S",
-    question: "If furniture or litter box placement changes, your cat:",
+    question: "How does your cat react when familiar items move?",
     options: [
       { text: "Investigates the change and adapts soon", value: "E" },
       { text: "Inspects carefully and may be cautious at first", value: "S" },
@@ -132,7 +132,7 @@ export const catQuestions: Question[] = [
   {
     id: 13,
     dimension: "E/S",
-    question: "With a new toy or puzzle feeder, your cat usually:",
+    question: "How does your cat approach a new toy?",
     options: [
       { text: "Touches, bats, or tests it right away", value: "E" },
       { text: "Sniffs and studies it before playing", value: "S" },
@@ -142,7 +142,7 @@ export const catQuestions: Question[] = [
   {
     id: 14,
     dimension: "E/S",
-    question: "When hearing an unfamiliar noise, your cat:",
+    question: "How does your cat react to an unfamiliar sound?",
     options: [
       { text: "Moves toward the sound to investigate", value: "E" },
       { text: "Stops, listens, and scans the room", value: "S" },
@@ -152,7 +152,7 @@ export const catQuestions: Question[] = [
   {
     id: 15,
     dimension: "E/S",
-    question: "Your cat's daily movement pattern is usually:",
+    question: "How predictable is your cat's daily routine?",
     options: [
       { text: "Flexible, with frequent route changes and inspections", value: "E" },
       { text: "Mostly predictable with a few preferred checkpoints", value: "S" },
@@ -182,7 +182,7 @@ export const catQuestions: Question[] = [
   {
     id: 18,
     dimension: "E/S",
-    question: "After a stressful event such as vacuuming or a doorbell, your cat:",
+    question: "How quickly does your cat recover after a stressful event?",
     options: [
       { text: "Recovers quickly and returns to normal activity", value: "E" },
       { text: "Takes time to check that the room is safe", value: "S" },
@@ -193,7 +193,7 @@ export const catQuestions: Question[] = [
   {
     id: 19,
     dimension: "V/C",
-    question: "When excited before meals, your cat:",
+    question: "How does your cat show excitement before a meal?",
     options: [
       { text: "Meows, circles, jumps, or clearly rushes the routine", value: "V" },
       { text: "Waits near the food area with moderate signals", value: "C" },
@@ -203,7 +203,7 @@ export const catQuestions: Question[] = [
   {
     id: 20,
     dimension: "V/C",
-    question: "During play with a wand or ball, your cat:",
+    question: "How does your cat behave during active play?",
     options: [
       { text: "Makes fast bursts, big pounces, and repeated chases", value: "V" },
       { text: "Plays in short controlled rounds", value: "C" },
@@ -213,7 +213,7 @@ export const catQuestions: Question[] = [
   {
     id: 21,
     dimension: "V/C",
-    question: "When your cat wants a door opened or a need met, it:",
+    question: "How does your cat ask for something it wants?",
     options: [
       { text: "Uses clear meows, pawing, scratching, or repeated signals", value: "V" },
       { text: "Looks at you, waits nearby, or gives small signals", value: "C" },
@@ -223,7 +223,7 @@ export const catQuestions: Question[] = [
   {
     id: 22,
     dimension: "V/C",
-    question: "If startled by a sudden movement, your cat:",
+    question: "How does your cat react to sudden movement?",
     options: [
       { text: "Jumps, runs, vocalizes, or reacts visibly", value: "V" },
       { text: "Pauses, watches, and settles after checking", value: "C" },
@@ -233,7 +233,7 @@ export const catQuestions: Question[] = [
   {
     id: 23,
     dimension: "V/C",
-    question: "Your cat's tail, ears, and body language are usually:",
+    question: "How easy is it to read your cat's body language?",
     options: [
       { text: "Easy to read, with clear changes in posture and motion", value: "V" },
       { text: "Subtle but understandable if you watch closely", value: "C" },
@@ -243,7 +243,7 @@ export const catQuestions: Question[] = [
   {
     id: 24,
     dimension: "V/C",
-    question: "When greeting a favorite person, your cat:",
+    question: "How does your cat greet a favorite person?",
     options: [
       { text: "Shows obvious excitement through sound or movement", value: "V" },
       { text: "Gives quiet rubbing, blinking, or nearby presence", value: "C" },
@@ -263,7 +263,7 @@ export const catQuestions: Question[] = [
   {
     id: 26,
     dimension: "V/C",
-    question: "When frustrated, blocked, or overstimulated, your cat:",
+    question: "How does your cat behave when frustrated?",
     options: [
       { text: "Shows it clearly with tail flicks, swats, bites, or loud sounds", value: "V" },
       { text: "Moves away or gives quieter warning signs", value: "C" },
@@ -284,7 +284,7 @@ export const catQuestions: Question[] = [
   {
     id: 28,
     dimension: "P/G",
-    question: "When moving through the home, your cat tends to:",
+    question: "How does your cat move around the home?",
     options: [
       { text: "Turn spaces into climbing, chasing, or hiding games", value: "P" },
       { text: "Patrol familiar spots and check changes", value: "G" },
@@ -294,7 +294,7 @@ export const catQuestions: Question[] = [
   {
     id: 29,
     dimension: "P/G",
-    question: "When someone opens a door or window, your cat:",
+    question: "How does your cat react to an open door or window?",
     options: [
       { text: "Treats the movement as something to chase or play near", value: "P" },
       { text: "Moves over to inspect the opening and boundary", value: "G" },
@@ -314,7 +314,7 @@ export const catQuestions: Question[] = [
   {
     id: 31,
     dimension: "P/G",
-    question: "When a toy is hidden under a blanket or box, your cat:",
+    question: "What does your cat do when a toy is hidden?",
     options: [
       { text: "Pounces, digs, or turns it into a game", value: "P" },
       { text: "Studies the edges and searches methodically", value: "G" },
@@ -324,7 +324,7 @@ export const catQuestions: Question[] = [
   {
     id: 32,
     dimension: "P/G",
-    question: "If another pet or person moves quickly nearby, your cat:",
+    question: "How does your cat react to fast movement nearby?",
     options: [
       { text: "Joins, chases, or swats playfully", value: "P" },
       { text: "Monitors the movement and keeps position", value: "G" },
@@ -334,7 +334,7 @@ export const catQuestions: Question[] = [
   {
     id: 33,
     dimension: "P/G",
-    question: "When guests arrive, your cat is more likely to:",
+    question: "What does your cat focus on when guests arrive?",
     options: [
       { text: "Engage with bags, shoes, strings, or movement", value: "P" },
       { text: "Inspect scent marks and monitor the new presence", value: "G" },
@@ -344,7 +344,7 @@ export const catQuestions: Question[] = [
   {
     id: 34,
     dimension: "P/G",
-    question: "When you initiate play, your cat usually:",
+    question: "How does your cat respond when you start a game?",
     options: [
       { text: "Responds quickly and keeps the game going", value: "P" },
       { text: "Plays briefly, then returns to watching the room", value: "G" },
@@ -364,7 +364,7 @@ export const catQuestions: Question[] = [
   {
     id: 36,
     dimension: "P/G",
-    question: "When something small moves across the floor, your cat:",
+    question: "How does your cat react to a small moving object?",
     options: [
       { text: "Stalks, pounces, or bats at it as play", value: "P" },
       { text: "Tracks it carefully before deciding what to do", value: "G" },
@@ -372,3 +372,14 @@ export const catQuestions: Question[] = [
     ],
   },
 ];
+
+// Seven observable behaviors per dimension keep the four-axis score balanced
+// while making the assessment meaningfully shorter.
+const selectedQuestionIds = new Set([
+  1, 2, 3, 4, 5, 6, 8,
+  10, 11, 12, 13, 14, 15, 18,
+  19, 20, 21, 22, 23, 24, 26,
+  28, 29, 31, 32, 33, 34, 36,
+]);
+
+export const catQuestions = allCatQuestions.filter(({ id }) => selectedQuestionIds.has(id));
