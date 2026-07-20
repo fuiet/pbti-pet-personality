@@ -121,7 +121,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button
-                      onClick={() => router.push(`/report/${entry.pbti_id}`)}
+                      onClick={() => router.push(`/report/${entry.pbti_id}/preparing`)}
                       className="rounded-full bg-[#ff7a1a] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#ee6b10]"
                     >
                       {zh ? "报告" : "Report"}

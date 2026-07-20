@@ -168,7 +168,7 @@ export default function QuizPage() {
         try {
           const result = calculatePBTI(next);
           const saved = await savePersonalityResult(pet, result, next);
-          router.push(`/report/${saved.pbti_id}`);
+          router.push(`/report/${saved.pbti_id}/preparing`);
         } catch (error) {
           setIsSaving(false);
           setSelectedOptionIndex(null);

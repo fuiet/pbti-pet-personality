@@ -122,7 +122,7 @@ export default function AccountPage() {
               {zh ? "添加爱宠" : "Add a new pet"}
             </Link>
             {latestRecord ? (
-              <Link href={`/report/${latestRecord.pbti_id}`} className="rounded-full border border-[#eaded2] bg-white px-6 py-3 text-sm font-black text-[#171514] transition hover:bg-[#fff7ed]">
+              <Link href={`/report/${latestRecord.pbti_id}/preparing`} className="rounded-full border border-[#eaded2] bg-white px-6 py-3 text-sm font-black text-[#171514] transition hover:bg-[#fff7ed]">
                 {zh ? "打开最新报告" : "Open latest report"}
               </Link>
             ) : null}
@@ -207,7 +207,7 @@ export default function AccountPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/report/${record.pbti_id}`} className="rounded-full bg-[#ff7a1a] px-5 py-2.5 text-xs font-black text-white">
+                        <Link href={`/report/${record.pbti_id}/preparing`} className="rounded-full bg-[#ff7a1a] px-5 py-2.5 text-xs font-black text-white">
                           {zh ? "报告" : "Report"}
                         </Link>
                         <Link href={`/memory/${record.pbti_id}`} className="rounded-full border border-[#eaded2] px-5 py-2.5 text-xs font-black text-[#4f463f]">

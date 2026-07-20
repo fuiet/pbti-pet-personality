@@ -155,7 +155,7 @@ export default function ResultPage() {
           ))}
         </div>
         <button
-          onClick={() => router.push(`/report/${record.pbti_id}`)}
+          onClick={() => router.push(`/report/${record.pbti_id}/preparing`)}
           className="mt-7 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] sm:w-auto"
         >
           {zh ? "打开完整报告" : "Open full report"}
@@ -163,7 +163,7 @@ export default function ResultPage() {
       </section>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={() => router.push(`/report/${record.pbti_id}`)}
+          onClick={() => router.push(`/report/${record.pbti_id}/preparing`)}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
           {zh ? "查看完整报告" : "View complete report"}

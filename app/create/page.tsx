@@ -362,11 +362,13 @@ export default function CreatePet() {
 
           <div className="min-w-0">
             <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "性别（选填）" : "Sex (optional)"}</label>
-            <div className="grid h-[60px] grid-cols-2 gap-2 rounded-2xl border-2 border-[#eaded2] bg-white p-1.5">
+            <div translate="no" className="notranslate grid h-[60px] grid-cols-2 gap-2 rounded-2xl border-2 border-[#eaded2] bg-white p-1.5">
               {(["male", "female"] as const).map((option) => (
                 <button
                   key={option}
                   type="button"
+                  translate="no"
+                  data-no-translation="true"
                   aria-pressed={gender === option}
                   onClick={() => setGender((current) => current === option ? "" : option)}
                   className={`rounded-xl text-sm font-black transition ${gender === option ? "bg-[#ff7a1a] text-white shadow-sm" : "bg-[#fff7ed] text-[#4f463f] hover:bg-[#fff0e4]"}`}

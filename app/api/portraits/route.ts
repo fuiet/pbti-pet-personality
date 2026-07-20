@@ -11,7 +11,15 @@ const IMAGE_ENDPOINT = process.env.QWEN_IMAGE_ENDPOINT || "https://dashscope.ali
 const PORTRAIT_BUCKET = process.env.PBTI_PORTRAIT_BUCKET || "pet-portraits";
 // DashScope image-to-image generation accepts up to 2K. Keep this fixed so a
 // stale 4K environment override cannot make portrait generation fail.
-const IMAGE_SIZE = "2K";
+const IMAGE_SIZE_BY_STYLE: Record<string, string> = {
+  "white-sketch-avatar": "2048*2048",
+  "vertical-campaign": "1632*2048",
+  "landscape-campaign": "2048*1360",
+};
+
+function imageSizeForStyle(styleId: string) {
+  return IMAGE_SIZE_BY_STYLE[styleId.split("--")[0]] || "2K";
+}
 
 function isMissingPortraitTable(error: { message?: string; code?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";
@@ -48,6 +56,9 @@ async function savePortraitAsset(
 
   const bytes = await imageResponse.arrayBuffer();
   const contentType = imageResponse.headers.get("content-type") || "application/octet-stream";
+  if (!contentType.toLowerCase().startsWith("image/") || bytes.byteLength === 0) {
+    throw new Error("The image service returned an invalid portrait file.");
+  }
   const storagePath = `${userId}/${petId}/${crypto.randomUUID()}.${extensionForContentType(contentType)}`;
   const upload = await supabase.storage.from(PORTRAIT_BUCKET).upload(storagePath, bytes, {
     contentType,
@@ -85,16 +96,18 @@ async function savePortraitAsset(
     if (existing) return existing;
   }
 
-  if (error && !isMissingPortraitTable(error)) throw new Error(error.message);
+  if (error) {
+    await supabase.storage.from(PORTRAIT_BUCKET).remove([storagePath]);
+    if (isMissingPortraitTable(error)) throw new Error("Portrait persistence is not configured.");
+    throw new Error(error.message);
+  }
 
-  return data || {
-    id: crypto.randomUUID(),
-    style_id: style.id,
-    style_name: style.name,
-    image_url: persistedUrl,
-    storage_path: storagePath,
-    created_at: new Date().toISOString(),
-  };
+  if (!data) {
+    await supabase.storage.from(PORTRAIT_BUCKET).remove([storagePath]);
+    throw new Error("The generated portrait could not be saved.");
+  }
+
+  return data;
 }
 
 export async function POST(request: Request) {
@@ -193,7 +206,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: IMAGE_MODEL,
         input: { messages: [{ role: "user", content: [...photos.map((image: string) => ({ image })), { text: prompt }] }] },
-        parameters: { size: IMAGE_SIZE, n: 1, watermark: false },
+        parameters: { size: imageSizeForStyle(style.id), n: 1, watermark: false },
       }),
     });
     const data = await response.json();

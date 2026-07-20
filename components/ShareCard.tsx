@@ -60,7 +60,10 @@ export default function ShareCard({ petName, pbtiId, type, personality, imageUrl
     const scale = Math.max(canvas.width / image.naturalWidth, photoHeight / image.naturalHeight);
     const width = image.naturalWidth * scale;
     const height = image.naturalHeight * scale;
-    context.drawImage(image, (canvas.width - width) / 2, (photoHeight - height) / 2, width, height);
+    // Portrait sources place the face in the upper third. Keep that focal area visible
+    // when cropping the vertical portrait into the horizontal share-card header.
+    const cropY = Math.min(0, photoHeight * 0.16 - height * 0.24);
+    context.drawImage(image, (canvas.width - width) / 2, cropY, width, height);
     const fade = context.createLinearGradient(0, 500, 0, 760);
     fade.addColorStop(0, "rgba(23,21,20,0)");
     fade.addColorStop(1, "#171514");
@@ -169,7 +172,7 @@ export default function ShareCard({ petName, pbtiId, type, personality, imageUrl
     <div className="overflow-hidden rounded-[2rem] border border-[#312c29] bg-[#171514] text-white shadow-[0_24px_70px_rgba(40,28,20,.16)]">
       <div className="grid lg:grid-cols-[.92fr_1.08fr]">
         <div className="relative min-h-[360px] overflow-hidden bg-[#2a2522]">
-          <img src={imageUrl} alt={`${petName} PBTI`} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={imageUrl} alt={`${petName} PBTI`} className="absolute inset-0 h-full w-full object-cover object-[50%_24%]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#171514] via-transparent to-black/10" />
           <div className="absolute left-6 top-6 text-2xl font-black text-[#ff7a1a]">PBTI</div>
           <div className="absolute inset-x-6 bottom-6"><div className="text-3xl font-black">{petName}</div><div className="mt-1 text-sm font-bold text-white/65">{pbtiId}</div></div>

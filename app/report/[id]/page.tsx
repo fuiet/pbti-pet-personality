@@ -3,7 +3,6 @@
 export const runtime = "edge";
 
 import { use, useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import { localizePersonality } from "@/data/personalityLocalization";
@@ -75,6 +74,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const { loading: authLoading } = useRequireAuth();
   const [record, setRecord] = useState<ResultRecord | null>(null);
   const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
+  const [verticalPortrait, setVerticalPortrait] = useState("");
   const [loadingRecord, setLoadingRecord] = useState(true);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         const saved = await getResultByRecordId(id);
         if (!active) return;
 
-        if (!saved) {
+        if (!saved?.pet) {
           router.replace("/dashboard");
           return;
         }
@@ -99,6 +99,25 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           } catch {
             // A missing visual profile should not block the behavior report.
           }
+        }
+
+        try {
+          const portraitResponse = await fetch(`/api/portraits?petId=${encodeURIComponent(saved.pet.id)}`, { cache: "no-store" });
+          const portraitData = await portraitResponse.json();
+          const vertical = portraitResponse.ok
+            ? (portraitData.portraits || []).find((portrait: { style_id?: string; image_url?: string }) =>
+                portrait.style_id?.startsWith("vertical-campaign--") && portrait.image_url,
+              )
+            : null;
+          if (!vertical?.image_url) {
+            router.replace(`/report/${saved.pbti_id}/preparing`);
+            return;
+          }
+          if (!active) return;
+          setVerticalPortrait(vertical.image_url);
+        } catch {
+          router.replace(`/report/${saved.pbti_id}/preparing`);
+          return;
         }
 
         setRecord(saved);
@@ -129,7 +148,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const displayPersonality = localizePersonality(personality, language);
   const species = record.pet.species === "dog" ? "dog" : "cat";
   const typeArtwork = getPersonalityAsset(personality.code, species);
-  const shareArtworkSource = record.pet.photo_url || typeArtwork;
+  const shareArtworkSource = verticalPortrait || record.pet.photo_url || typeArtwork;
   const shareArtwork = shareArtworkSource.startsWith("/") ? shareArtworkSource : `/api/portraits/asset?url=${encodeURIComponent(shareArtworkSource)}`;
   const scores = record.scores || {};
   const dimensionScores = dimensionScoresFromTraitScores(scores);
@@ -183,7 +202,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
         <div className="pointer-events-none absolute -bottom-10 -right-4 h-52 w-52 sm:h-72 sm:w-72">
-          <Image src={typeArtwork} alt={`${personality.code} ${displayPersonality.name}`} fill unoptimized sizes="288px" className="object-contain drop-shadow-[0_20px_35px_rgba(255,122,26,.22)]" />
+          <img
+            src={verticalPortrait || typeArtwork}
+            alt=""
+            className={`h-full w-full drop-shadow-[0_20px_35px_rgba(255,122,26,.22)] ${verticalPortrait ? "object-cover object-[50%_24%]" : "object-contain"}`}
+            onError={(event) => {
+              const fallback = getPersonalityAsset(defaultPersonalityCode, species);
+              if (!event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback;
+            }}
+          />
         </div>
       </div>
 
