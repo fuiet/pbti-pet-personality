@@ -136,18 +136,29 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
         const savedStyleIds = new Set(saved.map((portrait) => portrait.style_id.split("--")[0]));
         const missingStyles = styles.filter((style) => !savedStyleIds.has(style.id)).slice(0, Math.max(0, 3 - saved.length));
         const completed = [...saved];
+        const failedStyles: string[] = [];
 
         for (const style of missingStyles) {
-          const response = await fetch("/api/portraits", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ petId, resultId, styleId: `${style.id}--${PORTRAIT_PROMPT_VERSION}` }),
-          });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data?.error || `Unable to generate ${style.name}.`);
-          if (!completed.some((portrait) => portrait.id === data.portrait.id)) completed.push(data.portrait as PortraitAsset);
-          if (active) setPortraits([...completed].slice(0, 3));
+          let generated = false;
+          for (let attempt = 0; attempt < 2 && !generated; attempt += 1) {
+            try {
+              if (attempt > 0) await new Promise((resolve) => window.setTimeout(resolve, 1800));
+              const response = await fetch("/api/portraits", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ petId, resultId, styleId: `${style.id}--${PORTRAIT_PROMPT_VERSION}` }),
+              });
+              const data = await response.json();
+              if (!response.ok) throw new Error(data?.error || `Unable to generate ${style.name}.`);
+              if (!completed.some((portrait) => portrait.id === data.portrait.id)) completed.push(data.portrait as PortraitAsset);
+              if (active) setPortraits([...completed].slice(0, 3));
+              generated = true;
+            } catch {
+              if (attempt === 1) failedStyles.push(getPortraitStyleDisplayName(style.id, language, style.name));
+            }
+          }
         }
+        if (active && failedStyles.length) setError(zh ? `${failedStyles.join("、")}生成失败，系统已保留成功的图片。请稍后重新打开报告继续生成。` : `${failedStyles.join(", ")} could not be generated. Successful images were saved; reopen the report later to retry.`);
       } catch (generationError) {
         if (active) setError(generationError instanceof Error ? generationError.message : "Portrait generation failed.");
       } finally {
@@ -157,7 +168,7 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
 
     void loadOrCreatePortraits();
     return () => { active = false; };
-  }, [petId, resultId, styles]);
+  }, [language, petId, resultId, styles, zh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -245,7 +256,7 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
         })}
       </div>
 
-      {error ? <p className="mt-5 rounded-2xl bg-[#7d2d1e] px-4 py-3 text-sm font-bold leading-6 text-[#ffd2c4]">{zh ? "写真处理暂时失败，请稍后重试。" : error}</p> : null}
+      {error ? <p className="mt-5 rounded-2xl bg-[#7d2d1e] px-4 py-3 text-sm font-bold leading-6 text-[#ffd2c4]">{error}</p> : null}
       <p className="mt-5 text-xs leading-5 text-white/42">{zh ? "前三张写真会自动生成并保存到这只爱宠的档案中。再次打开报告时会继续使用同一组写真；预览、下载和复制的 PNG 都会带有爱宠名字与 PBTI Logo。" : "The first three portraits are generated automatically, saved to this pet, and reused whenever the report is opened. The site composites the pet name and small PBTI logo into the full-resolution PNG used for preview, download, and copy."}</p>
     </section>
   );

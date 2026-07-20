@@ -14,7 +14,6 @@ import { getLatestVisualProfileForPet, getResultByRecordId, type ResultRecord } 
 import type { PetVisualProfile } from "@/lib/visualProfile";
 import ShareCard from "@/components/ShareCard";
 import PortraitGenerator from "@/components/PortraitGenerator";
-import { PORTRAIT_PROMPT_VERSION } from "@/lib/portraitPrompts";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -77,7 +76,6 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const [record, setRecord] = useState<ResultRecord | null>(null);
   const [visualProfile, setVisualProfile] = useState<PetVisualProfile | null>(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
-  const [coverPortraitUrl, setCoverPortraitUrl] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -123,48 +121,6 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     };
   }, [authLoading, id, router]);
 
-  useEffect(() => {
-    const petId = record?.pet?.id;
-    const resultId = record?.pbti_id;
-    const personalityCode = record?.personality_type;
-    if (!petId || !resultId || !personalityCode) return;
-    const stablePetId = petId;
-    const stableResultId = resultId;
-    const stablePersonalityCode = personalityCode;
-
-    let active = true;
-
-    async function loadCoverPortrait() {
-      try {
-        const response = await fetch(`/api/portraits?petId=${encodeURIComponent(stablePetId)}`);
-        const payload = await response.json();
-        const coverStyleId = `personality-cover-${stablePersonalityCode.toLowerCase()}--${PORTRAIT_PROMPT_VERSION}`;
-        const savedPortrait = Array.isArray(payload?.portraits)
-          ? payload.portraits.find((portrait: { style_id?: string }) => portrait.style_id === coverStyleId)
-          : null;
-        if (active && savedPortrait?.image_url) {
-          setCoverPortraitUrl(savedPortrait.image_url);
-          return;
-        }
-
-        const generatedResponse = await fetch("/api/portraits", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ petId: stablePetId, resultId: stableResultId, styleId: coverStyleId }),
-        });
-        const generated = await generatedResponse.json();
-        if (active && generatedResponse.ok && generated?.portrait?.image_url) setCoverPortraitUrl(generated.portrait.image_url);
-      } catch {
-        // Keep the uploaded pet photo visible while the personality portrait is being prepared.
-      }
-    }
-
-    void loadCoverPortrait();
-    return () => {
-      active = false;
-    };
-  }, [record?.pbti_id, record?.personality_type, record?.pet?.id]);
-
   if (authLoading || loadingRecord || !record || !record.pet) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
@@ -173,10 +129,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const displayPersonality = localizePersonality(personality, language);
   const species = record.pet.species === "dog" ? "dog" : "cat";
   const typeArtwork = getPersonalityAsset(personality.code, species);
-  const coverArtworkSource = coverPortraitUrl || record.pet.photo_url || typeArtwork;
-  const coverArtwork = coverArtworkSource.startsWith("/")
-    ? coverArtworkSource
-    : `/api/portraits/asset?url=${encodeURIComponent(coverArtworkSource)}`;
+  const shareArtworkSource = record.pet.photo_url || typeArtwork;
+  const shareArtwork = shareArtworkSource.startsWith("/") ? shareArtworkSource : `/api/portraits/asset?url=${encodeURIComponent(shareArtworkSource)}`;
   const scores = record.scores || {};
   const dimensionScores = dimensionScoresFromTraitScores(scores);
   const generatedReport = generatePetReport({
@@ -228,9 +182,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             {displayPersonality.traits.map((trait) => <span key={trait} className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-xs font-black text-white/82">{trait}</span>)}
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[34%] min-w-52 overflow-hidden sm:w-[38%]">
-          <img src={coverArtwork} alt={`${record.pet.name} ${zh ? "性格造型照" : "personality portrait"}`} className="h-full w-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#171514] via-[#171514]/15 to-transparent" />
+        <div className="pointer-events-none absolute -bottom-10 -right-4 h-52 w-52 sm:h-72 sm:w-72">
+          <Image src={typeArtwork} alt={`${personality.code} ${displayPersonality.name}`} fill unoptimized sizes="288px" className="object-contain drop-shadow-[0_20px_35px_rgba(255,122,26,.22)]" />
         </div>
       </div>
 
@@ -361,7 +314,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             pbtiId={record.pbti_id}
             type={personality.code}
             personality={displayPersonality.name}
-            imageUrl={coverArtwork}
+            imageUrl={shareArtwork}
             summary={report.summary}
             traits={displayPersonality.traits}
             dimensions={dimensionVisuals.map((item) => ({ label: item.label, value: item.value }))}
