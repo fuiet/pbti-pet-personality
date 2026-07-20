@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
+import { getBreedDisplayName } from "@/data/breedLocalization";
 import { createPetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -272,7 +273,7 @@ export default function CreatePet() {
           <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "品种（选填）" : "Breed (optional)"}</label>
           <div className="relative">
             <input
-              value={breed}
+              value={getBreedDisplayName(breed, language)}
               onChange={(e) => setBreed(e.target.value)}
               onFocus={() => setBreedMenuOpen(false)}
               className="w-full rounded-2xl border-2 border-[#eaded2] bg-white p-4 pr-14 text-sm font-semibold text-[#171514] outline-none transition placeholder:text-[#a3968a] focus:border-[#ff7a1a]/50"
@@ -304,7 +305,7 @@ export default function CreatePet() {
                     }}
                     className={`block w-full rounded-xl px-4 py-3 text-left text-sm font-bold transition hover:bg-[#fff0e4] ${breed === option ? "bg-[#fff0e4] text-[#ff7a1a]" : "text-[#4f463f]"}`}
                   >
-                    {option}
+                    {getBreedDisplayName(option, language)}
                   </button>
                 ))}
               </div>

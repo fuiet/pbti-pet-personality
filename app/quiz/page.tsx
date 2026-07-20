@@ -122,8 +122,7 @@ export default function QuizPage() {
     [pet?.species, zh],
   );
   const currentQuestion = questions[current];
-  const displayQuestionIndex = Math.min(Math.max(current, answers.length), questions.length - 1);
-  const questionNumber = displayQuestionIndex + 1;
+  const questionNumber = current + 1;
   const progress = Math.round((questionNumber / questions.length) * 100);
   const stage = stageAssets[Math.min(stageAssets.length - 1, Math.floor(current / 6))];
   const helperStage = stageAssets[(Math.floor(current / 6) + 2) % stageAssets.length];
@@ -138,12 +137,11 @@ export default function QuizPage() {
   }, [answers, questions]);
 
   const goBack = useCallback(() => {
-    if (current > 0 && !isSaving) {
+    if (current > 0 && !isSaving && selectedOptionIndex === null) {
       setSelectedOptionIndex(null);
       setCurrent(current - 1);
-      setAnswers(answers.slice(0, -1));
     }
-  }, [current, answers, isSaving]);
+  }, [current, isSaving, selectedOptionIndex]);
 
   const select = useCallback(
     (value: string, optionIndex: number) => {
@@ -155,7 +153,8 @@ export default function QuizPage() {
       setSelectedOptionIndex(optionIndex);
 
       window.setTimeout(async () => {
-        const next = [...answers, value as Trait];
+        const next = [...answers];
+        next[current] = value as Trait;
         setAnswers(next);
 
         if (current < questions.length - 1) {
@@ -274,7 +273,20 @@ export default function QuizPage() {
               <div className="rounded-full bg-[#fff0e4] px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#d96612]">
                 {localizedDimensionLabels[currentQuestion?.dimension || "A/I"]}
               </div>
-              <div className="text-xs font-black uppercase tracking-[.14em] text-[#a3968a]">{zh ? `${stage.name} 阶段` : `${stage.name} phase`}</div>
+              <div className="flex items-center gap-3">
+                {current > 0 ? (
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    disabled={isSaving || selectedOptionIndex !== null}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#eaded2] bg-white px-4 py-2 text-xs font-black text-[#4f463f] transition hover:border-[#ff7a1a]/40 hover:bg-[#fff7ed] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <span aria-hidden="true">←</span>
+                    {zh ? "上一题" : "Previous"}
+                  </button>
+                ) : null}
+                <div className="text-xs font-black uppercase tracking-[.14em] text-[#a3968a]">{zh ? `${stage.name} 阶段` : `${stage.name} phase`}</div>
+              </div>
             </div>
 
             <div key={current} className="animate-slide-in">
@@ -285,7 +297,8 @@ export default function QuizPage() {
 
               <div className="mt-8 grid gap-4">
                 {(currentQuestion?.options || []).map((option, index) => {
-                  const selected = selectedOptionIndex === index;
+                  const savedOptionIndex = currentQuestion?.options.findIndex((item) => item.value === answers[current]);
+                  const selected = (selectedOptionIndex ?? savedOptionIndex) === index;
                   return (
                     <button
                       key={`${current}-${index}`}
@@ -347,10 +360,10 @@ export default function QuizPage() {
           <div className="mt-6 flex gap-3">
             <button
               onClick={goBack}
-              disabled={current === 0 || isSaving}
+              disabled={current === 0 || isSaving || selectedOptionIndex !== null}
               className="flex-1 rounded-full border border-white/15 bg-white/8 px-4 py-3 text-sm font-black text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-35"
             >
-              {zh ? "上一题" : "Back"}
+              {zh ? "上一题" : "Previous"}
             </button>
             <button
               onClick={() => router.push("/create")}
