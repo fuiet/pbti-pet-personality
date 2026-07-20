@@ -188,7 +188,9 @@ Identity lock requirements:
 - Output should resemble a polished editorial pet photoshoot, not a simple background replacement.
 - Each result receives three varied styles chosen from the built-in library.
 - Add the pet name and a small PBTI logo after generation so the image model cannot distort typography.
-- The downloaded/copied image must include the composited pet name and logo.
+- Portrait composition uses `public/pbti-logo-transparent.png`; do not add a white or translucent backing rectangle behind it.
+- Render the pet name as a responsive wordmark with a bold outlined title, orange/white accent rule, and `PBTI PET PORTRAIT` subtitle rather than plain text.
+- The single download action exports the composited pet name and logo as a PNG and is labeled `Download original`; the upstream unbranded asset is not offered for download.
 - Image-to-image portrait generation is fixed at the provider's supported maximum of `2K`; do not override it with `4K` or claim mathematically lossless output if the upstream model compresses it.
 
 Environment variables:

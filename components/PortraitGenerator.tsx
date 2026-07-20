@@ -15,8 +15,26 @@ function loadImage(source: string) {
   });
 }
 
+function fitFontSize(context: CanvasRenderingContext2D, text: string, maxWidth: number, preferredSize: number, minimumSize: number) {
+  let size = preferredSize;
+  while (size > minimumSize) {
+    context.font = `900 ${size}px "Arial Black", "Microsoft YaHei", sans-serif`;
+    if (context.measureText(text).width <= maxWidth) break;
+    size -= 2;
+  }
+  return size;
+}
+
+function drawSpacedText(context: CanvasRenderingContext2D, text: string, x: number, y: number, spacing: number) {
+  let cursor = x;
+  for (const character of text) {
+    context.fillText(character, cursor, y);
+    cursor += context.measureText(character).width + spacing;
+  }
+}
+
 async function composePortrait(imageUrl: string, petName: string) {
-  const [source, logo] = await Promise.all([loadImage(imageUrl), loadImage("/logo.png")]);
+  const [source, logo] = await Promise.all([loadImage(imageUrl), loadImage("/pbti-logo-transparent.png")]);
     const width = source.naturalWidth || source.width;
     const height = source.naturalHeight || source.height;
     const canvas = document.createElement("canvas");
@@ -27,21 +45,51 @@ async function composePortrait(imageUrl: string, petName: string) {
 
     context.drawImage(source, 0, 0, width, height);
 
-    const padding = Math.max(32, Math.round(Math.min(width, height) * 0.045));
-    const logoHeight = Math.max(44, Math.round(Math.min(width, height) * 0.065));
+    const shortEdge = Math.min(width, height);
+    const padding = Math.max(34, Math.round(shortEdge * 0.052));
+    const logoHeight = Math.max(42, Math.round(shortEdge * 0.058));
     const logoWidth = Math.round((logo.naturalWidth / logo.naturalHeight) * logoHeight);
     const logoX = width - padding - logoWidth;
     const logoY = padding;
-    context.fillStyle = "rgba(255,255,255,.84)";
-    context.fillRect(logoX - 14, logoY - 10, logoWidth + 28, logoHeight + 20);
+    context.save();
+    context.shadowColor = "rgba(255,255,255,.55)";
+    context.shadowBlur = Math.max(3, Math.round(shortEdge * 0.006));
     context.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+    context.restore();
 
-    const fontSize = Math.max(34, Math.round(Math.min(width, height) * 0.055));
-    context.font = "700 " + fontSize + "px Arial, sans-serif";
+    const displayName = petName.trim() || "MY PET";
+    const preferredNameSize = Math.max(56, Math.round(shortEdge * 0.105));
+    const minimumNameSize = Math.max(34, Math.round(shortEdge * 0.055));
+    const maxNameWidth = Math.min(width * 0.62, width - padding * 2 - logoWidth);
+    const fontSize = fitFontSize(context, displayName, maxNameWidth, preferredNameSize, minimumNameSize);
+    const nameY = padding + fontSize;
+
+    context.save();
+    context.lineJoin = "round";
+    context.lineWidth = Math.max(3, Math.round(fontSize * 0.075));
+    context.strokeStyle = "rgba(18,15,13,.42)";
     context.fillStyle = "#ffffff";
-    context.shadowColor = "rgba(0,0,0,.5)";
-    context.shadowBlur = Math.max(5, Math.round(fontSize * 0.18));
-    context.fillText(petName, padding, padding + fontSize);
+    context.font = `900 ${fontSize}px "Arial Black", "Microsoft YaHei", sans-serif`;
+    context.strokeText(displayName, padding, nameY);
+    context.fillText(displayName, padding, nameY);
+    const renderedNameWidth = context.measureText(displayName).width;
+    context.restore();
+
+    const accentY = nameY + Math.max(16, Math.round(shortEdge * 0.02));
+    const accentWidth = Math.min(renderedNameWidth, maxNameWidth);
+    const accentHeight = Math.max(6, Math.round(shortEdge * 0.008));
+    context.fillStyle = "#ff7418";
+    context.fillRect(padding, accentY, Math.max(accentHeight * 5, accentWidth * 0.24), accentHeight);
+    context.fillStyle = "rgba(255,255,255,.96)";
+    context.fillRect(padding + Math.max(accentHeight * 5, accentWidth * 0.24) + accentHeight, accentY, Math.max(accentHeight * 4, accentWidth * 0.12), accentHeight);
+
+    const label = "PBTI  PET PORTRAIT";
+    const labelSize = Math.max(14, Math.round(shortEdge * 0.022));
+    context.font = `800 ${labelSize}px Arial, sans-serif`;
+    context.fillStyle = "rgba(255,255,255,.92)";
+    context.shadowColor = "rgba(0,0,0,.55)";
+    context.shadowBlur = Math.max(3, Math.round(labelSize * 0.2));
+    drawSpacedText(context, label, padding, accentY + accentHeight + labelSize * 1.65, Math.max(1, Math.round(labelSize * 0.16)));
     context.shadowColor = "transparent";
 
     return await new Promise<string>((resolve, reject) => {
@@ -165,10 +213,6 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
           const imageUrl = "image_url" in item ? item.image_url : "";
           const portraitRecordId = "image_url" in item ? item.id : "";
           const brandedUrl = portraitRecordId ? compositedUrls[portraitRecordId] : "";
-          const originalUrl = imageUrl ? (imageUrl.startsWith("/") ? imageUrl : "/api/portraits/asset?url=" + encodeURIComponent(imageUrl)) : "";
-          const originalDownloadUrl = originalUrl && !imageUrl.startsWith("/")
-            ? originalUrl + "&download=1&filename=" + encodeURIComponent(`${petName}-${id}-original-2K`)
-            : originalUrl;
           return (
             <article key={id} className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[.06]">
               <div className="relative aspect-[4/5] overflow-hidden bg-[#2a2522]">
@@ -180,11 +224,8 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
                 <div className="mt-1 text-xs text-white/48">{pbtiCode} / {personalityName}</div>
                 {imageUrl ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <a href={originalDownloadUrl} download={petName + "-" + id + "-original-2K"} className="inline-flex rounded-full bg-[#ffb878] px-3 py-2 text-xs font-black text-[#171514] hover:bg-white">
-                      Download original 2K
-                    </a>
-                    <a href={brandedUrl || undefined} download={petName + "-" + id + "-branded-2K.png"} aria-disabled={!brandedUrl} className={`inline-flex rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white/80 hover:bg-white/10 ${brandedUrl ? "" : "pointer-events-none opacity-40"}`}>
-                      Download branded PNG
+                    <a href={brandedUrl || undefined} download={petName + "-" + id + "-original.png"} aria-disabled={!brandedUrl} className={`inline-flex rounded-full bg-[#ffb878] px-3 py-2 text-xs font-black text-[#171514] hover:bg-white ${brandedUrl ? "" : "pointer-events-none opacity-40"}`}>
+                      Download original
                     </a>
                     <button type="button" disabled={!brandedUrl} onClick={() => brandedUrl && copyPortrait(portraitRecordId, brandedUrl)} className="inline-flex rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white/80 hover:bg-white/10 disabled:cursor-wait disabled:opacity-40">
                       {copiedId === portraitRecordId ? "Copied" : "Copy image"}
