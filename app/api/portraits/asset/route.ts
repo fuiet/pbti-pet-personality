@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   const contentLength = response.headers.get("content-length");
   if (contentLength) headers["Content-Length"] = contentLength;
   if (requestUrl.searchParams.get("download") === "1") {
-    const filename = (requestUrl.searchParams.get("filename") || "portrait-original-4K")
+    const filename = (requestUrl.searchParams.get("filename") || "portrait-original-2K")
       .replace(/[^a-zA-Z0-9._-]+/g, "-")
       .slice(0, 100);
     headers["Content-Disposition"] = `attachment; filename="${filename}"`;

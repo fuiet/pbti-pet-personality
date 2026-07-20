@@ -189,7 +189,7 @@ Identity lock requirements:
 - Each result receives three varied styles chosen from the built-in library.
 - Add the pet name and a small PBTI logo after generation so the image model cannot distort typography.
 - The downloaded/copied image must include the composited pet name and logo.
-- Target image generation size is configured as `4K`; avoid claiming mathematically lossless output if the upstream model compresses it.
+- Image-to-image portrait generation is fixed at the provider's supported maximum of `2K`; do not override it with `4K` or claim mathematically lossless output if the upstream model compresses it.
 
 Environment variables:
 
@@ -197,7 +197,7 @@ Environment variables:
 DASHSCOPE_API_KEY=<server-side secret>
 QWEN_IMAGE_MODEL=wan2.7-image
 QWEN_IMAGE_ENDPOINT=https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation
-QWEN_IMAGE_SIZE=4K
+QWEN_IMAGE_SIZE=2K
 PBTI_PORTRAIT_BUCKET=pet-portraits
 ```
 
@@ -396,7 +396,7 @@ Priority order unless the user gives a newer instruction:
 
 1. Complete the report redesign described in `Latest Unfinished Report Task`.
 2. Run TypeScript/build validation and fix any interrupted JSX or type errors without removing intended changes.
-3. Finish and verify automatic portrait generation, persistence, reuse, pet association, 4K download, and embedded logo/name.
+3. Finish and verify automatic portrait generation, persistence, reuse, pet association, original 2K download, and embedded logo/name.
 4. Verify upload compression and the three-second analysis modal delay.
 5. Implement and verify pet/report deletion in Account Center with confirmation and correct cascading behavior.
 6. Re-test Google account switching and email registration.

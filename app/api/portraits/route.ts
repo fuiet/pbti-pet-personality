@@ -9,7 +9,9 @@ export const runtime = "edge";
 const IMAGE_MODEL = process.env.QWEN_IMAGE_MODEL || "wan2.7-image";
 const IMAGE_ENDPOINT = process.env.QWEN_IMAGE_ENDPOINT || "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
 const PORTRAIT_BUCKET = process.env.PBTI_PORTRAIT_BUCKET || "pet-portraits";
-const IMAGE_SIZE = process.env.QWEN_IMAGE_SIZE || "4K";
+// DashScope image-to-image generation accepts up to 2K. Keep this fixed so a
+// stale 4K environment override cannot make portrait generation fail.
+const IMAGE_SIZE = "2K";
 
 function isMissingPortraitTable(error: { message?: string; code?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() || "";

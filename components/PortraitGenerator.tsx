@@ -167,7 +167,7 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
           const brandedUrl = portraitRecordId ? compositedUrls[portraitRecordId] : "";
           const originalUrl = imageUrl ? (imageUrl.startsWith("/") ? imageUrl : "/api/portraits/asset?url=" + encodeURIComponent(imageUrl)) : "";
           const originalDownloadUrl = originalUrl && !imageUrl.startsWith("/")
-            ? originalUrl + "&download=1&filename=" + encodeURIComponent(`${petName}-${id}-original-4K`)
+            ? originalUrl + "&download=1&filename=" + encodeURIComponent(`${petName}-${id}-original-2K`)
             : originalUrl;
           return (
             <article key={id} className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[.06]">
@@ -180,10 +180,10 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
                 <div className="mt-1 text-xs text-white/48">{pbtiCode} / {personalityName}</div>
                 {imageUrl ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <a href={originalDownloadUrl} download={petName + "-" + id + "-original-4K"} className="inline-flex rounded-full bg-[#ffb878] px-3 py-2 text-xs font-black text-[#171514] hover:bg-white">
-                      Download original 4K
+                    <a href={originalDownloadUrl} download={petName + "-" + id + "-original-2K"} className="inline-flex rounded-full bg-[#ffb878] px-3 py-2 text-xs font-black text-[#171514] hover:bg-white">
+                      Download original 2K
                     </a>
-                    <a href={brandedUrl || undefined} download={petName + "-" + id + "-branded-4K.png"} aria-disabled={!brandedUrl} className={`inline-flex rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white/80 hover:bg-white/10 ${brandedUrl ? "" : "pointer-events-none opacity-40"}`}>
+                    <a href={brandedUrl || undefined} download={petName + "-" + id + "-branded-2K.png"} aria-disabled={!brandedUrl} className={`inline-flex rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white/80 hover:bg-white/10 ${brandedUrl ? "" : "pointer-events-none opacity-40"}`}>
                       Download branded PNG
                     </a>
                     <button type="button" disabled={!brandedUrl} onClick={() => brandedUrl && copyPortrait(portraitRecordId, brandedUrl)} className="inline-flex rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white/80 hover:bg-white/10 disabled:cursor-wait disabled:opacity-40">
