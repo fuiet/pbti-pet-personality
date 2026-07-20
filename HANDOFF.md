@@ -414,3 +414,14 @@ Priority order unless the user gives a newer instruction:
 - Do not claim medical, ancestry, behavioral, or statistical certainty that the system does not provide.
 - Do not overwrite unrelated or uncommitted user changes.
 - Do not push or deploy unless explicitly requested.
+
+## 2026-07-20 Bilingual System Update
+
+- The supported languages are English (default) and Simplified Chinese only.
+- `components/LanguageProvider.tsx` owns the active language, persists it under `pbti-language`, detects Chinese browsers on first visit, and synchronizes the document `lang` attribute.
+- Shared UI translations live in `lib/i18n.ts`; page-specific natural Chinese copy remains close to its page when it is substantial.
+- `data/zhQuestions.ts` contains behavior-equivalent Simplified Chinese wording for all 28 scored questions. It changes display copy only; dimensions, values, IDs, and scoring are unchanged.
+- Report generation accepts `language` and produces native Chinese report prose when `zh-CN` is active.
+- Core journeys now respond to the language selector: home, authentication, profile creation, upload and visual analysis, quiz, result, full report, portraits, dashboard/account, type library, and memory book.
+- English personality codes remain canonical. Chinese UI adds localized names and explanations without changing those codes.
+- Production build passed locally after the bilingual implementation. These changes remain uncommitted and must not be pushed or deployed unless explicitly requested.

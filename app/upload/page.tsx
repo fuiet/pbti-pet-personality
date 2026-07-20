@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getLatestPetRecord, getPetRecord, updatePetPhotos, updatePetPhoto, type PetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import type { PetVisualProfile } from "@/lib/visualProfile";
+import { useLanguage } from "@/components/LanguageProvider";
 
 type AnalysisState = "idle" | "background" | "complete";
 
@@ -95,6 +96,14 @@ function CheckIcon({ className = "" }: { className?: string }) {
 
 export default function UploadPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const zh = language === "zh-CN";
+  const localizedPhotoRequirements = zh ? [
+    { label: "正面照", detail: "脸部清晰、正对镜头" },
+    { label: "左侧照", detail: "左侧脸或身体轮廓" },
+    { label: "右侧照", detail: "右侧脸或身体轮廓" },
+  ] : photoRequirements;
+  const localizedAnalysisSteps = zh ? ["检查照片清晰度", "提取外观特征", "整理爱宠鉴定标签"] : analysisSteps;
   const inputRef = useRef<HTMLInputElement>(null);
   const analysisAttemptedKeyRef = useRef("");
   const analysisPromptTimerRef = useRef<number | null>(null);
@@ -342,7 +351,7 @@ export default function UploadPage() {
   }, [analysisState, hasFullPhotoSet, pet, photoSetKey, savedPhotoSetKey]);
 
   if (authLoading || loadingPet) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
   return (
@@ -367,10 +376,10 @@ export default function UploadPage() {
       </div>
 
       <div className="mb-8 text-center lg:text-left">
-        <p className="text-sm font-black uppercase tracking-[.18em] text-[#d96612]">Step 2 of 4</p>
-        <h1 className="mt-3 text-4xl font-black tracking-[-.05em] text-[#171514] sm:text-5xl">Upload 3 pet photos</h1>
+        <p className="text-sm font-black uppercase tracking-[.18em] text-[#d96612]">{zh ? "第 2 步，共 4 步" : "Step 2 of 4"}</p>
+        <h1 className="mt-3 text-4xl font-black tracking-[-.05em] text-[#171514] sm:text-5xl">{zh ? "上传 3 张爱宠照片" : "Upload 3 pet photos"}</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-[#6f6258] lg:text-lg">
-          Please upload three clear photos of {pet?.name || "your pet"}: front face, left side, and right side. The front photo will be used as the main saved image for visual analysis.
+          {zh ? `请上传 ${pet?.name || "爱宠"} 的正面、左侧和右侧清晰照片。正面照将作为档案头像，并用于爱宠鉴定。` : `Please upload three clear photos of ${pet?.name || "your pet"}: front face, left side, and right side. The front photo will be used as the main saved image for visual analysis.`}
         </p>
       </div>
 
@@ -392,14 +401,14 @@ export default function UploadPage() {
             type="button"
             onClick={() => inputRef.current?.click()}
             className="block w-full text-left"
-            aria-label="Choose up to 3 pet photos"
+            aria-label={zh ? "选择最多 3 张爱宠照片" : "Choose up to 3 pet photos"}
           >
             <div className="relative grid h-[340px] place-items-center overflow-hidden rounded-[1.5rem] border border-[#f0dfcf] bg-[#fffaf5] sm:h-[420px]">
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,122,26,.06)_1px,transparent_1px),linear-gradient(0deg,rgba(255,122,26,.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-80" />
 
               {preview ? (
                 <div className="relative h-full w-full">
-                  <img src={preview} alt="Pet preview" className="h-full w-full object-contain" />
+                  <img src={preview} alt={zh ? "爱宠照片预览" : "Pet preview"} className="h-full w-full object-contain" />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(23,21,20,.08),rgba(23,21,20,.36))]" />
 
                   {analysisState === "background" ? (
@@ -417,7 +426,7 @@ export default function UploadPage() {
                   ) : null}
 
                   <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
-                    {analysisState === "complete" ? "Visual identification saved" : analysisState === "background" ? "Background analysis running" : `${uploadedPhotoCount}/3 photos uploaded`}
+                    {analysisState === "complete" ? (zh ? "爱宠鉴定已保存" : "Visual identification saved") : analysisState === "background" ? (zh ? "正在扫描分析" : "Background analysis running") : (zh ? `已上传 ${uploadedPhotoCount}/3 张` : `${uploadedPhotoCount}/3 photos uploaded`)}
                   </div>
                 </div>
               ) : (
@@ -425,13 +434,13 @@ export default function UploadPage() {
                   <div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.5rem] bg-[#fff0e4] text-[#ff7a1a] shadow-[0_18px_44px_rgba(255,122,26,.14)]">
                     <CameraIcon className="h-9 w-9" />
                   </div>
-                  <h2 className="mt-7 text-3xl font-black tracking-[-.04em] text-[#171514]">Upload front, left, and right photos</h2>
-                  <p className="mt-3 text-sm leading-6 text-[#756960]">Add front, left, and right images from your device</p>
+                  <h2 className="mt-7 text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "上传正面、左侧和右侧照片" : "Upload front, left, and right photos"}</h2>
+                  <p className="mt-3 text-sm leading-6 text-[#756960]">{zh ? "从手机或电脑中选择三张清晰照片" : "Add front, left, and right images from your device"}</p>
                   <div className="mt-7 inline-flex rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white shadow-[0_16px_34px_rgba(255,122,26,.26)]">
-                    Choose photos
+                    {zh ? "选择照片" : "Choose photos"}
                   </div>
                   <div className="mt-7 grid gap-2 sm:grid-cols-3">
-                    {photoRequirements.map((item, index) => (
+                    {localizedPhotoRequirements.map((item, index) => (
                       <div key={item.label} className="rounded-2xl border border-[#f0dfcf] bg-white/78 px-3 py-3 text-left shadow-sm">
                         <div className="text-xs font-black uppercase tracking-[.12em] text-[#ff7a1a]">0{index + 1}</div>
                         <div className="mt-1 text-sm font-black text-[#171514]">{item.label}</div>
@@ -439,7 +448,7 @@ export default function UploadPage() {
                       </div>
                     ))}
                   </div>
-                  <p className="mt-4 text-xs font-semibold text-[#a3968a]">JPG, PNG or WebP up to 10MB each. Large photos are compressed automatically before analysis. Incomplete or unclear photos may affect identification and test results.</p>
+                  <p className="mt-4 text-xs font-semibold text-[#a3968a]">{zh ? "支持 JPG、PNG、WebP，每张不超过 10MB。大图会自动压缩；照片不完整或不清晰可能影响鉴定结果。" : "JPG, PNG or WebP up to 10MB each. Large photos are compressed automatically before analysis. Incomplete or unclear photos may affect identification and test results."}</p>
                 </div>
               )}
             </div>
@@ -450,11 +459,11 @@ export default function UploadPage() {
           {preview ? (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1">
               <div>
-                <p className="text-sm font-black text-[#171514]">{pet?.name ? `${pet.name}'s photo set` : "Photo set"}</p>
+                <p className="text-sm font-black text-[#171514]">{zh ? `${pet?.name || "爱宠"}的照片` : pet?.name ? `${pet.name}'s photo set` : "Photo set"}</p>
                 <p className="text-xs font-semibold text-[#8c7b6d]">{uploadStatusText}</p>
               </div>
               <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:min-w-[260px]">
-                {photoRequirements.map((item, index) => (
+                {localizedPhotoRequirements.map((item, index) => (
                   <div key={item.label} className="overflow-hidden rounded-xl border border-[#eaded2] bg-[#fff7ed]">
                     {photoPreviews[index] ? (
                       <img src={photoPreviews[index]} alt={`${item.label} preview`} className="h-16 w-full object-cover" />
@@ -472,14 +481,14 @@ export default function UploadPage() {
                   onClick={() => inputRef.current?.click()}
                   className="rounded-full border border-[#eaded2] bg-white px-5 py-2.5 text-xs font-black text-[#4f463f] transition hover:border-[#ff7a1a]/50 hover:bg-[#fff7ed]"
                 >
-                  {hasFullPhotoSet ? "Replace set" : "Add photos"}
+                  {hasFullPhotoSet ? (zh ? "重新选择" : "Replace set") : (zh ? "继续添加" : "Add photos")}
                 </button>
                 <button
                   type="button"
                   onClick={removePhoto}
                   className="rounded-full border border-[#eaded2] bg-white px-5 py-2.5 text-xs font-black text-[#7a6d63] transition hover:border-[#ff7a1a]/50 hover:text-[#ff7a1a]"
                 >
-                  Remove
+                  {zh ? "移除" : "Remove"}
                 </button>
               </div>
             </div>
@@ -489,8 +498,8 @@ export default function UploadPage() {
         <aside className="rounded-[2rem] border border-[#eaded2] bg-[#171514] p-6 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Visual model</p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Photo analysis</h2>
+              <p className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "视觉识别" : "Visual model"}</p>
+              <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">{zh ? "爱宠鉴定" : "Photo analysis"}</h2>
             </div>
             <div className={`grid h-11 w-11 place-items-center rounded-2xl ${analysisState === "complete" ? "bg-[#2fd07f] text-[#07140d]" : "bg-white/10 text-[#ffb878]"}`}>
               {analysisState === "complete" ? <CheckIcon className="h-6 w-6" /> : <CameraIcon className="h-6 w-6" />}
@@ -499,7 +508,7 @@ export default function UploadPage() {
 
           <div className="mt-7 rounded-[1.25rem] border border-white/10 bg-white/[.06] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-white/58">
-              <span>{analysisState === "idle" ? (hasFullPhotoSet ? "Ready to scan" : "Waiting for 3 photos") : analysisState === "background" ? "Background scan" : "Ready"}</span>
+              <span>{analysisState === "idle" ? (hasFullPhotoSet ? (zh ? "可以开始扫描" : "Ready to scan") : (zh ? "等待 3 张照片" : "Waiting for 3 photos")) : analysisState === "background" ? (zh ? "正在扫描" : "Background scan") : (zh ? "已完成" : "Ready")}</span>
               <span>{analysisState === "idle" ? `${uploadedPhotoCount}/3` : `${analysisProgress}%`}</span>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
@@ -511,7 +520,7 @@ export default function UploadPage() {
           </div>
 
           <div className="mt-6 space-y-3">
-            {analysisSteps.map((step, index) => {
+            {localizedAnalysisSteps.map((step, index) => {
               const isWaiting = analysisState === "idle" && !hasFullPhotoSet;
               const isDone = analysisState === "complete" || (analysisState === "background" && index < activeStepIndex);
               const isActive = analysisState === "background" && index === activeStepIndex;
@@ -532,24 +541,24 @@ export default function UploadPage() {
           </div>
 
           <div className={`mt-6 rounded-[1.25rem] p-4 ${analysisState === "complete" ? "bg-[#10351f] text-[#c9f8db]" : "bg-white/[.06] text-white/68"}`}>
-            <p className="text-sm font-black text-white">{analysisState === "complete" ? "Visual identification saved." : analysisState === "background" ? "Background analysis is running." : hasFullPhotoSet ? "Photo set ready for analysis." : "Upload 3 photos before visual analysis starts."}</p>
+            <p className="text-sm font-black text-white">{analysisState === "complete" ? (zh ? "爱宠鉴定已保存。" : "Visual identification saved.") : analysisState === "background" ? (zh ? "正在扫描分析照片。" : "Background analysis is running.") : hasFullPhotoSet ? (zh ? "照片已齐，可以开始分析。" : "Photo set ready for analysis.") : (zh ? "上传 3 张照片后将自动开始鉴定。" : "Upload 3 photos before visual analysis starts.")}</p>
             <p className="mt-2 text-sm leading-6 opacity-80">
               {analysisState === "complete"
-                ? "Your pet photo is ready. Please start the personality test."
+                ? (zh ? "爱宠鉴定已完成，可以开始性格测试了。" : "Your pet photo is ready. Please start the personality test.")
                 : analysisState === "background"
-                ? "We are identifying breed cues, coat details, facial features, and body structure in the background. You can continue answering now; the result will appear with the final report."
+                ? (zh ? "系统正在后台识别品种线索、毛发、面部和体态特征。你可以继续答题，鉴定结果会随完整报告一起呈现。" : "We are identifying breed cues, coat details, facial features, and body structure in the background. You can continue answering now; the result will appear with the final report.")
                 : hasFullPhotoSet
-                ? "Your front, left, and right photos are ready. Analysis starts automatically when the full set is uploaded."
-                : `Add ${missingPhotoCount} more photo${missingPhotoCount === 1 ? "" : "s"}. You can still skip ahead, but complete photos improve breed, coat, and mixed-trait identification.`}
+                ? (zh ? "正面、左侧和右侧照片已齐，系统会自动开始分析。" : "Your front, left, and right photos are ready. Analysis starts automatically when the full set is uploaded.")
+                : (zh ? `还需上传 ${missingPhotoCount} 张照片。你也可以先跳过，但完整照片有助于更准确地判断品种、毛色和混血特征。` : `Add ${missingPhotoCount} more photo${missingPhotoCount === 1 ? "" : "s"}. You can still skip ahead, but complete photos improve breed, coat, and mixed-trait identification.`)}
             </p>
           </div>
 
           {visualProfile ? (
             <div className="mt-6 rounded-[1.25rem] border border-white/10 bg-white/[.06] p-4">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-black text-white">PBTI visual tags</h3>
+                <h3 className="text-sm font-black text-white">{zh ? "PBTI 外观标签" : "PBTI visual tags"}</h3>
                 <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[#ffb878]">
-                  {visualFallback ? "API key not active" : visualProfile.providerModel}
+                  {visualFallback ? (zh ? "服务暂不可用" : "API key not active") : visualProfile.providerModel}
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -561,39 +570,39 @@ export default function UploadPage() {
               </div>
               <div className="mt-4 grid gap-3 text-sm text-white/72">
                 <div>
-                  <span className="text-white/42">Breed guess: </span>
+                  <span className="text-white/42">{zh ? "品种判断：" : "Breed guess: "}</span>
                   <span className="font-bold text-white">
-                    {visualProfile.breedCandidates[0]?.breed || "Mixed / unclear"}
+                    {visualProfile.breedCandidates[0]?.breed || (zh ? "混血或暂不明确" : "Mixed / unclear")}
                   </span>
                 </div>
                 <div>
-                  <span className="text-white/42">Coat: </span>
+                  <span className="text-white/42">{zh ? "毛发：" : "Coat: "}</span>
                   <span>{[visualProfile.coat.color, visualProfile.coat.length, visualProfile.coat.pattern].filter(Boolean).join(", ")}</span>
                 </div>
                 <div>
-                  <span className="text-white/42">Expression: </span>
+                  <span className="text-white/42">{zh ? "神态：" : "Expression: "}</span>
                   <span>{visualProfile.face.eyeExpression}</span>
                 </div>
                 <div>
-                  <span className="text-white/42">Photo quality: </span>
+                  <span className="text-white/42">{zh ? "照片质量：" : "Photo quality: "}</span>
                   <span>{visualProfile.photoQuality.score}/100</span>
                 </div>
               </div>
               {visualFallback ? (
                 <p className="mt-4 rounded-2xl bg-[#ff7a1a]/15 px-3 py-2 text-xs font-bold leading-5 text-[#ffcfaa]">
-                  Live Qwen-VL analysis did not run. Check DASHSCOPE_API_KEY in Cloudflare Production variables, then retry deployment.
+                  {zh ? "实时图像分析暂未运行，请检查 Cloudflare Production 中的 DASHSCOPE_API_KEY 配置后重新部署。" : "Live Qwen-VL analysis did not run. Check DASHSCOPE_API_KEY in Cloudflare Production variables, then retry deployment."}
                 </p>
               ) : null}
               <p className="mt-4 text-xs leading-5 text-white/42">{visualProfile.disclaimer}</p>
             </div>
           ) : null}
           <div className="mt-7 border-t border-white/10 pt-5">
-            <h3 className="text-sm font-black text-white">Required photo set</h3>
+            <h3 className="text-sm font-black text-white">{zh ? "需要的照片" : "Required photo set"}</h3>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-white/68">
-              <li>Front-facing face photo</li>
-              <li>Left-side body / profile photo</li>
-              <li>Right-side body / profile photo</li>
-              <li className="text-[#ffcfaa]">Incomplete or unclear photos may affect identification and test results.</li>
+              <li>{zh ? "正面脸部照片" : "Front-facing face photo"}</li>
+              <li>{zh ? "左侧身体或侧脸照片" : "Left-side body / profile photo"}</li>
+              <li>{zh ? "右侧身体或侧脸照片" : "Right-side body / profile photo"}</li>
+              <li className="text-[#ffcfaa]">{zh ? "照片缺失或不清晰可能影响鉴定结果。" : "Incomplete or unclear photos may affect identification and test results."}</li>
             </ul>
           </div>
         </aside>
@@ -607,11 +616,11 @@ export default function UploadPage() {
                 <CameraIcon className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-xl font-black tracking-[-.035em]">{analysisState === "complete" ? "Photo analysis is ready." : "Background analysis is running."}</h2>
+                <h2 className="text-xl font-black tracking-[-.035em]">{analysisState === "complete" ? (zh ? "照片分析已完成" : "Photo analysis is ready.") : (zh ? "正在扫描分析照片" : "Background analysis is running.")}</h2>
                 <p className="mt-3 text-sm leading-6 text-white/72">
                   {analysisState === "complete"
-                    ? "We finished reviewing breed cues, coat details, facial features, and body structure. Your visual findings will appear in the final report."
-                    : "We are identifying breed cues, coat details, facial features, and body structure from your photos. You can continue to the behavior test now; visual findings will appear in the final report."}
+                    ? (zh ? "系统已完成品种特征、毛发、脸部与体态分析，鉴定内容会显示在完整报告中。" : "We finished reviewing breed cues, coat details, facial features, and body structure. Your visual findings will appear in the final report.")
+                    : (zh ? "系统正在识别品种特征、毛发、脸部与体态。你可以先进入行为测试，鉴定结果会自动写入完整报告。" : "We are identifying breed cues, coat details, facial features, and body structure from your photos. You can continue to the behavior test now; visual findings will appear in the final report.")}
                 </p>
               </div>
             </div>
@@ -621,14 +630,14 @@ export default function UploadPage() {
                 onClick={() => setAnalysisPromptVisible(false)}
                 className="rounded-full border border-white/12 bg-white/8 px-5 py-3 text-sm font-black text-white transition hover:bg-white/12"
               >
-                Stay here
+                {zh ? "继续查看" : "Stay here"}
               </button>
               <button
                 type="button"
                 onClick={() => router.push(`/quiz?petId=${pet?.id || ""}`)}
                 className="flex-1 rounded-full bg-[#ff7a1a] px-5 py-3 text-sm font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.24)] transition hover:bg-[#ee6b10]"
               >
-                Continue to behavior test
+                {zh ? "进入行为测试" : "Continue to behavior test"}
               </button>
             </div>
           </div>
@@ -639,14 +648,14 @@ export default function UploadPage() {
           onClick={() => router.push("/create")}
           className="rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-sm font-bold text-[#4f463f] transition hover:bg-white/80"
         >
-          Back to profile
+          {zh ? "返回档案" : "Back to profile"}
         </button>
         <button
           onClick={() => router.push(`/quiz?petId=${pet?.id || ""}`)}
           disabled={!canStartQuiz}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:bg-[#ffc397] disabled:shadow-none disabled:hover:translate-y-0"
         >
-          {analysisState === "idle" && !hasFullPhotoSet ? "Skip and continue" : analysisState === "background" ? "Continue while analysis runs" : "Continue to personality test"}
+          {analysisState === "idle" && !hasFullPhotoSet ? (zh ? "跳过并继续" : "Skip and continue") : analysisState === "background" ? (zh ? "分析中，继续测试" : "Continue while analysis runs") : (zh ? "进入性格测试" : "Continue to personality test")}
         </button>
       </div>
     </div>

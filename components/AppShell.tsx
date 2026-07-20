@@ -4,16 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import HeaderAccountActions from "@/components/HeaderAccountActions";
 import LanguageSelector from "@/components/LanguageSelector";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const navLinks = [
-  { href: "/", label: "\u9996\u9875" },
-  { href: "/#method", label: "\u6d4b\u8bd5\u65b9\u6cd5" },
-  { href: "/types", label: "\u6027\u683c\u5206\u7c7b" },
-  { href: "/account", label: "\u7528\u6237\u4e2d\u5fc3" },
-];
+  { href: "/", key: "nav.home" },
+  { href: "/#method", key: "nav.method" },
+  { href: "/types", key: "nav.types" },
+  { href: "/account", key: "nav.account" },
+] as const;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const isHome = pathname === "/";
 
   if (isHome) return <>{children}</>;
@@ -32,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 href={link.href}
                 className={`transition hover:text-[#ff7a1a] ${(link.href === "/#method" ? false : pathname === link.href) ? "text-[#ff7a1a]" : ""}`}
               >
-                {link.label}
+                {t(link.key)}
               </Link>
             ))}
           </div>
@@ -47,11 +49,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-[#7a6d63] md:flex-row md:items-center">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="PBTI" className="h-8 w-auto object-contain" />
-            <span>Copyright 2026 PBTI</span>
+            <span>{t("footer.copyright")}</span>
           </div>
           <div className="flex gap-6">
-            <Link href="/" className="hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
-            <Link href="/#method" className="hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</Link>
+            <Link href="/" className="hover:text-[#ff7a1a]">{t("nav.home")}</Link>
+            <Link href="/#method" className="hover:text-[#ff7a1a]">{t("nav.method")}</Link>
           </div>
         </div>
       </footer>

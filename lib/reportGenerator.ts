@@ -2,6 +2,7 @@ import { dimensionDefinitions, researchBasis, type DimensionKey } from "@/lib/pb
 import type { PetVisualProfile } from "@/lib/visualProfile";
 
 export interface ReportInput {
+  language?: "en" | "zh-CN";
   petName: string;
   species?: "cat" | "dog";
   pbtiType: string;
@@ -105,6 +106,50 @@ function behavioralPreference(score: number | undefined, high: string, low: stri
 }
 
 export function generatePetReport(input: ReportInput): PetReport {
+  if (input.language === "zh-CN") {
+    const name = input.petName;
+    const scoreText = (score: number | undefined, high: string, low: string) => {
+      if (score === undefined) return `${high}与${low}之间较为均衡`;
+      if (score >= 68) return `明显偏向${high}`;
+      if (score >= 56) return `较偏向${high}`;
+      if (score <= 32) return `明显偏向${low}`;
+      if (score <= 44) return `较偏向${low}`;
+      return `在${high}与${low}之间较为均衡`;
+    };
+    const attachment = scoreText(input.dimensionScores?.attachment, "亲近陪伴", "自主空间");
+    const exploration = scoreText(input.dimensionScores?.exploration, "探索新鲜事物", "熟悉稳定的节奏");
+    const vitality = scoreText(input.dimensionScores?.vitality, "积极外放", "冷静克制");
+    const playfulness = scoreText(input.dimensionScores?.playfulness, "玩耍互动", "观察与守护");
+    return {
+      summary: `${name} 的行为表现与 ${input.pbtiType} / ${input.personalityName} 类型最接近。这个结果来自主人对日常行为的长期观察，而不是根据品种或某一次特殊表现下结论。`,
+      dimensionNarrative: [
+        `亲近方式：${attachment}。`, `适应变化：${exploration}。`, `情绪表达：${vitality}。`, `玩心与守护：${playfulness}。`,
+      ],
+      loveLanguage: [
+        { title: "它表达信任的方式", body: `${name}${attachment}。主动靠近、安心待在身边、邀请互动，或在独处后再次回来，都可能是它表达信任的方式。请关注长期重复出现的选择，而不是某一次特别黏人或疏远。` },
+        { title: "它喜欢怎样被关注", body: `${name}${exploration}，同时${vitality}。互动时观察身体是否放松、是否愿意继续；当它转头、僵住、离开、躲藏或过度兴奋时，应及时降低互动强度。` },
+        { title: "建立专属的爱意词典", body: "迎接你、在附近休息、保持舒服的跟随距离、邀请玩耍、缓慢眨眼或安静依偎，都可能是爱意。把它反复选择的触摸方式、休息位置、声音、游戏和生活仪式记录下来。" },
+      ],
+      relationship: [
+        { title: "用可预期的生活建立安全感", body: `让 ${name} 能够大致预判吃饭、散步或如厕、玩耍和休息的时间。稳定不等于一成不变，而是让变化发生得清楚、温和，并留出恢复空间。` },
+        { title: "尊重选择，也尊重拒绝", body: "用邀请代替强迫，为互动保留退出通道，并奖励它主动靠近与配合。尊重暂停不会削弱感情，反而会让爱宠知道自己的表达是安全且有效的。" },
+        { title: "把配合变成共同练习", body: `${name}${playfulness}。采用短而容易成功的互动，在受挫或过度兴奋前结束；不要因害怕、犹豫或压力信号惩罚它。突然变化往往是在传递环境、舒适度或健康方面的信息。` },
+      ],
+      appearance: input.visualProfile
+        ? `${input.visualProfile.summary} 品种判断仅依据照片中的可见特征，不能作为血统、来源、健康或真实行为的证明。`
+        : "目前没有可用的外观鉴定信息；性格结果仍以行为测试为主要依据。",
+      recommendations: [
+        { title: "先优化生活环境", detail: "保留稳定的休息区、饮水与进食位置，并确保爱宠随时可以回到不被打扰的安全空间。" },
+        { title: "建立可持续的日常节奏", detail: `${name}${exploration}。一次只调整一项生活安排，并给它足够时间适应。` },
+        { title: "让活动强度匹配它的能量", detail: `${name}${vitality}，同时${playfulness}。选择难度适中的互动，在兴趣下降前结束，并轮换熟悉的活动。` },
+        { title: "观察趋势，而不是单次表现", detail: "持续关注食欲、睡眠、行动、排泄、梳理、叫声和社交变化，并记录行为发生前后的环境与恢复方式。" },
+        { title: "需要时及时寻求专业帮助", detail: "如果身体或行为突然改变、持续异常或影响生活，请尽快联系专业兽医；长期行为困扰可咨询采用正向训练方式的行为专业人士。" },
+      ],
+      visualAnalysis: input.visualProfile || null,
+      fitIndex: input.fitScore !== undefined ? `原型匹配指数：${input.fitScore}/100。该数值表示与 PBTI 原型的相似程度，不是统计置信度或医学诊断。` : undefined,
+      modelVersion: input.modelVersion,
+    };
+  }
   const speciesLabel = input.species === "dog" ? "dog" : "cat";
   const attachment = behavioralPreference(input.dimensionScores?.attachment, "close social connection", "choice and personal space");
   const exploration = behavioralPreference(input.dimensionScores?.exploration, "novelty and discovery", "familiarity and predictable routines");

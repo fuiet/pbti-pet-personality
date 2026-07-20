@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 import { createPetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const progressSteps = ["Profile", "Photo", "Test", "Report"] as const;
 
@@ -131,6 +132,8 @@ const createPageDecorations = [
 
 export default function CreatePet() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const zh = language === "zh-CN";
   const { loading } = useRequireAuth();
   const [name, setName] = useState("");
   const [species, setSpecies] = useState<"cat" | "dog">("cat");
@@ -142,12 +145,15 @@ export default function CreatePet() {
   const [ageMenuOpen, setAgeMenuOpen] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const breedOptions = species === "cat" ? catBreedOptions : dogBreedOptions;
+  const localizedAgeOptions = zh
+    ? ["6 个月以内", "6–12 个月", "1 岁", "2 岁", "3 岁", "4 岁", "5 岁", "6–8 岁", "9–11 岁", "12 岁以上"]
+    : ageOptions;
 
   async function saveProfile() {
     if (isSaving) return;
 
     if (!name.trim()) {
-      setProfileError("Please enter your pet's name before continuing.");
+      setProfileError(zh ? "请先填写爱宠的名字。" : "Please enter your pet's name before continuing.");
       return;
     }
 
@@ -164,13 +170,13 @@ export default function CreatePet() {
 
       router.push(`/upload?petId=${pet.id}`);
     } catch (error) {
-      setProfileError(error instanceof Error ? error.message : "We could not save this pet profile. Please try again.");
+      setProfileError(error instanceof Error ? error.message : zh ? "暂时无法保存爱宠档案，请稍后重试。" : "We could not save this pet profile. Please try again.");
       setIsSaving(false);
     }
   }
 
   if (loading) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
   return (
@@ -211,12 +217,12 @@ export default function CreatePet() {
         })}
       </div>
 
-      <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">Create Your Pet Profile</h1>
-      <p className="mt-2 text-sm text-[#7a6d63]">Tell us about your pet to begin the personality discovery journey.</p>
+      <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "建立爱宠档案" : "Create Your Pet Profile"}</h1>
+      <p className="mt-2 text-sm text-[#7a6d63]">{zh ? "先认识一下你的爱宠，再开始探索它的独特性格。" : "Tell us about your pet to begin the personality discovery journey."}</p>
 
       <div className="mt-8 space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#4f463f]">Pet Name</label>
+          <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "爱宠名字" : "Pet Name"}</label>
           <input
             value={name}
             onChange={(e) => {
@@ -224,12 +230,12 @@ export default function CreatePet() {
               if (profileError) setProfileError(null);
             }}
             className="w-full rounded-2xl border-2 border-[#eaded2] bg-white p-4 text-sm font-semibold text-[#171514] outline-none transition placeholder:text-[#a3968a] focus:border-[#ff7a1a]/50"
-            placeholder="Enter your pet's name"
+            placeholder={zh ? "请输入爱宠的名字" : "Enter your pet's name"}
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#4f463f]">Species</label>
+          <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "物种" : "Species"}</label>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => {
@@ -242,8 +248,8 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl font-black text-[#ff7a1a]">Cat</div>
-              <div className="mt-1 text-sm font-bold">Cat</div>
+              <div className="text-3xl font-black text-[#ff7a1a]">{zh ? "猫咪" : "Cat"}</div>
+              <div className="mt-1 text-sm font-bold">{zh ? "猫" : "Cat"}</div>
             </button>
             <button
               onClick={() => {
@@ -256,25 +262,25 @@ export default function CreatePet() {
                   : "border-[#eaded2] bg-white hover:border-[#ff7a1a]/30"
               }`}
             >
-              <div className="text-3xl font-black text-[#ff7a1a]">Dog</div>
-              <div className="mt-1 text-sm font-bold">Dog</div>
+              <div className="text-3xl font-black text-[#ff7a1a]">{zh ? "狗狗" : "Dog"}</div>
+              <div className="mt-1 text-sm font-bold">{zh ? "狗" : "Dog"}</div>
             </button>
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#4f463f]">Breed (optional)</label>
+          <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "品种（选填）" : "Breed (optional)"}</label>
           <div className="relative">
             <input
               value={breed}
               onChange={(e) => setBreed(e.target.value)}
               onFocus={() => setBreedMenuOpen(false)}
               className="w-full rounded-2xl border-2 border-[#eaded2] bg-white p-4 pr-14 text-sm font-semibold text-[#171514] outline-none transition placeholder:text-[#a3968a] focus:border-[#ff7a1a]/50"
-              placeholder={species === "cat" ? "Choose or type a cat breed" : "Choose or type a dog breed"}
+              placeholder={zh ? `选择或输入${species === "cat" ? "猫咪" : "狗狗"}品种` : species === "cat" ? "Choose or type a cat breed" : "Choose or type a dog breed"}
             />
             <button
               type="button"
-              aria-label="Choose breed"
+              aria-label={zh ? "选择品种" : "Choose breed"}
               aria-expanded={breedMenuOpen}
               onClick={() => {
                 setBreedMenuOpen((open) => !open);
@@ -307,18 +313,18 @@ export default function CreatePet() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#4f463f]">Age (optional)</label>
+          <label className="mb-2 block text-sm font-bold text-[#4f463f]">{zh ? "年龄（选填）" : "Age (optional)"}</label>
           <div className="relative">
             <input
               value={age}
               onChange={(e) => setAge(e.target.value)}
               onFocus={() => setAgeMenuOpen(false)}
               className="w-full rounded-2xl border-2 border-[#eaded2] bg-white p-4 pr-14 text-sm font-semibold text-[#171514] outline-none transition placeholder:text-[#a3968a] focus:border-[#ff7a1a]/50"
-              placeholder="Choose or type an age"
+              placeholder={zh ? "选择或输入年龄" : "Choose or type an age"}
             />
             <button
               type="button"
-              aria-label="Choose age"
+              aria-label={zh ? "选择年龄" : "Choose age"}
               aria-expanded={ageMenuOpen}
               onClick={() => {
                 setAgeMenuOpen((open) => !open);
@@ -332,7 +338,7 @@ export default function CreatePet() {
             </button>
             {ageMenuOpen ? (
               <div className="absolute left-0 right-0 top-[calc(100%+.5rem)] z-30 max-h-64 overflow-auto rounded-2xl border border-[#eaded2] bg-white p-2 shadow-[0_18px_45px_rgba(52,34,20,.14)]">
-                {ageOptions.map((option) => (
+                {localizedAgeOptions.map((option) => (
                   <button
                     key={option}
                     type="button"
@@ -363,7 +369,7 @@ export default function CreatePet() {
         disabled={isSaving}
         className="mt-8 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-wait disabled:opacity-70"
       >
-        {isSaving ? "Saving profile..." : "Continue to Photo"}
+        {isSaving ? (zh ? "正在保存…" : "Saving profile...") : (zh ? "下一步：上传照片" : "Continue to Photo")}
       </button>
       </div>
     </div>

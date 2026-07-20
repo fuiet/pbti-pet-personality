@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import HeaderAccountActions from "@/components/HeaderAccountActions";
 import LanguageSelector from "@/components/LanguageSelector";
+import { useLanguage } from "@/components/LanguageProvider";
 import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 
 
@@ -21,6 +22,7 @@ function getCountdownParts() {
 }
 
 function PremiumCountdown() {
+  const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getCountdownParts> | null>(null);
 
   useEffect(() => {
@@ -30,10 +32,10 @@ function PremiumCountdown() {
   }, []);
 
   const parts = [
-    { label: "Days", value: timeLeft?.days ?? 0 },
-    { label: "Hours", value: timeLeft?.hours ?? 0 },
-    { label: "Minutes", value: timeLeft?.minutes ?? 0 },
-    { label: "Seconds", value: timeLeft?.seconds ?? 0 },
+    { label: t("home.countdown.days"), value: timeLeft?.days ?? 0 },
+    { label: t("home.countdown.hours"), value: timeLeft?.hours ?? 0 },
+    { label: t("home.countdown.minutes"), value: timeLeft?.minutes ?? 0 },
+    { label: t("home.countdown.seconds"), value: timeLeft?.seconds ?? 0 },
   ];
 
   return (
@@ -237,20 +239,23 @@ function HeroStatIcon({ kind }: { kind: (typeof heroStats)[number]["icon"] }) {
   );
 }
 
-function SampleResultPreview() {
+function SampleResultPreview({ zh }: { zh: boolean }) {
+  const traits = zh ? ["有守护欲", "沉稳", "偏爱规律"] : previewTraits;
+  const scores = zh ? [["亲密度", 76], ["稳定感", 84], ["探索欲", 58], ["敏感度", 42]] as const : previewScores;
+  const tips = zh ? ["生活发生较大变化后，尽量保持日常节奏稳定。", "当它主动关注你时，用温和的赞美及时回应。", "客人到访前，可以先安排一轮益智游戏。"] : previewTips;
   return (
     <section className="mx-auto max-w-7xl px-6 pb-16">
       <div className="grid gap-8 rounded-[2rem] border border-[#eaded2] bg-white/72 p-6 shadow-[0_30px_90px_rgba(52,34,20,.08)] md:p-8 lg:grid-cols-[.85fr_1.15fr]">
         <div className="flex flex-col justify-center">
-          <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">Sample result preview</div>
+          <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "报告示例" : "Sample result preview"}</div>
           <h2 className="mt-4 max-w-xl text-4xl font-black leading-[.96] tracking-[-.05em] text-[#171514] md:text-5xl">
-            See the kind of report your pet will get
+            {zh ? "提前看看爱宠会获得怎样的报告" : "See the kind of report your pet will get"}
           </h2>
           <p className="mt-5 max-w-lg text-base leading-8 text-[#655a51]">
-            Your pet's result brings together a personality type, readable behavior traits, care suggestions, and a share-ready portrait card.
+            {zh ? "报告会整合性格类型、行为特点、照护建议，以及适合分享的专属写真卡片。" : "Your pet's result brings together a personality type, readable behavior traits, care suggestions, and a share-ready portrait card."}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            {["Type summary", "Trait scores", "Care guide", "Share card"].map((item) => (
+            {(zh ? ["类型概览", "维度得分", "照护指南", "分享卡片"] : ["Type summary", "Trait scores", "Care guide", "Share card"]).map((item) => (
               <span key={item} className="rounded-full border border-[#f2d8bf] bg-[#fff7ed] px-4 py-2 text-sm font-black text-[#8a4f22]">
                 {item}
               </span>
@@ -260,7 +265,7 @@ function SampleResultPreview() {
             href="/create"
             className="mt-8 inline-flex w-fit rounded-full bg-[#ff7a1a] px-7 py-4 text-sm font-black text-white shadow-[0_18px_42px_rgba(255,122,26,.28)] transition hover:-translate-y-1 hover:bg-[#ee6b10]"
           >
-            Get your pet's result
+            {zh ? "获取爱宠的测试结果" : "Get your pet's result"}
           </Link>
         </div>
 
@@ -268,9 +273,9 @@ function SampleResultPreview() {
           <article className="rounded-[1.6rem] border border-[#eaded2] bg-[#fffaf4] p-5 shadow-[0_20px_55px_rgba(52,34,20,.08)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">PBTI report</div>
-                <div className="mt-2 text-xs font-black uppercase tracking-[.16em] text-[#d96612]">ASVG</div><h3 className="mt-1 text-3xl font-black tracking-[-.05em] text-[#171514]">Guardian</h3>
-                <p className="mt-2 text-sm leading-6 text-[#655a51]">Steady, loyal, and happiest when their world feels familiar.</p>
+                <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "PBTI 性格报告" : "PBTI report"}</div>
+                <div className="mt-2 text-xs font-black uppercase tracking-[.16em] text-[#d96612]">ASVG</div><h3 className="mt-1 text-3xl font-black tracking-[-.05em] text-[#171514]">{zh ? "守护者" : "Guardian"}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#655a51]">{zh ? "沉稳忠诚，在熟悉而稳定的环境里最安心。" : "Steady, loyal, and happiest when their world feels familiar."}</p>
               </div>
               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[1.2rem] bg-[#edf0f2]">
                 <Image
@@ -285,7 +290,7 @@ function SampleResultPreview() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              {previewTraits.map((trait) => (
+              {traits.map((trait) => (
                 <span key={trait} className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-[#6b5f55] shadow-sm">
                   {trait}
                 </span>
@@ -293,7 +298,7 @@ function SampleResultPreview() {
             </div>
 
             <div className="mt-6 space-y-4">
-              {previewScores.map(([label, score]) => (
+              {scores.map(([label, score]) => (
                 <div key={label}>
                   <div className="mb-1.5 flex justify-between text-xs font-black text-[#6b5f55]">
                     <span>{label}</span>
@@ -309,9 +314,9 @@ function SampleResultPreview() {
 
           <div className="grid gap-4">
             <article className="rounded-[1.6rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_45px_rgba(52,34,20,.06)]">
-              <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">Care tips</div>
+              <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "照护建议" : "Care tips"}</div>
               <ul className="mt-4 space-y-3">
-                {previewTips.map((tip) => (
+                {tips.map((tip) => (
                   <li key={tip} className="flex gap-3 text-sm leading-6 text-[#655a51]">
                     <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#ff7a1a]" />
                     <span>{tip}</span>
@@ -332,8 +337,8 @@ function SampleResultPreview() {
                 />
               </div>
               <div className="p-5">
-                <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Share poster</div>
-                <div className="mt-1 text-2xl font-black tracking-[-.04em]">Guardian Energy</div>
+                <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "分享海报" : "Share poster"}</div>
+                <div className="mt-1 text-2xl font-black tracking-[-.04em]">{zh ? "守护者能量" : "Guardian Energy"}</div>
               </div>
             </article>
           </div>
@@ -344,16 +349,34 @@ function SampleResultPreview() {
 }
 
 export default function Home() {
+  const { language, t } = useLanguage();
+  const localizedHeroStats = language === "zh-CN" ? [
+    { ...heroStats[0], unit: "道题", title: "行为性格测试", body: "从日常习惯与反应中梳理爱宠的性格倾向。" },
+    { ...heroStats[1], unit: "种类型", title: "宠物性格模型", body: "猫狗共享 12 种性格名称与四字母代码。" },
+    { ...heroStats[2], unit: "页以上", title: "完整解读报告", body: "把测试结果整理成容易理解的相处与照护建议。" },
+    { ...heroStats[3], unit: "张写真", title: "专属写真套装", body: "生成适合保存与分享的爱宠写真。" },
+  ] : heroStats;
+  const localizedResearchPillars = language === "zh-CN" ? [
+    { label: "猫咪研究参考", title: "Feline Five 性格维度", body: "以主人长期观察到的猫咪行为作为概念参考。PBTI 采用相关行为线索，但不复制 Feline Five 量表，也不宣称具有同等验证效力。" },
+    { label: "狗狗研究参考", title: "C-BARQ 行为线索", body: "参考 C-BARQ 等研究涉及的日常行为领域。PBTI 是独立的科普型模型，不套用 C-BARQ 常模，也不用于诊断行为问题。" },
+    { label: "PBTI 评分方式", title: "4 个维度，12 种类型", body: "28 道题分别映射到 A/I、E/S、V/C、P/G 四个行为维度，再匹配猫狗共用的 12 种性格原型。" },
+  ] : researchPillars;
+  const localizedMethodSteps = language === "zh-CN" ? [
+    { index: "01", title: "建立爱宠档案", body: "填写名字、物种、品种和年龄，帮助系统了解爱宠的基本生活背景，但不会用品种刻板印象判断性格。", signal: "基础信息", badge: "档案建立" },
+    { index: "02", title: "爱宠鉴定", body: "上传最多 3 张照片，识别毛色、脸型、体态和可能的品种构成，为完整报告补充外观信息。", signal: "照片分析", badge: "视觉识别" },
+    { index: "03", title: "28 道行为题", body: "根据主人观察到的社交方式、日常规律、探索反应、活跃程度和警觉表现，计算四个 PBTI 行为维度。", signal: "行为评分", badge: "性格计算" },
+    { index: "04", title: "生成性格报告", body: "匹配 12 种 PBTI 类型之一，并提供行为依据、相处建议、照护提示、外观信息与分享写真。", signal: "报告输出", badge: "完整解读" },
+  ] : methodSteps;
   return (
     <main className="min-h-screen overflow-hidden bg-[#fff9f2] text-[#171514]">
       <header className="sticky top-0 z-50 border-b border-[#eaded2]/70 bg-[#fff9f2]/86 backdrop-blur-2xl">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
           <BrandLogo compact />
           <div className="hidden items-center gap-9 text-sm font-bold text-[#4f463f] lg:flex">
-            <Link href="/" className="transition hover:text-[#ff7a1a]">{"\u9996\u9875"}</Link>
-            <a href="#method" className="transition hover:text-[#ff7a1a]">{"\u6d4b\u8bd5\u65b9\u6cd5"}</a>
-            <Link href="/types" className="transition hover:text-[#ff7a1a]">{"\u6027\u683c\u5206\u7c7b"}</Link>
-            <Link href="/account" className="transition hover:text-[#ff7a1a]">{"\u7528\u6237\u4e2d\u5fc3"}</Link>
+            <Link href="/" className="transition hover:text-[#ff7a1a]">{t("nav.home")}</Link>
+            <a href="#method" className="transition hover:text-[#ff7a1a]">{t("nav.method")}</a>
+            <Link href="/types" className="transition hover:text-[#ff7a1a]">{t("nav.types")}</Link>
+            <Link href="/account" className="transition hover:text-[#ff7a1a]">{t("nav.account")}</Link>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSelector compact />
@@ -364,21 +387,21 @@ export default function Home() {
 
       <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-16 lg:min-h-[700px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-[minmax(720px,0.95fr)_minmax(360px,0.65fr)]">
         <div className="relative z-10">
-          <h1 className="max-w-3xl text-[54px] font-black leading-[.92] tracking-[-.07em] text-[#171514] md:text-[78px]">
-            Discover who they really are
-            <span className="mt-3 block text-[#ff7a1a]">Research-informed, thoughtful, and fun</span>
+          <h1 className={`max-w-3xl font-black leading-[.92] text-[#171514] ${language === "zh-CN" ? "text-[48px] tracking-[-.055em] md:text-[64px]" : "text-[54px] tracking-[-.07em] md:text-[78px]"}`}>
+            {t("home.hero.title")}
+            <span className="mt-3 block text-[#ff7a1a]">{t("home.hero.accent")}</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#655a51]">
-            PBTI turns pet behavior research into a clear personality readout with a 28-question assessment, a 12-type framework, a deep report, and portrait-style share cards.
+            {t("home.hero.body")}
           </p>
           <div className="mt-6 max-w-3xl rounded-[1.5rem] border border-[#ff7a1a]/35 bg-[#171514] p-5 text-white shadow-[0_22px_55px_rgba(52,34,20,.14)]">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
-                <div className="inline-flex rounded-full bg-[#ff7a1a] px-3 py-1 text-xs font-black uppercase tracking-[.14em] text-white">Premium free access</div>
-                <h2 className="mt-3 text-2xl font-black tracking-[-.04em]">Premium is free for 1 month</h2>
-                <p className="mt-2 text-sm leading-6 text-white/72">Full reports, portrait posters, and multi-pet profiles are open during launch month.</p>
+                <div className="inline-flex rounded-full bg-[#ff7a1a] px-3 py-1 text-xs font-black uppercase tracking-[.14em] text-white">{t("home.premium.label")}</div>
+                <h2 className="mt-3 text-2xl font-black tracking-[-.04em]">{t("home.premium.title")}</h2>
+                <p className="mt-2 text-sm leading-6 text-white/72">{t("home.premium.body")}</p>
                 <Link href="/create" className="mt-4 inline-flex rounded-full bg-white px-5 py-3 text-center text-sm font-black text-[#171514] transition hover:-translate-y-0.5 hover:bg-[#fff7ed]">
-                  Claim premium access
+                  {t("home.premium.cta")}
                 </Link>
               </div>
               <PremiumCountdown />
@@ -386,14 +409,14 @@ export default function Home() {
           </div>
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
             <Link href="/create" className="rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_22px_50px_rgba(255,122,26,.34)] transition hover:-translate-y-1 hover:bg-[#ee6b10]">
-              Start the free test
+              {t("home.cta.start")}
             </Link>
             <Link href="/types" className="rounded-full border border-[#eaded2] bg-white/85 px-8 py-4 text-center font-black text-[#171514] shadow-[0_16px_45px_rgba(52,34,20,.07)] transition hover:-translate-y-1">
-              Explore the 12 personality types
+              {t("home.cta.types")}
             </Link>
           </div>
           <div className="mt-10 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
-            {heroStats.map((item) => (
+            {localizedHeroStats.map((item) => (
               <article key={item.title} className="group min-h-[136px] rounded-[1.65rem] border border-[#eaded2] bg-white/92 p-5 shadow-[0_16px_34px_rgba(52,34,20,.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(52,34,20,.1)]">
                 <div className="flex items-start justify-between gap-5">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#fff1dc] transition duration-300 group-hover:scale-105">
@@ -421,7 +444,7 @@ export default function Home() {
         </div>
       </section>
 
-      <SampleResultPreview />
+      <SampleResultPreview zh={language === "zh-CN"} />
 
       <section id="method" className="relative overflow-hidden border-y border-[#eaded2]/80 bg-white/58 py-16">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(255,122,26,.08),transparent_28%),radial-gradient(circle_at_88%_74%,rgba(255,184,120,.16),transparent_30%)]" />
@@ -437,17 +460,17 @@ export default function Home() {
         <div className="relative z-10 mx-auto max-w-7xl px-6 py-16">
           <div className="grid gap-8 border-b border-[#eaded2] pb-10 lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)] lg:items-end lg:gap-16">
             <div>
-              <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">PBTI method</div>
+              <div className="text-sm font-black uppercase tracking-[.16em] text-[#d96612]">{t("home.method.eyebrow")}</div>
               <h2 className="mt-4 max-w-2xl text-5xl font-black leading-[.95] tracking-[-.055em] text-[#171514]">
-                How PBTI turns behavior into a useful report
+                {t("home.method.title")}
               </h2>
             </div>
             <div>
               <p className="text-base leading-8 text-[#655a51]">
-                PBTI is a behavior-based personality indicator. It uses owner-observed daily behavior as the scoring source, with breed, age, and photo context used only to personalize the report experience.
+                {t("home.method.body")}
               </p>
               <div className="mt-5 rounded-[1.35rem] border border-[#eaded2] bg-white p-4 text-sm leading-6 text-[#655a51] shadow-[0_16px_40px_rgba(52,34,20,.06)]">
-                Based on behavior research, not breed stereotypes. Educational indicator only, not a veterinary diagnosis.
+                {t("home.method.note")}
               </div>
             </div>
           </div>
@@ -457,19 +480,19 @@ export default function Home() {
               <div className="grid grid-cols-3 overflow-hidden rounded-[1.35rem] border border-[#eaded2] bg-white shadow-[0_16px_40px_rgba(52,34,20,.06)]">
               <div className="border-r border-[#eaded2] p-4">
                 <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">28</div>
-                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">questions</div>
+                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">{t("common.questions")}</div>
               </div>
               <div className="border-r border-[#eaded2] p-4">
                 <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">12</div>
-                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">types</div>
+                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">{t("common.types")}</div>
               </div>
               <div className="p-4">
                 <div className="text-2xl font-black tracking-[-.04em] text-[#ff7a1a]">10+</div>
-                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">pages</div>
+                <div className="mt-1 text-xs font-black uppercase tracking-[.06em] text-[#6b5f55]">{t("common.pages")}</div>
               </div>
             </div>
               <div className="mt-4 grid flex-1 gap-4 lg:grid-rows-3">
-              {researchPillars.map((pillar) => (
+              {localizedResearchPillars.map((pillar) => (
                 <article key={pillar.title} className="rounded-[1.35rem] border border-[#eaded2] bg-white/92 p-5 shadow-[0_16px_40px_rgba(52,34,20,.05)]">
                   <div className="text-[11px] font-black uppercase tracking-[.14em] text-[#d96612]">{pillar.label}</div>
                   <h3 className="mt-2 text-lg font-black tracking-[-.035em] text-[#171514]">{pillar.title}</h3>
@@ -483,7 +506,7 @@ export default function Home() {
               <div className="absolute bottom-7 left-[1.65rem] top-7 hidden w-px bg-[#f2d8bf] md:block" />
 
               <div className="grid h-full gap-4 lg:grid-rows-4">
-              {methodSteps.map((step) => (
+              {localizedMethodSteps.map((step) => (
                 <article key={step.index} className="relative h-full rounded-[1.6rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_48px_rgba(52,34,20,.06)] md:ml-14 md:grid md:grid-cols-[1fr_auto] md:items-center md:gap-8">
                   <div className="absolute -left-14 top-6 hidden h-14 w-14 items-center justify-center rounded-full border border-[#f4d8bd] bg-[#fff3e2] text-sm font-black text-[#ff7a1a] shadow-sm md:flex">
                     {step.index}
@@ -511,25 +534,30 @@ export default function Home() {
       <section id="types" className="mx-auto max-w-7xl px-6 py-16">
         <div className="mb-8 flex items-end justify-between gap-6">
           <div>
-            <h2 className="text-4xl font-black tracking-[-.04em]">Personality types</h2>
-            <p className="mt-3 text-[#655a51]">The same 12 personality names are used across both cats and dogs, and the cat art set is now live in the site.</p>
+            <h2 className="text-4xl font-black tracking-[-.04em]">{language === "zh-CN" ? "性格类型" : "Personality types"}</h2>
+            <p className="mt-3 text-[#655a51]">{language === "zh-CN" ? "猫咪和狗狗共享同一套 12 种性格名称与四字母代码，并会自动使用对应物种的素材。" : "The same 12 personality names and four-letter codes are shared by cats and dogs, with species-specific artwork used automatically."}</p>
           </div>
-          <Link href="/quiz" className="hidden text-sm font-black text-[#ff7a1a] sm:block">Try the quiz</Link>
+          <Link href="/quiz" className="hidden text-sm font-black text-[#ff7a1a] sm:block">{language === "zh-CN" ? "开始测试" : "Try the quiz"}</Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-          {catPersonalityTypes.map((personality) => (
-            <PersonalityShowcaseCard key={personality.name} {...personality} />
-          ))}
+          {catPersonalityTypes.map((personality) => {
+            const localized = language === "zh-CN" ? ({
+              IEVP: ["探索家", "好奇"], ASVG: ["守护者", "忠诚"], ISCP: ["梦想家", "温柔"], IEVG: ["独行侠", "独立"],
+              IECG: ["学者", "善思考"], AEVG: ["领袖", "自信"], ASCP: ["陪伴者", "亲昵"], ASCG: ["治愈者", "体贴"],
+              AEVP: ["小太阳", "乐观"], ISCG: ["哨兵", "警觉"], AECP: ["玩乐家", "爱玩"], ISVG: ["贵族", "优雅"],
+            } as const)[personality.code] : null;
+            return <PersonalityShowcaseCard key={personality.name} {...personality} name={localized?.[0] || personality.name} desc={localized?.[1] || personality.desc} />;
+          })}
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="relative overflow-hidden rounded-[2rem] border border-[#eaded2] bg-gradient-to-r from-white via-[#fff0df] to-[#ffd8ad] p-10 shadow-[0_30px_90px_rgba(52,34,20,.1)] md:p-12">
           <div className="max-w-2xl">
-            <h2 className="text-4xl font-black tracking-[-.04em]">Ready to discover your pet's type?</h2>
-            <p className="mt-5 text-lg leading-8 text-[#5f544d]">Create a profile, upload a photo, answer the quiz, and get a personality result in minutes.</p>
+            <h2 className="text-4xl font-black tracking-[-.04em]">{language === "zh-CN" ? "准备好发现爱宠的性格类型了吗？" : "Ready to discover your pet's type?"}</h2>
+            <p className="mt-5 text-lg leading-8 text-[#5f544d]">{language === "zh-CN" ? "创建档案、上传照片并完成测试，几分钟内获得专属性格结果。" : "Create a profile, upload a photo, answer the quiz, and get a personality result in minutes."}</p>
             <Link href="/create" className="mt-8 inline-block rounded-full bg-[#ff7a1a] px-8 py-4 font-black text-white shadow-[0_20px_45px_rgba(255,122,26,.32)]">
-              Start now
+              {language === "zh-CN" ? "现在开始" : "Start now"}
             </Link>
           </div>
         </div>
@@ -538,7 +566,7 @@ export default function Home() {
       <footer className="border-t border-[#eaded2] px-6 py-8">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 text-sm text-[#7a6d63] md:flex-row md:items-center">
           <BrandLogo compact />
-          <div>Copyright 2026 PBTI. Pet Behavior Type Indicator.</div>
+          <div>{language === "zh-CN" ? "© 2026 PBTI 爱宠行为性格指标" : "Copyright 2026 PBTI. Pet Behavior Type Indicator."}</div>
         </div>
       </footer>
     </main>

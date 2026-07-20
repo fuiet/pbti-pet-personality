@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { choosePortraitStylesForPet, PORTRAIT_STYLES } from "@/lib/portraitPrompts";
+import { useLanguage } from "@/components/LanguageProvider";
 
 type PortraitAsset = { id: string; style_id: string; style_name: string; image_url: string };
 
@@ -105,6 +106,8 @@ async function composePortrait(imageUrl: string, petName: string) {
 type PortraitGeneratorProps = { petId: string; resultId: string; petName: string; pbtiCode: string; personalityName: string };
 
 export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, personalityName }: PortraitGeneratorProps) {
+  const { language } = useLanguage();
+  const zh = language === "zh-CN";
   const styles = useMemo(() => choosePortraitStylesForPet(petId, 3), [petId]);
   const [portraits, setPortraits] = useState<PortraitAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -197,12 +200,12 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
     <section className="mt-6 rounded-[2rem] border border-[#eaded2] bg-[#171514] p-6 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)] sm:p-8">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Portrait studio</div>
-          <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Three portraits, one real pet</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/70">Each generation uses your photo set as the identity reference. The setting, wardrobe, lighting, and art direction vary; species, coat, eyes, face, body, sex, and age impression stay protected.</p>
+          <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "爱宠写真工作室" : "Portrait studio"}</div>
+          <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">{zh ? "三张写真，记录真实的它" : "Three portraits, one real pet"}</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/70">{zh ? "系统会以你上传的照片作为身份参考，只改变场景、服饰、灯光和艺术方向，并尽量保留物种、毛色、眼睛、脸型、体态、性别与年龄特征。" : "Each generation uses your photo set as the identity reference. The setting, wardrobe, lighting, and art direction vary; species, coat, eyes, face, body, sex, and age impression stay protected."}</p>
         </div>
         <div className="shrink-0 rounded-full bg-white/10 px-5 py-3 text-xs font-black text-white/72">
-          {loading ? `Creating and saving ${Math.max(3 - portraits.length, 0)} portrait${3 - portraits.length === 1 ? "" : "s"}...` : "Saved to this pet's report"}
+          {loading ? (zh ? `正在生成并保存 ${Math.max(3 - portraits.length, 0)} 张写真…` : `Creating and saving ${Math.max(3 - portraits.length, 0)} portrait${3 - portraits.length === 1 ? "" : "s"}...`) : (zh ? "已保存到爱宠报告" : "Saved to this pet's report")}
         </div>
       </div>
 
@@ -216,19 +219,19 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
           return (
             <article key={id} className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[.06]">
               <div className="relative aspect-[4/5] overflow-hidden bg-[#2a2522]">
-                {imageUrl ? <img src={brandedUrl || imageUrl} alt={`${petName} portrait in ${style?.name || "custom"} style`} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center px-5 text-center text-sm font-bold text-white/38">{loading ? "Generating..." : "Ready for a new portrait"}</div>}
-                {imageUrl && !brandedUrl ? <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-black/58 px-3 py-2 text-center text-[10px] font-black text-white backdrop-blur-sm">Adding name and PBTI logo...</div> : null}
+                {imageUrl ? <img src={brandedUrl || imageUrl} alt={`${petName} portrait in ${style?.name || "custom"} style`} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center px-5 text-center text-sm font-bold text-white/38">{loading ? (zh ? "正在生成…" : "Generating...") : (zh ? "写真准备中" : "Ready for a new portrait")}</div>}
+                {imageUrl && !brandedUrl ? <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-black/58 px-3 py-2 text-center text-[10px] font-black text-white backdrop-blur-sm">{zh ? "正在添加名字与 PBTI Logo…" : "Adding name and PBTI logo..."}</div> : null}
               </div>
               <div className="p-4">
-                <div className="text-sm font-black text-white">{style?.name || "Portrait style"}</div>
+                <div className="text-sm font-black text-white">{style?.name || (zh ? "写真风格" : "Portrait style")}</div>
                 <div className="mt-1 text-xs text-white/48">{pbtiCode} / {personalityName}</div>
                 {imageUrl ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     <a href={brandedUrl || undefined} download={petName + "-" + id + "-original.png"} aria-disabled={!brandedUrl} className={`inline-flex rounded-full bg-[#ffb878] px-3 py-2 text-xs font-black text-[#171514] hover:bg-white ${brandedUrl ? "" : "pointer-events-none opacity-40"}`}>
-                      Download original
+                      {zh ? "下载原图" : "Download original"}
                     </a>
                     <button type="button" disabled={!brandedUrl} onClick={() => brandedUrl && copyPortrait(portraitRecordId, brandedUrl)} className="inline-flex rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white/80 hover:bg-white/10 disabled:cursor-wait disabled:opacity-40">
-                      {copiedId === portraitRecordId ? "Copied" : "Copy image"}
+                      {copiedId === portraitRecordId ? (zh ? "已复制" : "Copied") : (zh ? "复制图片" : "Copy image")}
                     </button>
                   </div>
                 ) : null}
@@ -237,8 +240,8 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
         })}
       </div>
 
-      {error ? <p className="mt-5 rounded-2xl bg-[#7d2d1e] px-4 py-3 text-sm font-bold leading-6 text-[#ffd2c4]">{error}</p> : null}
-      <p className="mt-5 text-xs leading-5 text-white/42">The first three portraits are generated automatically, saved to this pet, and reused whenever the report is opened. The site composites the pet name and small PBTI logo into the full-resolution PNG used for preview, download, and copy.</p>
+      {error ? <p className="mt-5 rounded-2xl bg-[#7d2d1e] px-4 py-3 text-sm font-bold leading-6 text-[#ffd2c4]">{zh ? "写真处理暂时失败，请稍后重试。" : error}</p> : null}
+      <p className="mt-5 text-xs leading-5 text-white/42">{zh ? "前三张写真会自动生成并保存到这只爱宠的档案中。再次打开报告时会继续使用同一组写真；预览、下载和复制的 PNG 都会带有爱宠名字与 PBTI Logo。" : "The first three portraits are generated automatically, saved to this pet, and reused whenever the report is opened. The site composites the pet name and small PBTI logo into the full-resolution PNG used for preview, download, and copy."}</p>
     </section>
   );
 }

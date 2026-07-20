@@ -5,15 +5,19 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithGoogle, signUpWithEmail } from "@/lib/auth";
 import { normalizeNextPath } from "@/lib/nextPath";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export default function RegisterClient() {
   const router = useRouter();
+  const { language } = useLanguage(); const zh = language === "zh-CN";
   const searchParams = useSearchParams();
   const nextPath = normalizeNextPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(
-    searchParams.get("error") === "google_auth_failed" ? "Google sign-in failed. Please try again." : ""
+    searchParams.get("error") === "google_auth_failed"
+      ? (zh ? "Google 登录失败，请重试。" : "Google sign-in failed. Please try again.")
+      : ""
   );
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
@@ -30,7 +34,7 @@ export default function RegisterClient() {
       await signInWithGoogle(nextPath);
     } catch (authError) {
       setIsGoogleSubmitting(false);
-      setMessage(authError instanceof Error ? authError.message : "Unable to start Google sign-in.");
+      setMessage(zh ? "暂时无法连接 Google 登录，请稍后重试。" : authError instanceof Error ? authError.message : "Unable to start Google sign-in.");
     }
   }
 
@@ -52,11 +56,11 @@ export default function RegisterClient() {
         return;
       }
 
-      setMessage("Account created. Please check your email to confirm your account, then sign in.");
+      setMessage(zh ? "账户已创建。请前往邮箱完成验证，然后登录。" : "Account created. Please check your email to confirm your account, then sign in.");
       setIsEmailSubmitting(false);
     } catch (authError) {
       setIsEmailSubmitting(false);
-      setMessage(authError instanceof Error ? authError.message : "Unable to create your account.");
+      setMessage(zh ? "暂时无法创建账户，请检查填写内容后重试。" : authError instanceof Error ? authError.message : "Unable to create your account.");
     }
   }
 
@@ -66,8 +70,8 @@ export default function RegisterClient() {
         <div className="rounded-3xl border border-[#eaded2] bg-white p-8 shadow-sm">
           <div className="mb-6 text-center">
             <div className="text-4xl font-black text-[#ff7a1a]">PBTI</div>
-            <h1 className="mt-3 text-2xl font-black tracking-[-.03em] text-[#171514]">Create Account</h1>
-            <p className="mt-1 text-sm text-[#7a6d63]">Use Google or create a PBTI account with email</p>
+            <h1 className="mt-3 text-2xl font-black tracking-[-.03em] text-[#171514]">{zh ? "创建账户" : "Create Account"}</h1>
+            <p className="mt-1 text-sm text-[#7a6d63]">{zh ? "使用 Google，或通过邮箱注册 PBTI" : "Use Google or create a PBTI account with email"}</p>
           </div>
 
           {message ? (
@@ -81,19 +85,19 @@ export default function RegisterClient() {
               className="flex w-full items-center justify-center gap-3 rounded-full bg-[#171514] px-8 py-4 font-black text-white shadow-[0_12px_28px_rgba(23,21,20,.18)] transition hover:-translate-y-0.5 hover:bg-[#2b2724] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-[#171514]">G</span>
-              {isGoogleSubmitting ? "Connecting..." : "Continue with Google"}
+              {isGoogleSubmitting ? (zh ? "正在连接…" : "Connecting...") : (zh ? "使用 Google 继续" : "Continue with Google")}
             </button>
 
             <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-[#ab9f95]">
               <span className="h-px flex-1 bg-[#eaded2]" />
-              or
+              {zh ? "或" : "or"}
               <span className="h-px flex-1 bg-[#eaded2]" />
             </div>
 
             <form onSubmit={handleEmailRegister} className="space-y-3">
               <div>
                 <label htmlFor="register-email" className="mb-1 block text-sm font-bold text-[#4f463f]">
-                  Email
+                  {zh ? "邮箱" : "Email"}
                 </label>
                 <input
                   id="register-email"
@@ -109,7 +113,7 @@ export default function RegisterClient() {
 
               <div>
                 <label htmlFor="register-password" className="mb-1 block text-sm font-bold text-[#4f463f]">
-                  Password
+                  {zh ? "密码" : "Password"}
                 </label>
                 <input
                   id="register-password"
@@ -118,7 +122,7 @@ export default function RegisterClient() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="w-full rounded-2xl border border-[#eaded2] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ffb273] focus:ring-2 focus:ring-[#ffe2cb]"
-                  placeholder="Create a password"
+                  placeholder={zh ? "设置登录密码" : "Create a password"}
                   required
                 />
               </div>
@@ -128,13 +132,13 @@ export default function RegisterClient() {
                 disabled={isGoogleSubmitting || isEmailSubmitting}
                 className="w-full rounded-full bg-[#ff7a1a] px-8 py-4 font-black text-white shadow-[0_12px_28px_rgba(255,122,26,.28)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isEmailSubmitting ? "Creating account..." : "Create with Email"}
+                {isEmailSubmitting ? (zh ? "正在创建…" : "Creating account...") : (zh ? "使用邮箱注册" : "Create with Email")}
               </button>
             </form>
           </div>
 
           <p className="mt-5 text-center text-sm text-[#7a6d63]">
-            Already have an account? <a href="/login" className="font-bold text-[#ff7a1a] hover:underline">Sign in</a>
+            {zh ? "已有账户？" : "Already have an account? "}<a href="/login" className="font-bold text-[#ff7a1a] hover:underline">{zh ? "直接登录" : "Sign in"}</a>
           </p>
         </div>
       </div>

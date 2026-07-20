@@ -8,6 +8,8 @@ import { dogQuestions } from "@/data/dogQuestions";
 import { calculatePBTI, type Trait } from "@/lib/pbtiEngine";
 import { getLatestPetRecord, getPetRecord, savePersonalityResult, type PetRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import { useLanguage } from "@/components/LanguageProvider";
+import { localizeQuestions } from "@/data/zhQuestions";
 
 const dimensionLabels: Record<string, string> = {
   "A/I": "Social connection",
@@ -59,6 +61,17 @@ function CheckIcon({ className = "" }: { className?: string }) {
 
 export default function QuizPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const zh = language === "zh-CN";
+  const localizedDimensionLabels = zh ? {
+    "A/I": "亲近方式", "E/S": "适应变化", "V/C": "情绪表达", "P/G": "玩心与守护",
+  } : dimensionLabels;
+  const localizedSignalDescriptions = zh ? {
+    "A/I": "观察爱宠如何寻求陪伴、保持距离，以及表达亲近。",
+    "E/S": "观察爱宠面对新鲜事物、固定规律和环境变化时的反应。",
+    "V/C": "观察爱宠表达兴奋、需求和情绪能量的方式。",
+    "P/G": "观察爱宠如何在玩耍互动与警觉守护之间取得平衡。",
+  } : signalDescriptions;
   const { loading: authLoading } = useRequireAuth();
   const [pet, setPet] = useState<PetRecord | null>(null);
   const [current, setCurrent] = useState(0);
@@ -104,7 +117,10 @@ export default function QuizPage() {
     };
   }, [authLoading, router]);
 
-  const questions = pet?.species === "dog" ? dogQuestions : catQuestions;
+  const questions = useMemo(
+    () => localizeQuestions(pet?.species === "dog" ? dogQuestions : catQuestions, zh),
+    [pet?.species, zh],
+  );
   const currentQuestion = questions[current];
   const displayQuestionIndex = Math.min(Math.max(current, answers.length), questions.length - 1);
   const questionNumber = displayQuestionIndex + 1;
@@ -157,11 +173,11 @@ export default function QuizPage() {
         } catch (error) {
           setIsSaving(false);
           setSelectedOptionIndex(null);
-          setQuizError(error instanceof Error ? error.message : "Unable to save your result. Please try again.");
+          setQuizError(error instanceof Error ? error.message : zh ? "暂时无法保存测试结果，请重试。" : "Unable to save your result. Please try again.");
         }
       }, 240);
     },
-    [answers, current, isSaving, pet, questions.length, router, selectedOptionIndex]
+    [answers, current, isSaving, pet, questions.length, router, selectedOptionIndex, zh]
   );
 
   useEffect(() => {
@@ -180,7 +196,7 @@ export default function QuizPage() {
   }, [currentQuestion?.options, goBack, router, select]);
 
   if (authLoading || loadingPet || !pet) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">Loading...</div>;
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
   return (
@@ -188,15 +204,15 @@ export default function QuizPage() {
       <section className="mb-7 rounded-[2rem] border border-[#eaded2] bg-white/82 p-5 shadow-[0_18px_55px_rgba(52,34,20,.06)] lg:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-black uppercase tracking-[.18em] text-[#d96612]">Step 3 of 4</p>
-            <h1 className="mt-2 text-4xl font-black tracking-[-.055em] text-[#171514]">Behavior Assessment</h1>
+            <p className="text-sm font-black uppercase tracking-[.18em] text-[#d96612]">{zh ? "第 3 步，共 4 步" : "Step 3 of 4"}</p>
+            <h1 className="mt-2 text-4xl font-black tracking-[-.055em] text-[#171514]">{zh ? "行为性格测试" : "Behavior Assessment"}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f6258]">
-              Answer based on your pet's usual behavior, not one rare moment. Each choice helps map a clearer personality pattern.
+              {zh ? "请根据爱宠平时最常见的表现作答，不要只参考某一次特殊情况。你的长期观察最有价值。" : "Answer based on your pet's usual behavior, not one rare moment. Each choice helps map a clearer personality pattern."}
             </p>
           </div>
           <div key={`quiz-progress-${questionNumber}`} className="min-w-[240px] rounded-2xl bg-[#fff7ed] p-4">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[.12em] text-[#8c7b6d]">
-              <span>Question {questionNumber}/{questions.length}</span>
+              <span>{zh ? `第 ${questionNumber}/${questions.length} 题` : `Question ${questionNumber}/${questions.length}`}</span>
             </div>
             <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#eaded2]">
               <div className="h-full rounded-full bg-[#ff7a1a] transition-all duration-300" style={{ width: `${progress}%` }} />
@@ -207,7 +223,7 @@ export default function QuizPage() {
 
       {quizError ? (
         <div className="mb-5 rounded-2xl border border-[#ffd8bd] bg-[#fff0e4] px-5 py-4 text-sm font-bold text-[#d96612]">
-          Result saving failed: {quizError}
+          {zh ? "结果保存失败：" : "Result saving failed: "}{quizError}
         </div>
       ) : null}
 
@@ -220,27 +236,27 @@ export default function QuizPage() {
               <div className="grid h-56 place-items-center">
                 <img
                   src={getPersonalityAsset("IEVP", species)}
-                  alt="Personality guide"
+                  alt={zh ? "性格测试引导形象" : "Personality guide"}
                   className="h-44 w-44 object-contain drop-shadow-[0_18px_30px_rgba(52,34,20,.16)]"
                 />
               </div>
             )}
             <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
-              Visual profile ready
+              {zh ? "爱宠档案已就绪" : "Visual profile ready"}
             </div>
           </div>
 
           <div className="mt-5">
             <h2 className="truncate text-2xl font-black tracking-[-.04em] text-[#171514]">{pet.name}</h2>
             <p className="mt-1 text-sm font-bold text-[#7a6d63]">
-              {speciesLabel(pet.species)}{pet.breed ? ` - ${pet.breed}` : ""}{pet.age ? ` - ${pet.age}` : ""}
+              {zh ? (pet.species === "dog" ? "狗狗" : "猫咪") : speciesLabel(pet.species)}{pet.breed ? ` - ${pet.breed}` : ""}{pet.age ? ` - ${pet.age}` : ""}
             </p>
           </div>
 
           <div className="mt-5 rounded-2xl bg-[#171514] p-4 text-white">
-            <p className="text-xs font-black uppercase tracking-[.14em] text-[#ffb878]">Current signal</p>
-            <p className="mt-2 text-lg font-black">{dimensionLabels[currentQuestion?.dimension || "A/I"]}</p>
-            <p className="mt-2 text-xs leading-5 text-white/62">{signalDescriptions[currentQuestion?.dimension || "A/I"]}</p>
+            <p className="text-xs font-black uppercase tracking-[.14em] text-[#ffb878]">{zh ? "当前观察维度" : "Current signal"}</p>
+            <p className="mt-2 text-lg font-black">{localizedDimensionLabels[currentQuestion?.dimension || "A/I"]}</p>
+            <p className="mt-2 text-xs leading-5 text-white/62">{localizedSignalDescriptions[currentQuestion?.dimension || "A/I"]}</p>
           </div>
         </aside>
 
@@ -256,13 +272,13 @@ export default function QuizPage() {
           <div className="relative z-10">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="rounded-full bg-[#fff0e4] px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#d96612]">
-                {dimensionLabels[currentQuestion?.dimension || "A/I"]}
+                {localizedDimensionLabels[currentQuestion?.dimension || "A/I"]}
               </div>
-              <div className="text-xs font-black uppercase tracking-[.14em] text-[#a3968a]">{stage.name} phase</div>
+              <div className="text-xs font-black uppercase tracking-[.14em] text-[#a3968a]">{zh ? `${stage.name} 阶段` : `${stage.name} phase`}</div>
             </div>
 
             <div key={current} className="animate-slide-in">
-              <p className="mt-10 text-sm font-black uppercase tracking-[.16em] text-[#d96612]">Question {String(questionNumber).padStart(2, "0")}</p>
+              <p className="mt-10 text-sm font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? `第 ${String(questionNumber).padStart(2, "0")} 题` : `Question ${String(questionNumber).padStart(2, "0")}`}</p>
               <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight tracking-[-.045em] text-[#171514] sm:text-4xl">
                 {currentQuestion?.question || ""}
               </h2>
@@ -299,8 +315,8 @@ export default function QuizPage() {
         <aside className="rounded-[2rem] border border-[#eaded2] bg-[#171514] p-5 text-white shadow-[0_24px_70px_rgba(52,34,20,.12)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">Signal tracker</p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">Behavior map</h2>
+              <p className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "维度进度" : "Signal tracker"}</p>
+              <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">{zh ? "行为地图" : "Behavior map"}</h2>
             </div>
             <img
               src={getPersonalityAsset(helperStage.code, species)}
@@ -313,7 +329,7 @@ export default function QuizPage() {
             {dimensionStats.map((stat) => (
               <div key={stat.dimension} className="rounded-2xl border border-white/10 bg-white/[.05] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-black text-white">{dimensionLabels[stat.dimension]}</span>
+                  <span className="text-sm font-black text-white">{localizedDimensionLabels[stat.dimension]}</span>
                   <span className="text-xs font-black text-[#ffb878]">{stat.answered}/{stat.total}</span>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
@@ -324,8 +340,8 @@ export default function QuizPage() {
           </div>
 
           <div className="mt-6 rounded-[1.25rem] bg-white/[.06] p-4">
-            <p className="text-sm font-black text-white">No right or wrong answers.</p>
-            <p className="mt-2 text-sm leading-6 text-white/64">Choose the option that best matches your pet's usual pattern. The result becomes more precise as the behavior map fills in.</p>
+            <p className="text-sm font-black text-white">{zh ? "答案没有对错。" : "No right or wrong answers."}</p>
+            <p className="mt-2 text-sm leading-6 text-white/64">{zh ? "选择最符合爱宠日常表现的一项。完成的维度越多，性格画像就越清晰。" : "Choose the option that best matches your pet's usual pattern. The result becomes more precise as the behavior map fills in."}</p>
           </div>
 
           <div className="mt-6 flex gap-3">
@@ -334,14 +350,14 @@ export default function QuizPage() {
               disabled={current === 0 || isSaving}
               className="flex-1 rounded-full border border-white/15 bg-white/8 px-4 py-3 text-sm font-black text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-35"
             >
-              Back
+              {zh ? "上一题" : "Back"}
             </button>
             <button
               onClick={() => router.push("/create")}
               disabled={isSaving}
               className="flex-1 rounded-full border border-white/15 bg-white/8 px-4 py-3 text-sm font-black text-white/74 transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-35"
             >
-              Quit
+              {zh ? "退出测试" : "Quit"}
             </button>
           </div>
         </aside>
@@ -351,8 +367,8 @@ export default function QuizPage() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#171514]/62 px-5 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-center shadow-[0_30px_90px_rgba(0,0,0,.22)]">
             <div className="mx-auto h-12 w-12 rounded-full border-4 border-[#fff0e4] border-t-[#ff7a1a] animate-spin" />
-            <h2 className="mt-6 text-3xl font-black tracking-[-.05em] text-[#171514]">Assessment complete</h2>
-            <p className="mt-3 text-sm leading-6 text-[#7a6d63]">Generating your PBTI result and saved report...</p>
+            <h2 className="mt-6 text-3xl font-black tracking-[-.05em] text-[#171514]">{zh ? "测试完成" : "Assessment complete"}</h2>
+            <p className="mt-3 text-sm leading-6 text-[#7a6d63]">{zh ? "正在生成并保存爱宠的 PBTI 报告…" : "Generating your PBTI result and saved report..."}</p>
           </div>
         </div>
       ) : null}
