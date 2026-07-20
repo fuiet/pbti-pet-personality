@@ -41,30 +41,20 @@ async function savePortraitAsset(
   imageUrl: string,
   model: string,
 ) {
-  let persistedUrl = imageUrl;
-  let storagePath: string | null = null;
+  const imageResponse = await fetch(imageUrl);
+  if (!imageResponse.ok) throw new Error("The generated portrait could not be downloaded for permanent storage.");
 
-  try {
-    const imageResponse = await fetch(imageUrl);
-    if (imageResponse.ok) {
-      const bytes = await imageResponse.arrayBuffer();
-      const contentType = imageResponse.headers.get("content-type") || "application/octet-stream";
-      storagePath = `${userId}/${petId}/${crypto.randomUUID()}.${extensionForContentType(contentType)}`;
-      const upload = await supabase.storage.from(PORTRAIT_BUCKET).upload(storagePath, bytes, {
-        contentType,
-        cacheControl: "31536000",
-        upsert: false,
-      });
+  const bytes = await imageResponse.arrayBuffer();
+  const contentType = imageResponse.headers.get("content-type") || "application/octet-stream";
+  const storagePath = `${userId}/${petId}/${crypto.randomUUID()}.${extensionForContentType(contentType)}`;
+  const upload = await supabase.storage.from(PORTRAIT_BUCKET).upload(storagePath, bytes, {
+    contentType,
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (upload.error) throw new Error(`Portrait storage failed: ${upload.error.message}`);
 
-      if (!upload.error) {
-        persistedUrl = supabase.storage.from(PORTRAIT_BUCKET).getPublicUrl(storagePath).data.publicUrl;
-      } else {
-        storagePath = null;
-      }
-    }
-  } catch {
-    storagePath = null;
-  }
+  const persistedUrl = supabase.storage.from(PORTRAIT_BUCKET).getPublicUrl(storagePath).data.publicUrl;
 
   const { data, error } = await supabase
     .from("pet_portraits")
@@ -82,7 +72,7 @@ async function savePortraitAsset(
     .single();
 
   if (error?.code === "23505") {
-    if (storagePath) await supabase.storage.from(PORTRAIT_BUCKET).remove([storagePath]);
+    await supabase.storage.from(PORTRAIT_BUCKET).remove([storagePath]);
     const { data: existing } = await supabase
       .from("pet_portraits")
       .select("id,style_id,style_name,image_url,storage_path,created_at")
@@ -229,7 +219,14 @@ export async function GET(request: Request) {
 
     if (error && isMissingPortraitTable(error)) return NextResponse.json({ error: "Portrait persistence is not configured. Run supabase/pet-portraits.sql before opening reports." }, { status: 503 });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ portraits: data || [], petName: pet.name });
+
+    const durablePortraits = (data || []).filter((portrait) => Boolean(portrait.storage_path));
+    const temporaryPortraitIds = (data || []).filter((portrait) => !portrait.storage_path).map((portrait) => portrait.id);
+    if (temporaryPortraitIds.length) {
+      await supabase.from("pet_portraits").delete().in("id", temporaryPortraitIds).eq("user_id", user.id);
+    }
+
+    return NextResponse.json({ portraits: durablePortraits, petName: pet.name });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load portraits." }, { status: 500 });
   }

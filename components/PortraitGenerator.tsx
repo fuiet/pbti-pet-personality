@@ -172,8 +172,8 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
           return (
             <article key={id} className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[.06]">
               <div className="relative aspect-[4/5] overflow-hidden bg-[#2a2522]">
-                {imageUrl ? <img src={brandedUrl || originalUrl} alt={`${petName} portrait in ${style?.name || "custom"} style`} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center px-5 text-center text-sm font-bold text-white/38">{loading ? "Generating..." : "Ready for a new portrait"}</div>}
-                {imageUrl && !brandedUrl ? <div className="absolute inset-0 grid place-items-center bg-black/35 text-xs font-black text-white">Adding name and PBTI logo...</div> : null}
+                {imageUrl ? <img src={brandedUrl || imageUrl} alt={`${petName} portrait in ${style?.name || "custom"} style`} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center px-5 text-center text-sm font-bold text-white/38">{loading ? "Generating..." : "Ready for a new portrait"}</div>}
+                {imageUrl && !brandedUrl ? <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-black/58 px-3 py-2 text-center text-[10px] font-black text-white backdrop-blur-sm">Adding name and PBTI logo...</div> : null}
               </div>
               <div className="p-4">
                 <div className="text-sm font-black text-white">{style?.name || "Portrait style"}</div>
