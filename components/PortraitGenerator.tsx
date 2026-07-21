@@ -34,6 +34,66 @@ function drawSpacedText(context: CanvasRenderingContext2D, text: string, x: numb
   }
 }
 
+function hashString(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function fontStack(kind: "block" | "rounded" | "condensed" | "script" = "block") {
+  if (kind === "rounded") return `"Arial Rounded MT Bold", "Trebuchet MS", "Microsoft YaHei", sans-serif`;
+  if (kind === "condensed") return `"Impact", "Arial Black", "Microsoft YaHei", sans-serif`;
+  if (kind === "script") return `"Comic Sans MS", "Segoe Print", "Microsoft YaHei", cursive`;
+  return `"Arial Black", "Microsoft YaHei", sans-serif`;
+}
+
+function fitFontSizeWithFont(context: CanvasRenderingContext2D, text: string, maxWidth: number, preferredSize: number, minimumSize: number, weight = 900, family = fontStack()) {
+  let size = preferredSize;
+  while (size > minimumSize) {
+    context.font = `${weight} ${size}px ${family}`;
+    if (context.measureText(text).width <= maxWidth) break;
+    size -= 2;
+  }
+  return size;
+}
+
+function drawOutlinedText(context: CanvasRenderingContext2D, text: string, x: number, y: number, options: { font: string; fill: string; stroke?: string; lineWidth?: number; shadow?: string; shadowBlur?: number; align?: CanvasTextAlign }) {
+  context.save();
+  context.font = options.font;
+  context.textAlign = options.align || "left";
+  context.textBaseline = "alphabetic";
+  context.lineJoin = "round";
+  if (options.shadow) {
+    context.shadowColor = options.shadow;
+    context.shadowBlur = options.shadowBlur || 0;
+  }
+  if (options.stroke && options.lineWidth) {
+    context.lineWidth = options.lineWidth;
+    context.strokeStyle = options.stroke;
+    context.strokeText(text, x, y);
+  }
+  context.fillStyle = options.fill;
+  context.fillText(text, x, y);
+  context.restore();
+}
+
+function drawNameBadge(context: CanvasRenderingContext2D, text: string, x: number, y: number, width: number, height: number, bg: string, fg: string, font: string) {
+  context.save();
+  context.fillStyle = bg;
+  context.beginPath();
+  context.roundRect(x, y, width, height, height / 2);
+  context.fill();
+  context.font = font;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = fg;
+  context.fillText(text, x + width / 2, y + height / 2 + height * 0.02);
+  context.restore();
+}
+
 async function composePortrait(imageUrl: string, petName: string) {
   const [source, logo] = await Promise.all([loadImage(imageUrl), loadImage("/pbti-logo-transparent.png")]);
     const width = source.naturalWidth || source.width;
@@ -59,39 +119,93 @@ async function composePortrait(imageUrl: string, petName: string) {
     context.restore();
 
     const displayName = petName.trim() || "MY PET";
-    const preferredNameSize = Math.max(56, Math.round(shortEdge * 0.105));
-    const minimumNameSize = Math.max(34, Math.round(shortEdge * 0.055));
-    const maxNameWidth = Math.min(width * 0.62, width - padding * 2 - logoWidth);
-    const fontSize = fitFontSize(context, displayName, maxNameWidth, preferredNameSize, minimumNameSize);
-    const nameY = padding + fontSize;
+    const maxNameWidth = width - padding * 2 - logoWidth * 0.5;
+    const layout = hashString(`${imageUrl}:${displayName}`) % 7;
+    const isLandscape = width > height * 1.16;
+    const isSquare = Math.abs(width - height) < shortEdge * 0.08;
 
-    context.save();
-    context.lineJoin = "round";
-    context.lineWidth = Math.max(3, Math.round(fontSize * 0.075));
-    context.strokeStyle = "rgba(18,15,13,.42)";
-    context.fillStyle = "#ffffff";
-    context.font = `900 ${fontSize}px "Arial Black", "Microsoft YaHei", sans-serif`;
-    context.strokeText(displayName, padding, nameY);
-    context.fillText(displayName, padding, nameY);
-    const renderedNameWidth = context.measureText(displayName).width;
-    context.restore();
-
-    const accentY = nameY + Math.max(16, Math.round(shortEdge * 0.02));
-    const accentWidth = Math.min(renderedNameWidth, maxNameWidth);
-    const accentHeight = Math.max(6, Math.round(shortEdge * 0.008));
-    context.fillStyle = "#ff7418";
-    context.fillRect(padding, accentY, Math.max(accentHeight * 5, accentWidth * 0.24), accentHeight);
-    context.fillStyle = "rgba(255,255,255,.96)";
-    context.fillRect(padding + Math.max(accentHeight * 5, accentWidth * 0.24) + accentHeight, accentY, Math.max(accentHeight * 4, accentWidth * 0.12), accentHeight);
-
-    const label = "PBTI  PET PORTRAIT";
-    const labelSize = Math.max(14, Math.round(shortEdge * 0.022));
-    context.font = `800 ${labelSize}px Arial, sans-serif`;
-    context.fillStyle = "rgba(255,255,255,.92)";
-    context.shadowColor = "rgba(0,0,0,.55)";
-    context.shadowBlur = Math.max(3, Math.round(labelSize * 0.2));
-    drawSpacedText(context, label, padding, accentY + accentHeight + labelSize * 1.65, Math.max(1, Math.round(labelSize * 0.16)));
-    context.shadowColor = "transparent";
+    if (layout === 0) {
+      const fontSize = fitFontSizeWithFont(context, displayName, Math.min(width * 0.66, maxNameWidth), Math.round(shortEdge * 0.12), Math.round(shortEdge * 0.052), 900, fontStack("block"));
+      const x = padding;
+      const y = padding + fontSize;
+      const font = `900 ${fontSize}px ${fontStack("block")}`;
+      drawOutlinedText(context, displayName, x, y, { font, fill: "#ffffff", stroke: "rgba(13,39,45,.58)", lineWidth: Math.max(4, fontSize * 0.08), shadow: "rgba(0,0,0,.28)", shadowBlur: fontSize * 0.1 });
+      const barHeight = Math.max(7, shortEdge * 0.008);
+      context.fillStyle = "#ff7418";
+      context.fillRect(x, y + fontSize * 0.25, Math.max(barHeight * 8, context.measureText(displayName).width * 0.22), barHeight);
+      context.fillStyle = "rgba(255,255,255,.96)";
+      context.fillRect(x + Math.max(barHeight * 8, context.measureText(displayName).width * 0.22) + barHeight * 1.4, y + fontSize * 0.25, barHeight * 6, barHeight);
+      context.font = `800 ${Math.max(14, shortEdge * 0.022)}px Arial, sans-serif`;
+      context.fillStyle = "rgba(255,255,255,.9)";
+      drawSpacedText(context, "PBTI PET PORTRAIT", x, y + fontSize * 0.62, Math.max(1, shortEdge * 0.003));
+    } else if (layout === 1) {
+      const fontSize = fitFontSizeWithFont(context, displayName.toUpperCase(), width * 0.76, Math.round(shortEdge * 0.09), Math.round(shortEdge * 0.04), 900, fontStack("condensed"));
+      const text = displayName.toUpperCase();
+      const y = isLandscape ? height - padding - fontSize * 0.55 : padding + fontSize * 0.95;
+      context.save();
+      context.translate(width / 2, y);
+      context.rotate(-0.035);
+      drawOutlinedText(context, text, 0, 0, { font: `900 ${fontSize}px ${fontStack("condensed")}`, fill: "#fff7ef", stroke: "rgba(0,0,0,.38)", lineWidth: Math.max(3, fontSize * 0.055), shadow: "rgba(0,0,0,.32)", shadowBlur: fontSize * 0.12, align: "center" });
+      context.restore();
+      const labelSize = Math.max(13, shortEdge * 0.02);
+      drawNameBadge(context, "PBTI", padding, padding, labelSize * 3.8, labelSize * 2.15, "rgba(255,116,24,.95)", "#171514", `900 ${labelSize}px Arial, sans-serif`);
+    } else if (layout === 2) {
+      const fontSize = fitFontSizeWithFont(context, displayName, width * 0.52, Math.round(shortEdge * 0.085), Math.round(shortEdge * 0.04), 900, fontStack("rounded"));
+      const badgeWidth = Math.min(width - padding * 2, context.measureText(displayName).width + fontSize * 1.3);
+      const badgeHeight = fontSize * 1.45;
+      const x = padding;
+      const y = height - padding - badgeHeight;
+      drawNameBadge(context, displayName, x, y, badgeWidth, badgeHeight, "rgba(255,255,255,.9)", "#171514", `900 ${fontSize}px ${fontStack("rounded")}`);
+      context.fillStyle = "#ff7418";
+      context.beginPath();
+      context.arc(x + badgeHeight * 0.48, y - badgeHeight * 0.2, badgeHeight * 0.12, 0, Math.PI * 2);
+      context.arc(x + badgeHeight * 0.82, y - badgeHeight * 0.32, badgeHeight * 0.12, 0, Math.PI * 2);
+      context.fill();
+    } else if (layout === 3) {
+      const fontSize = fitFontSizeWithFont(context, displayName, isSquare ? width * 0.74 : width * 0.42, Math.round(shortEdge * 0.095), Math.round(shortEdge * 0.04), 900, fontStack("block"));
+      const x = isLandscape ? padding : width / 2;
+      const y = height - padding - fontSize * 0.5;
+      drawOutlinedText(context, displayName, x, y, { font: `900 ${fontSize}px ${fontStack("block")}`, fill: "#ffffff", stroke: "rgba(255,116,24,.92)", lineWidth: Math.max(5, fontSize * 0.09), shadow: "rgba(0,0,0,.28)", shadowBlur: fontSize * 0.08, align: isLandscape ? "left" : "center" });
+      context.font = `900 ${Math.max(14, shortEdge * 0.026)}px Arial, sans-serif`;
+      context.fillStyle = "rgba(255,255,255,.8)";
+      context.textAlign = isLandscape ? "left" : "center";
+      context.fillText("PET PERSONALITY PORTRAIT", x, y + fontSize * 0.45);
+      context.textAlign = "left";
+    } else if (layout === 4) {
+      const fontSize = fitFontSizeWithFont(context, displayName, height * 0.55, Math.round(shortEdge * 0.075), Math.round(shortEdge * 0.035), 900, fontStack("condensed"));
+      context.save();
+      context.translate(padding + fontSize * 0.2, height - padding);
+      context.rotate(-Math.PI / 2);
+      drawOutlinedText(context, displayName.toUpperCase(), 0, 0, { font: `900 ${fontSize}px ${fontStack("condensed")}`, fill: "#ffffff", stroke: "rgba(0,0,0,.46)", lineWidth: Math.max(3, fontSize * 0.055), shadow: "rgba(0,0,0,.22)", shadowBlur: fontSize * 0.08 });
+      context.font = `800 ${Math.max(12, shortEdge * 0.018)}px Arial, sans-serif`;
+      context.fillStyle = "#ff7418";
+      drawSpacedText(context, "PBTI", 0, fontSize * 0.58, Math.max(1, shortEdge * 0.004));
+      context.restore();
+    } else if (layout === 5) {
+      const fontSize = fitFontSizeWithFont(context, displayName, width * 0.58, Math.round(shortEdge * 0.082), Math.round(shortEdge * 0.038), 900, fontStack("script"));
+      const x = width - padding;
+      const y = height - padding - fontSize * 0.3;
+      drawOutlinedText(context, displayName, x, y, { font: `900 ${fontSize}px ${fontStack("script")}`, fill: "#ffffff", stroke: "rgba(23,21,20,.5)", lineWidth: Math.max(3, fontSize * 0.06), shadow: "rgba(0,0,0,.32)", shadowBlur: fontSize * 0.1, align: "right" });
+      const labelSize = Math.max(12, shortEdge * 0.018);
+      context.font = `900 ${labelSize}px Arial, sans-serif`;
+      context.fillStyle = "#ff7418";
+      context.textAlign = "right";
+      context.fillText("PBTI ORIGINAL", x, y + fontSize * 0.48);
+      context.textAlign = "left";
+    } else {
+      const fontSize = fitFontSizeWithFont(context, displayName, width * 0.7, Math.round(shortEdge * 0.1), Math.round(shortEdge * 0.045), 900, fontStack("rounded"));
+      const x = width / 2;
+      const y = padding + fontSize;
+      drawOutlinedText(context, displayName, x, y, { font: `900 ${fontSize}px ${fontStack("rounded")}`, fill: "#ffffff", stroke: "rgba(0,0,0,.5)", lineWidth: Math.max(4, fontSize * 0.065), shadow: "rgba(255,116,24,.55)", shadowBlur: fontSize * 0.14, align: "center" });
+      context.save();
+      context.strokeStyle = "rgba(255,255,255,.78)";
+      context.lineWidth = Math.max(2, shortEdge * 0.004);
+      context.beginPath();
+      context.moveTo(width / 2 - fontSize * 1.9, y + fontSize * 0.18);
+      context.lineTo(width / 2 + fontSize * 1.9, y + fontSize * 0.18);
+      context.stroke();
+      context.restore();
+    }
 
     return await new Promise<string>((resolve, reject) => {
       canvas.toBlob((blob) => {
