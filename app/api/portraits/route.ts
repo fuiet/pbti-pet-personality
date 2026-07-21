@@ -193,6 +193,7 @@ export async function POST(request: Request) {
     const prompt = buildPortraitPrompt(style, {
       petName: pet.name,
       species,
+      gender: pet.gender === "male" || pet.gender === "female" ? pet.gender : null,
       pbtiCode: personality.code,
       personalityName: personality.name,
       visualProfile,
