@@ -111,35 +111,89 @@ async function savePortraitAsset(
   return data;
 }
 
+async function createPortraitPetRecord(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  species: "cat" | "dog",
+  petName?: string,
+) {
+  const trimmedName = typeof petName === "string" ? petName.trim() : "";
+  const fallbackName = `${species === "dog" ? "Dog" : "Cat"} Portrait ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+  const { data, error } = await supabase
+    .from("pets")
+    .insert({
+      user_id: userId,
+      name: trimmedName || fallbackName,
+      species,
+      breed: null,
+      age: null,
+      gender: null,
+    })
+    .select("id,name,species")
+    .single();
+
+  if (error) {
+    throw new Error(`Unable to prepare a pet profile for portrait generation: ${error.message}`);
+  }
+
+  return data as { id: string; name: string; species: "cat" | "dog" };
+}
+
 export async function POST(request: Request) {
   try {
-    const { petId, resultId, styleId, templateId, ownerPhotos, customPrompt } = await request.json();
-    if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
+    const { petId, resultId, styleId, templateId, ownerPhotos, customPrompt, petPhotos, petSpecies, petName } = await request.json();
 
     const supabase = await createSupabaseServerClient();
     const { data: userResult } = await supabase.auth.getUser();
     const user = userResult.user;
     if (!user) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
 
-    const { data: pet, error: petError } = await supabase.from("pets").select("*").eq("id", petId).eq("user_id", user.id).maybeSingle();
-    if (petError) return NextResponse.json({ error: petError.message }, { status: 500 });
-    if (!pet) return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
+    const uploadedPetPhotos = Array.isArray(petPhotos) ? petPhotos.filter((item) => typeof item === "string" && item).slice(0, 3) : [];
+    let pet: any = null;
+    let species: "cat" | "dog" | null = null;
+    let photos: string[] = [];
+    let resolvedPetId = typeof petId === "string" && petId ? petId : "";
 
-    const species = pet.species === "dog" ? "dog" : pet.species === "cat" ? "cat" : null;
+    if (resolvedPetId) {
+      const { data: petRow, error: petError } = await supabase.from("pets").select("*").eq("id", resolvedPetId).eq("user_id", user.id).maybeSingle();
+      if (petError) return NextResponse.json({ error: petError.message }, { status: 500 });
+      if (!petRow) return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
+
+      pet = petRow;
+      species = pet.species === "dog" ? "dog" : pet.species === "cat" ? "cat" : null;
+      photos = Array.isArray(pet.photo_urls) ? pet.photo_urls.filter(Boolean).slice(0, 3) : [];
+      if (!photos.length && typeof pet.photo_url === "string" && pet.photo_url) photos.push(pet.photo_url);
+    } else {
+      species = petSpecies === "dog" ? "dog" : petSpecies === "cat" ? "cat" : null;
+      photos = uploadedPetPhotos;
+      if (!species) return NextResponse.json({ error: "petSpecies is required when generating from new uploads." }, { status: 400 });
+      if (!photos.length) return NextResponse.json({ error: "Upload at least one pet photo before generating portraits." }, { status: 400 });
+
+      const createdPet = await createPortraitPetRecord(supabase, user.id, species, typeof petName === "string" ? petName : "");
+      resolvedPetId = createdPet.id;
+      pet = {
+        id: createdPet.id,
+        name: createdPet.name,
+        species: createdPet.species,
+        breed: null,
+        age: null,
+        gender: null,
+        photo_url: null,
+        photo_urls: [],
+      };
+    }
+
     if (!species) return NextResponse.json({ error: "A cat or dog profile is required." }, { status: 400 });
-
-    const photos = Array.isArray(pet.photo_urls) ? pet.photo_urls.filter(Boolean).slice(0, 3) : [];
-    if (!photos.length && typeof pet.photo_url === "string" && pet.photo_url) photos.push(pet.photo_url);
     if (!photos.length) return NextResponse.json({ error: "Upload at least one pet photo before generating portraits." }, { status: 400 });
 
     const selectedTemplate = typeof templateId === "string" ? findPortraitStudioTemplate(templateId) : null;
     const resolvedStyleId = selectedTemplate ? buildTemplateStyleId(selectedTemplate, PORTRAIT_PROMPT_VERSION) : styleId;
 
-    if (resolvedStyleId && selectedTemplate?.mode !== "duo") {
+    if (resolvedStyleId && selectedTemplate?.mode !== "duo" && resolvedPetId && uploadedPetPhotos.length === 0) {
       const { data: existing, error: existingError } = await supabase
         .from("pet_portraits")
         .select("id,style_id,style_name,image_url,storage_path,created_at")
-        .eq("pet_id", petId)
+        .eq("pet_id", resolvedPetId)
         .eq("user_id", user.id)
         .eq("style_id", resolvedStyleId)
         .maybeSingle();
@@ -162,7 +216,7 @@ export async function POST(request: Request) {
     const { data: visualRow } = await supabase
       .from("pet_visual_profiles")
       .select("species,breed_candidates,coat,face,body_language,visual_signals,photo_quality,raw_analysis")
-      .eq("pet_id", petId)
+      .eq("pet_id", resolvedPetId)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -250,7 +304,7 @@ export async function POST(request: Request) {
     const imageUrl = extractImageUrl(data);
     if (!imageUrl) return NextResponse.json({ error: "The image model returned no portrait." }, { status: 502 });
 
-    const asset = await savePortraitAsset(supabase, user.id, petId, style, prompt, imageUrl, IMAGE_MODEL);
+    const asset = await savePortraitAsset(supabase, user.id, resolvedPetId, style, prompt, imageUrl, IMAGE_MODEL);
     return NextResponse.json({ portrait: asset, style: { id: style.id, name: style.name }, petName: pet.name });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to generate portrait." }, { status: 500 });
