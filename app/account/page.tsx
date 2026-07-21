@@ -91,7 +91,7 @@ export default function AccountPage() {
   }
 
   if (authLoading || loadingRecords) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载..." : "Loading..."}</div>;
   }
 
   return (
@@ -119,7 +119,7 @@ export default function AccountPage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           <article className="rounded-[1.6rem] border border-[#eaded2] bg-white p-6 shadow-sm">
-            <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "当前账号" : "Signed in as"}</div>
+            <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "当前账户" : "Signed in as"}</div>
             <div className="mt-3 truncate text-xl font-black text-[#171514]">{user?.email}</div>
           </article>
           <article className="rounded-[1.6rem] border border-[#eaded2] bg-white p-6 shadow-sm">
@@ -134,7 +134,7 @@ export default function AccountPage() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "报告列表" : "Reports"}</h2>
-              <p className="mt-1 text-sm text-[#7a6d63]">{zh ? "以下内容仅属于当前登录账号。" : "Each record belongs to the current Supabase account."}</p>
+              <p className="mt-1 text-sm text-[#7a6d63]">{zh ? "以下内容仅属于当前登录账户。" : "Each record belongs to the current Supabase account."}</p>
             </div>
             <Link href="/dashboard" className="hidden text-sm font-black text-[#ff7a1a] sm:block">
               {zh ? "概览" : "Dashboard"}
@@ -179,7 +179,7 @@ export default function AccountPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-xl font-black text-[#171514]">{pet?.name || (zh ? "未命名爱宠" : "Unnamed pet")}</h3>
+                          <h3 className="text-xl font-black text-[#171514]">{pet?.name || (zh ? "未命名宠物" : "Unnamed pet")}</h3>
                           <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-black text-[#d96612]">{personality.code} / {displayPersonality.name}</span>
                         </div>
                         <p className="mt-1 text-sm text-[#7a6d63]">
@@ -211,11 +211,11 @@ export default function AccountPage() {
             <div className="text-xs font-black uppercase tracking-[.16em] text-[#ffb878]">{zh ? "写真海报" : "Portrait posters"}</div>
             <h2 className="mt-3 text-3xl font-black tracking-[-.05em]">{zh ? "我的写真" : "My portraits"}</h2>
             <p className="mt-3 text-sm leading-7 text-white/72">
-              {zh ? "生成的写真会保存在这里，方便你随时查看、下载和分享。" : "Generated portraits are saved here so you can revisit, download, and share them anytime."}
+              {zh ? "生成的照片会保存在这里，方便你随时查看、下载和分享。" : "Generated portraits are saved here so you can revisit, download, and share them anytime."}
             </p>
             <div className="mt-5">
               <Link href="/account/portraits/library" className="inline-flex rounded-full border border-white/14 bg-white/8 px-5 py-3 text-sm font-black text-white transition hover:bg-white/14">
-                {zh ? "写真工作台" : "AI Portrait Studio"}
+                {zh ? "写真图片库" : "Portrait gallery"}
               </Link>
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
@@ -223,7 +223,7 @@ export default function AccountPage() {
                 <a key={portrait.id} href={portrait.image_url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-2xl border border-white/10 bg-white/8 transition hover:bg-white/12">
                   <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="aspect-[4/5] w-full object-cover transition group-hover:scale-[1.02]" />
                   <div className="p-3">
-                    <div className="text-sm font-black text-white">{portrait.pet?.name || (zh ? "已保存爱宠" : "Saved pet")}</div>
+                    <div className="text-sm font-black text-white">{portrait.pet?.name || (zh ? "已保存宠物" : "Saved pet")}</div>
                     <div className="mt-1 text-xs font-bold text-white/58">{portrait.pet?.species === "dog" ? "Dog" : "Cat"} · {portrait.style_name}</div>
                   </div>
                 </a>
@@ -262,7 +262,7 @@ export default function AccountPage() {
                 {zh ? "取消" : "Cancel"}
               </button>
               <button type="button" disabled={deleting} onClick={confirmDelete} className="rounded-full bg-[#7d2d1e] px-5 py-3 text-sm font-black text-white transition hover:bg-[#692416] disabled:cursor-wait disabled:opacity-60">
-                {deleting ? (zh ? "正在删除…" : "Deleting...") : (zh ? "删除报告" : "Delete report")}
+                {deleting ? (zh ? "正在删除..." : "Deleting...") : (zh ? "删除报告" : "Delete report")}
               </button>
             </div>
           </div>
