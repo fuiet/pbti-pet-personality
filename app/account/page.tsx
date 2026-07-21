@@ -215,7 +215,7 @@ export default function AccountPage() {
             </p>
             <div className="mt-5">
               <Link href="/account/portraits" className="inline-flex rounded-full border border-white/14 bg-white/8 px-5 py-3 text-sm font-black text-white transition hover:bg-white/14">
-                {zh ? "全部图片" : "All images"}
+                {zh ? "写真工作台" : "AI Portrait Studio"}
               </Link>
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">

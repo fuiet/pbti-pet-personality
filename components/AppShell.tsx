@@ -10,12 +10,13 @@ const navLinks = [
   { href: "/", key: "nav.home" },
   { href: "/#method", key: "nav.method" },
   { href: "/types", key: "nav.types" },
+  { href: "/account/portraits", label: { en: "AI Portrait Studio", zh: "写真工作台" } },
   { href: "/account", key: "nav.account" },
 ] as const;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const isHome = pathname === "/";
 
   if (isHome) return <>{children}</>;
@@ -34,7 +35,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 href={link.href}
                 className={`transition hover:text-[#ff7a1a] ${(link.href === "/#method" ? false : pathname === link.href) ? "text-[#ff7a1a]" : ""}`}
               >
-                {t(link.key)}
+                {"key" in link ? t(link.key) : language === "zh-CN" ? link.label.zh : link.label.en}
               </Link>
             ))}
           </div>
