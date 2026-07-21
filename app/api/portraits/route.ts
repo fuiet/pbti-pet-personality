@@ -113,7 +113,7 @@ async function savePortraitAsset(
 
 export async function POST(request: Request) {
   try {
-    const { petId, resultId, styleId, templateId, ownerPhotos } = await request.json();
+    const { petId, resultId, styleId, templateId, ownerPhotos, customPrompt } = await request.json();
     if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
 
     const supabase = await createSupabaseServerClient();
@@ -211,6 +211,7 @@ export async function POST(request: Request) {
       personalityName: personality.name,
       visualProfile,
       ownerIncluded: selectedTemplate?.mode === "duo",
+      customPrompt: typeof customPrompt === "string" ? customPrompt : "",
     });
     const apiKey = process.env.DASHSCOPE_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "DASHSCOPE_API_KEY is not configured for portrait generation." }, { status: 503 });

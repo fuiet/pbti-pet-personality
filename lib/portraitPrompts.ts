@@ -16,6 +16,7 @@ export type PortraitRequestContext = {
   personalityName: string;
   visualProfile?: PetVisualProfile | null;
   ownerIncluded?: boolean;
+  customPrompt?: string | null;
 };
 
 type TemplateGender = "male" | "female";
@@ -485,6 +486,7 @@ export function buildPortraitPrompt(style: PortraitStyle, context: PortraitReque
   const template = studioTemplate ? promptTemplateFromStudioTemplate(studioTemplate) : pickTemplate(kind, context.gender);
   const personalityWardrobe = PERSONALITY_WARDROBE[context.pbtiCode] || "safe contemporary pet styling matched to the assigned personality while keeping the pet comfortable and recognizable.";
   const ownerIncluded = Boolean(context.ownerIncluded || studioTemplate?.mode === "duo");
+  const customPrompt = typeof context.customPrompt === "string" ? context.customPrompt.trim() : "";
 
   return [
     ownerIncluded ? duoIdentityLock(context.species) : IDENTITY_LOCK,
@@ -498,6 +500,7 @@ export function buildPortraitPrompt(style: PortraitStyle, context: PortraitReque
       ? `Use the selected built-in template as the direct generation target. Recreate its exact scene logic, camera distance, composition, wardrobe language, prop logic, and emotional mood, but replace the original example pet completely with the uploaded ${context.species}. ${template.direction}`
       : `Use this art direction exactly, replacing any generic pet with the uploaded ${context.species}: ${template.direction}`,
     `Personality reference for styling: ${context.pbtiCode} / ${context.personalityName}. If the template allows wardrobe choice, prefer ${personalityWardrobe}`,
+    customPrompt ? `Additional user refinements to honor when they do not conflict with identity lock or template structure: ${customPrompt}` : "",
     compositionRules(kind),
     UNIVERSAL_NO_TEXT.replace("__PET_NAME__", context.petName),
     `Pet name for website typography only: ${context.petName}.`,
