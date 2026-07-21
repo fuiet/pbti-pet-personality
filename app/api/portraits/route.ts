@@ -3,6 +3,7 @@ import { personalities, defaultPersonalityCode } from "@/data/personalities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPortraitPrompt, PORTRAIT_PROMPT_VERSION, PORTRAIT_STYLES, type PortraitStyle } from "@/lib/portraitPrompts";
 import { normalizeVisualProfile } from "@/lib/visualProfile";
+import { buildTemplateStyleId, findPortraitStudioTemplate } from "@/lib/portraitStudioTemplates";
 
 export const runtime = "edge";
 
@@ -112,7 +113,7 @@ async function savePortraitAsset(
 
 export async function POST(request: Request) {
   try {
-    const { petId, resultId, styleId } = await request.json();
+    const { petId, resultId, styleId, templateId, ownerPhotos } = await request.json();
     if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
 
     const supabase = await createSupabaseServerClient();
@@ -131,13 +132,16 @@ export async function POST(request: Request) {
     if (!photos.length && typeof pet.photo_url === "string" && pet.photo_url) photos.push(pet.photo_url);
     if (!photos.length) return NextResponse.json({ error: "Upload at least one pet photo before generating portraits." }, { status: 400 });
 
-    if (styleId) {
+    const selectedTemplate = typeof templateId === "string" ? findPortraitStudioTemplate(templateId) : null;
+    const resolvedStyleId = selectedTemplate ? buildTemplateStyleId(selectedTemplate, PORTRAIT_PROMPT_VERSION) : styleId;
+
+    if (resolvedStyleId && selectedTemplate?.mode !== "duo") {
       const { data: existing, error: existingError } = await supabase
         .from("pet_portraits")
         .select("id,style_id,style_name,image_url,storage_path,created_at")
         .eq("pet_id", petId)
         .eq("user_id", user.id)
-        .eq("style_id", styleId)
+        .eq("style_id", resolvedStyleId)
         .maybeSingle();
 
       if (existingError && isMissingPortraitTable(existingError)) {
@@ -178,17 +182,26 @@ export async function POST(request: Request) {
         })
       : null;
 
-    const baseStyleId = typeof styleId === "string" ? styleId.split("--")[0] : undefined;
-    const style: PortraitStyle = typeof styleId === "string" && styleId.startsWith("personality-cover-")
+    const baseStyleId = typeof resolvedStyleId === "string" ? resolvedStyleId.split("--")[0] : undefined;
+    const style: PortraitStyle = typeof resolvedStyleId === "string" && resolvedStyleId.startsWith("personality-cover-")
       ? {
-          id: styleId,
+          id: resolvedStyleId,
           name: `${personality.name} Signature Look`,
           category: "editorial",
           direction: "A premium full-height personality campaign portrait designed for the right side of a dark report cover. Keep the pet clearly visible from head through front body, use a saturated warm studio background with strong subject separation, and make the assigned personality wardrobe the visual centerpiece.",
         }
       : (() => {
           const selected = PORTRAIT_STYLES.find((item) => item.id === baseStyleId) || PORTRAIT_STYLES[Math.floor(Math.random() * PORTRAIT_STYLES.length)];
-          return styleId?.endsWith(`--${PORTRAIT_PROMPT_VERSION}`) ? { ...selected, id: styleId } : selected;
+          if (selectedTemplate) {
+            return {
+              ...selected,
+              id: resolvedStyleId,
+              name: selectedTemplate.title.en,
+              category: selected.category,
+              direction: selectedTemplate.basePrompt,
+            };
+          }
+          return resolvedStyleId?.endsWith(`--${PORTRAIT_PROMPT_VERSION}`) ? { ...selected, id: resolvedStyleId } : selected;
         })();
     const prompt = buildPortraitPrompt(style, {
       petName: pet.name,
@@ -197,16 +210,36 @@ export async function POST(request: Request) {
       pbtiCode: personality.code,
       personalityName: personality.name,
       visualProfile,
+      ownerIncluded: selectedTemplate?.mode === "duo",
     });
     const apiKey = process.env.DASHSCOPE_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "DASHSCOPE_API_KEY is not configured for portrait generation." }, { status: 503 });
+
+    const ownerPhotoList = Array.isArray(ownerPhotos) ? ownerPhotos.filter((item) => typeof item === "string" && item).slice(0, 3) : [];
+    if (selectedTemplate?.mode === "duo" && ownerPhotoList.length === 0) {
+      return NextResponse.json({ error: "Upload at least one owner photo before generating a pet + owner portrait." }, { status: 400 });
+    }
+
+    const templateReferenceImage = selectedTemplate
+      ? new URL(selectedTemplate.previewImage, request.url).toString()
+      : null;
 
     const response = await fetch(IMAGE_ENDPOINT, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: IMAGE_MODEL,
-        input: { messages: [{ role: "user", content: [...photos.map((image: string) => ({ image })), { text: prompt }] }] },
+        input: {
+          messages: [{
+            role: "user",
+            content: [
+              ...(templateReferenceImage ? [{ image: templateReferenceImage }] : []),
+              ...photos.map((image: string) => ({ image })),
+              ...ownerPhotoList.map((image: string) => ({ image })),
+              { text: prompt },
+            ],
+          }],
+        },
         parameters: { size: imageSizeForStyle(style.id), n: 1, watermark: false },
       }),
     });

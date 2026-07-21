@@ -2,39 +2,82 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import TemplatePreviewCard from "@/app/account/portraits/TemplatePreviewCard";
 import { useLanguage } from "@/components/LanguageProvider";
-import { listCurrentUserPortraits, type PetPortraitRecord } from "@/lib/pbtiRecords";
+import { PORTRAIT_STUDIO_TEMPLATES, type PortraitStudioCategory, type PortraitStudioMode, type PortraitStudioTemplate } from "@/lib/portraitStudioTemplates";
+import { getLatestResultForCurrentUser, listCurrentUserPortraits, type PetPortraitRecord, type ResultRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
-type PortraitDeleteTarget = {
-  id: string;
-  petName: string;
-  styleName: string;
-};
+const MAX_UPLOAD_IMAGE_EDGE = 1280;
+const MAX_UPLOAD_DATA_URL_BYTES = 800_000;
+const IMAGE_QUALITY_STEPS = [0.78, 0.68, 0.58, 0.5];
 
-type PortraitGroup = {
-  key: "avatar" | "vertical" | "landscape";
-  title: string;
-  subtitle: string;
-  portraits: PetPortraitRecord[];
-};
+const MODE_TABS: Array<{ id: PortraitStudioMode | "history"; en: string; zh: string }> = [
+  { id: "free", en: "Free Create", zh: "自由创作" },
+  { id: "duo", en: "Pet + Owner", zh: "宠物合影" },
+  { id: "history", en: "My Portraits", zh: "我的写真" },
+];
 
-type StudioOrientation = "avatar" | "vertical" | "landscape";
+const CATEGORY_FILTERS: Array<{ id: "all" | PortraitStudioCategory; en: string; zh: string }> = [
+  { id: "all", en: "All", zh: "全部" },
+  { id: "trending", en: "Trending", zh: "热门推荐" },
+  { id: "avatars", en: "Avatars", zh: "头像写真" },
+  { id: "posters", en: "Posters", zh: "竖屏海报" },
+  { id: "landscapes", en: "Landscapes", zh: "横屏场景" },
+  { id: "holiday", en: "Holiday", zh: "节日主题" },
+  { id: "pet-owner", en: "Pet + Owner", zh: "主宠合影" },
+];
 
-const STUDIO_OPTIONS = {
-  background: {
-    en: ["Soft studio", "Nature outdoors", "Modern editorial", "Festive scene"],
-    zh: ["柔光影棚", "自然户外", "时尚棚拍", "节日场景"],
-  },
-  styling: {
-    en: ["No outfit", "Light accessory", "Statement outfit", "Formal look"],
-    zh: ["不穿服饰", "轻配饰", "造型服饰", "正式造型"],
-  },
-  pose: {
-    en: ["Face camera", "Side profile", "Sitting calmly", "Playful motion"],
-    zh: ["看向镜头", "侧脸姿态", "安静坐姿", "动态互动"],
-  },
-} as const;
+type StudioTab = PortraitStudioMode | "history";
+
+function estimateDataUrlBytes(dataUrl: string) {
+  const commaIndex = dataUrl.indexOf(",");
+  const payload = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+  return Math.ceil((payload.length * 3) / 4);
+}
+
+function loadImageFromFile(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Unable to read image file."));
+    reader.onload = () => {
+      const image = new window.Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Unable to load image file."));
+      image.src = typeof reader.result === "string" ? reader.result : "";
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressImageFile(file: File) {
+  const image = await loadImageFromFile(file);
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const scale = Math.min(1, MAX_UPLOAD_IMAGE_EDGE / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Unable to prepare image compression.");
+  }
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  let bestDataUrl = canvas.toDataURL("image/jpeg", IMAGE_QUALITY_STEPS[0]);
+  for (const quality of IMAGE_QUALITY_STEPS.slice(1)) {
+    if (estimateDataUrlBytes(bestDataUrl) <= MAX_UPLOAD_DATA_URL_BYTES) break;
+    bestDataUrl = canvas.toDataURL("image/jpeg", quality);
+  }
+
+  return bestDataUrl;
+}
 
 function classifyPortrait(portrait: PetPortraitRecord) {
   const baseStyleId = portrait.style_id.split("--")[0];
@@ -43,51 +86,37 @@ function classifyPortrait(portrait: PetPortraitRecord) {
   return "vertical" as const;
 }
 
-function aspectClass(kind: PortraitGroup["key"]) {
-  if (kind === "avatar") return "aspect-square";
-  if (kind === "landscape") return "aspect-[16/10]";
-  return "aspect-[4/5]";
-}
-
-function groupTitle(kind: PortraitGroup["key"], zh: boolean) {
-  if (kind === "avatar") return zh ? "头像写真" : "Avatar portraits";
-  if (kind === "landscape") return zh ? "横屏写真" : "Landscape portraits";
-  return zh ? "竖屏写真" : "Vertical portraits";
-}
-
-function groupSubtitle(kind: PortraitGroup["key"], zh: boolean) {
-  if (kind === "avatar") return zh ? "适合头像、封面与分享卡使用。" : "Best for covers, avatars, and share cards.";
-  if (kind === "landscape") return zh ? "更适合场景化海报与横向展示。" : "Better suited to wide posters and horizontal layouts.";
-  return zh ? "主视觉写真，适合海报展示。" : "Primary poster portraits for the main visual showcase.";
-}
-
-export default function AccountPortraitsPage() {
+export default function AccountPortraitStudioPage() {
   const { language } = useLanguage();
   const zh = language === "zh-CN";
   const { loading: authLoading } = useRequireAuth();
   const [portraits, setPortraits] = useState<PetPortraitRecord[]>([]);
+  const [latestRecord, setLatestRecord] = useState<ResultRecord | null>(null);
   const [loadingPortraits, setLoadingPortraits] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<PortraitDeleteTarget | null>(null);
-  const [deleteError, setDeleteError] = useState("");
-  const [deleteNotice, setDeleteNotice] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [orientation, setOrientation] = useState<StudioOrientation>("vertical");
-  const [backgroundChoice, setBackgroundChoice] = useState(0);
-  const [stylingChoice, setStylingChoice] = useState(1);
-  const [poseChoice, setPoseChoice] = useState(0);
+  const [activeTab, setActiveTab] = useState<StudioTab>("free");
+  const [activeCategory, setActiveCategory] = useState<"all" | PortraitStudioCategory>("all");
+  const [selectedTemplateId, setSelectedTemplateId] = useState(PORTRAIT_STUDIO_TEMPLATES[0]?.id || "");
   const [promptText, setPromptText] = useState("");
+  const [ownerPhotos, setOwnerPhotos] = useState<string[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState("");
+  const [generationNotice, setGenerationNotice] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
 
     let active = true;
 
-    listCurrentUserPortraits()
-      .then((items) => {
-        if (active) setPortraits(items);
+    Promise.all([listCurrentUserPortraits(), getLatestResultForCurrentUser()])
+      .then(([savedPortraits, result]) => {
+        if (!active) return;
+        setPortraits(savedPortraits);
+        setLatestRecord(result);
       })
       .catch(() => {
-        if (active) setPortraits([]);
+        if (!active) return;
+        setPortraits([]);
+        setLatestRecord(null);
       })
       .finally(() => {
         if (active) setLoadingPortraits(false);
@@ -98,68 +127,85 @@ export default function AccountPortraitsPage() {
     };
   }, [authLoading]);
 
-  const groupedPortraits = useMemo<PortraitGroup[]>(() => {
-    const avatar = portraits.filter((portrait) => classifyPortrait(portrait) === "avatar");
-    const vertical = portraits.filter((portrait) => classifyPortrait(portrait) === "vertical");
-    const landscape = portraits.filter((portrait) => classifyPortrait(portrait) === "landscape");
+  const selectedTemplate = useMemo(
+    () => PORTRAIT_STUDIO_TEMPLATES.find((template) => template.id === selectedTemplateId) || PORTRAIT_STUDIO_TEMPLATES[0],
+    [selectedTemplateId],
+  );
 
-    return [
-      { key: "avatar", title: groupTitle("avatar", zh), subtitle: groupSubtitle("avatar", zh), portraits: avatar },
-      { key: "vertical", title: groupTitle("vertical", zh), subtitle: groupSubtitle("vertical", zh), portraits: vertical },
-      { key: "landscape", title: groupTitle("landscape", zh), subtitle: groupSubtitle("landscape", zh), portraits: landscape },
-    ];
-  }, [portraits, zh]);
+  const filteredTemplates = useMemo(() => {
+    return PORTRAIT_STUDIO_TEMPLATES.filter((template) => {
+      const modeMatch = activeTab === "history" ? true : template.mode === activeTab;
+      const categoryMatch = activeCategory === "all" ? true : template.category === activeCategory;
+      return modeMatch && categoryMatch;
+    });
+  }, [activeCategory, activeTab]);
 
-  const generatedPrompt = useMemo(() => {
-    const background = (zh ? STUDIO_OPTIONS.background.zh : STUDIO_OPTIONS.background.en)[backgroundChoice];
-    const styling = (zh ? STUDIO_OPTIONS.styling.zh : STUDIO_OPTIONS.styling.en)[stylingChoice];
-    const pose = (zh ? STUDIO_OPTIONS.pose.zh : STUDIO_OPTIONS.pose.en)[poseChoice];
-    const orientationText = zh
-      ? orientation === "avatar"
-        ? "头像写真"
-        : orientation === "vertical"
-          ? "竖屏写真"
-          : "横屏写真"
-      : orientation === "avatar"
-        ? "avatar portrait"
-        : orientation === "vertical"
-          ? "vertical portrait"
-          : "landscape portrait";
-    const custom = promptText.trim();
+  const featuredPortraits = useMemo(() => portraits.slice(0, 6), [portraits]);
+  const portraitCounts = useMemo(() => {
+    const avatar = portraits.filter((portrait) => classifyPortrait(portrait) === "avatar").length;
+    const vertical = portraits.filter((portrait) => classifyPortrait(portrait) === "vertical").length;
+    const landscape = portraits.filter((portrait) => classifyPortrait(portrait) === "landscape").length;
+    return { avatar, vertical, landscape };
+  }, [portraits]);
 
-    return zh
-      ? `生成一张${orientationText}，背景为${background}，服饰设定为${styling}，动作为${pose}。优先保留宠物真实身份，同时强化眼神交流感、面部神态与整体生命力，避免发呆、空洞或僵硬表情。${custom ? ` 用户补充：${custom}` : ""}`
-      : `Create one ${orientationText} with a ${background} background, ${styling} styling, and a ${pose} pose. Preserve the pet's real identity while improving eye contact, facial engagement, and overall liveliness so the result never feels blank, vacant, or stiff.${custom ? ` User direction: ${custom}` : ""}`;
-  }, [backgroundChoice, orientation, poseChoice, promptText, stylingChoice, zh]);
+  useEffect(() => {
+    if (!filteredTemplates.some((template) => template.id === selectedTemplateId) && filteredTemplates[0]) {
+      setSelectedTemplateId(filteredTemplates[0].id);
+    }
+  }, [filteredTemplates, selectedTemplateId]);
 
-  const featuredPortraits = useMemo(() => portraits.slice(0, 3), [portraits]);
+  async function generateFromTemplate() {
+    if (!selectedTemplate || !latestRecord?.pet) return;
+    if (selectedTemplate.mode === "duo" && ownerPhotos.length === 0) {
+      setGenerationError(zh ? "请先上传至少 1 张主人照片，再生成主宠合影。" : "Upload at least one owner photo before generating a pet + owner portrait.");
+      setGenerationNotice("");
+      return;
+    }
 
-  async function confirmDelete() {
-    if (!deleteTarget || deleting) return;
-
-    setDeleting(true);
-    setDeleteError("");
-    setDeleteNotice("");
+    setGenerating(true);
+    setGenerationError("");
+    setGenerationNotice("");
 
     try {
-      const response = await fetch("/api/account/delete", {
+      const response = await fetch("/api/portraits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "portrait", portraitId: deleteTarget.id }),
+        body: JSON.stringify({
+          petId: latestRecord.pet.id,
+          resultId: latestRecord.pbti_id,
+          templateId: selectedTemplate.id,
+          ownerPhotos,
+        }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || (zh ? "暂时无法删除这张写真，请稍后重试。" : "Unable to delete this portrait."));
+      if (!response.ok) throw new Error(data?.error || (zh ? "写真生成失败，请稍后重试。" : "Portrait generation failed."));
 
-      setPortraits((current) => current.filter((portrait) => portrait.id !== deleteTarget.id));
-      setDeleteNotice(
-        data?.storageWarning ||
-          (zh ? `${deleteTarget.petName} 的 ${deleteTarget.styleName} 已删除。` : `${deleteTarget.petName}'s ${deleteTarget.styleName} was deleted.`),
+      const created = data?.portrait as PetPortraitRecord | undefined;
+      if (created?.image_url) {
+        setPortraits((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+      }
+      setGenerationNotice(
+        zh
+          ? `已按“${selectedTemplate.title.zh}”模板为 ${latestRecord.pet.name} 发起生成。`
+          : `Started generation for ${latestRecord.pet.name} using the "${selectedTemplate.title.en}" template.`,
       );
-      setDeleteTarget(null);
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : (zh ? "暂时无法删除这张写真，请稍后重试。" : "Unable to delete this portrait."));
+      setGenerationError(error instanceof Error ? error.message : (zh ? "写真生成失败，请稍后重试。" : "Portrait generation failed."));
     } finally {
-      setDeleting(false);
+      setGenerating(false);
+    }
+  }
+
+  async function handleOwnerFiles(fileList: FileList | File[]) {
+    const files = Array.from(fileList).filter((file) => file.type.startsWith("image/")).slice(0, 3);
+    if (!files.length) return;
+
+    try {
+      const dataUrls = await Promise.all(files.map((file) => compressImageFile(file)));
+      setOwnerPhotos(dataUrls.filter(Boolean).slice(0, 3));
+      setGenerationError("");
+    } catch {
+      setGenerationError(zh ? "无法处理主人照片，请换一张更清晰的 JPG 或 PNG。" : "Unable to process the owner photo. Try a clearer JPG or PNG image.");
     }
   }
 
@@ -167,309 +213,232 @@ export default function AccountPortraitsPage() {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
-  if (portraits.length === 0) {
-    return (
-      <div className="mx-auto max-w-7xl px-6 py-10">
-        <section className="relative overflow-hidden rounded-[2.4rem] bg-[#171514] px-8 py-10 text-white shadow-[0_28px_80px_rgba(52,34,20,.18)]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_14%,rgba(255,122,26,.28),transparent_26%)]" />
-          <div className="relative z-10">
-            <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "写真工作台" : "AI Portrait Studio"}</div>
-            <h1 className="mt-3 text-5xl font-black tracking-[-.06em]">{zh ? "AI Portrait Studio" : "AI Portrait Studio"}</h1>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/72">
-              {zh
-                ? "这里会同时承载自主写真生成与全部图片管理。当前账户下还没有已保存写真，先打开一份报告生成首批作品。"
-                : "This studio is where self-serve generation and image management come together. There are no saved portraits yet, so open a report to create your first set."}
-            </p>
-          </div>
-        </section>
-
-        <section className="mt-8 rounded-[2rem] border border-dashed border-[#e5d2bf] bg-[#fff9f2] p-12 text-center">
-          <h2 className="text-3xl font-black text-[#171514]">{zh ? "还没有保存的写真" : "No saved portraits yet"}</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[#7a6d63]">
-            {zh
-              ? "打开一份报告后，系统会自动生成头像、竖屏与横屏三张写真，并在这里统一管理。"
-              : "Open a report and the system will automatically generate avatar, vertical, and landscape portraits for this library."}
-          </p>
-          <Link href="/account" className="mt-6 inline-flex rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white">
-            {zh ? "返回报告中心" : "Back to report center"}
-          </Link>
-        </section>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      <section className="relative overflow-hidden rounded-[2.4rem] bg-[#171514] text-white shadow-[0_28px_80px_rgba(52,34,20,.18)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_14%,rgba(255,122,26,.28),transparent_26%),linear-gradient(135deg,rgba(255,255,255,.04),transparent_40%)]" />
-        <div className="relative z-10 grid gap-8 px-8 py-8 lg:grid-cols-[1.25fr_.95fr] lg:px-10 lg:py-10">
+      <section className="overflow-hidden rounded-[2.5rem] border border-[#eaded2] bg-[linear-gradient(135deg,#fffdf9_0%,#fff5e8_54%,#fffdf8_100%)] shadow-[0_24px_70px_rgba(52,34,20,.08)]">
+        <div className="grid gap-8 px-8 py-10 lg:grid-cols-[1.05fr_.95fr] lg:px-10">
           <div>
-            <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "写真工作台" : "AI Portrait Studio"}</div>
-            <h1 className="mt-3 text-4xl font-black tracking-[-.06em] text-white sm:text-5xl">AI Portrait Studio</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/72">
+            <h1 className="max-w-2xl text-4xl font-black leading-[.92] tracking-[-.06em] text-[#171514] sm:text-5xl">
+              {zh ? "选一张模板图，让它变成你家宠物的写真" : "Pick a template image and turn it into your pet's portrait"}
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#6c5f55]">
               {zh
-                ? "把全部写真图库和自主创作入口放在同一个工作台里。先规划画面方向、背景、服饰与动作，再继续生成；也可以直接按头像、竖屏、横屏查看所有已保存作品。"
-                : "Bring your full portrait gallery and your next-generation workflow into one studio. Shape the image direction, background, styling, and pose first, then browse every saved image by format."}
+                ? "这里的模板不是灵感图，而是真实生成目标。选中哪张模板，就按那张图的构图、场景、服饰与氛围生成，只把里面的宠物换成你自己的宠物。"
+                : "These templates are not just inspiration cards. Whichever template you choose becomes the actual generation target: scene, composition, outfit, and atmosphere stay anchored to that image while the pet is replaced with your own."}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <div className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-white/84">
-                {zh ? `${portraits.length} 张图片` : `${portraits.length} images`}
+              <button type="button" onClick={() => selectedTemplate && generateFromTemplate()} disabled={generating || !selectedTemplate || !latestRecord?.pet} className="rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white shadow-[0_16px_34px_rgba(255,122,26,.26)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
+                {generating ? (zh ? "生成中…" : "Generating...") : (zh ? "按当前模板生成" : "Generate from template")}
+              </button>
+              <Link href="/account/portraits/library" className="rounded-full border border-[#eaded2] bg-white px-6 py-3 text-sm font-black text-[#3f352e] transition hover:border-[#ff7a1a] hover:text-[#ff7a1a]">
+                {zh ? "查看全部写真" : "View all portraits"}
+              </Link>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <div className="rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#7b6657]">
+                {zh ? `${portraitCounts.avatar} 头像 / ${portraitCounts.vertical} 竖屏 / ${portraitCounts.landscape} 横屏` : `${portraitCounts.avatar} avatars / ${portraitCounts.vertical} vertical / ${portraitCounts.landscape} landscape`}
               </div>
-              <div className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-white/70">
-                {zh
-                  ? `${groupedPortraits[0]?.portraits.length || 0} 张头像 / ${groupedPortraits[1]?.portraits.length || 0} 张竖屏 / ${groupedPortraits[2]?.portraits.length || 0} 张横屏`
-                  : `${groupedPortraits[0]?.portraits.length || 0} avatars / ${groupedPortraits[1]?.portraits.length || 0} vertical / ${groupedPortraits[2]?.portraits.length || 0} landscape`}
+              <div className="rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#7b6657]">
+                {latestRecord?.pet ? (zh ? `当前使用：${latestRecord.pet.name}` : `Using: ${latestRecord.pet.name}`) : (zh ? "请先完成一份报告" : "Create a report first")}
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-[1.8rem] border border-white/10 bg-white/8 p-5 backdrop-blur">
-              <div className="text-xs font-black uppercase tracking-[.15em] text-[#ffb878]">{zh ? "创作路径" : "Studio flow"}</div>
-              <div className="mt-3 space-y-3 text-sm text-white/72">
-                <p>{zh ? "1. 上传 3 张参考图，锁定宠物真实身份" : "1. Upload 3 references to lock the pet identity."}</p>
-                <p>{zh ? "2. 选择头像、竖屏或横屏画幅" : "2. Choose avatar, vertical, or landscape framing."}</p>
-                <p>{zh ? "3. 设定背景、服饰、动作与自定义想法" : "3. Shape the background, styling, pose, and custom direction."}</p>
-              </div>
-            </div>
-
-            <div className="rounded-[1.8rem] border border-white/10 bg-white/8 p-5 backdrop-blur md:col-span-2 lg:col-span-1">
-              <div className="text-xs font-black uppercase tracking-[.15em] text-[#ffb878]">{zh ? "当前方向" : "Current direction"}</div>
-              <p className="mt-3 text-2xl font-black tracking-[-.04em]">
-                {orientation === "avatar" ? (zh ? "头像写真" : "Avatar portrait") : orientation === "vertical" ? (zh ? "竖屏写真" : "Vertical portrait") : (zh ? "横屏写真" : "Landscape portrait")}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-white/68">
-                {zh
-                  ? "这一版先完成工作台设计与提示词组织，后续可以直接把这里接成真正的一键生成入口。"
-                  : "This redesign establishes the studio workflow and prompt structure, ready to be wired into a one-image generation action next."}
-              </p>
-            </div>
+          <div className="rounded-[2rem] border border-[#eaded2] bg-white p-5 shadow-[0_18px_40px_rgba(52,34,20,.05)]">
+            <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "当前模板" : "Current template"}</div>
+            {selectedTemplate ? (
+              <>
+                <div className={`relative mt-4 overflow-hidden rounded-[1.7rem] bg-gradient-to-br ${selectedTemplate.previewTint}`}>
+                  <div className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.22))]" />
+                  <img src={selectedTemplate.previewImage} alt={zh ? selectedTemplate.title.zh : selectedTemplate.title.en} className={`relative z-[1] w-full object-cover ${selectedTemplate.orientation === "avatar" ? "aspect-square" : selectedTemplate.orientation === "vertical" ? "aspect-[4/5]" : "aspect-[16/10]"}`} />
+                </div>
+                <h2 className="mt-4 text-2xl font-black tracking-[-.04em] text-[#171514]">{zh ? selectedTemplate.title.zh : selectedTemplate.title.en}</h2>
+                <p className="mt-2 text-sm leading-7 text-[#706459]">{zh ? selectedTemplate.subtitle.zh : selectedTemplate.subtitle.en}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {selectedTemplate.tags.map((tag) => (
+                    <span key={tag} className="rounded-full bg-[#fff0e4] px-3 py-1 text-[11px] font-black uppercase tracking-[.12em] text-[#d96612]">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-5 rounded-[1.4rem] bg-[#171514] p-4 text-white">
+                  <div className="text-xs font-black uppercase tracking-[.15em] text-[#ffb878]">{zh ? "模板生成规则" : "Template generation rule"}</div>
+                  <p className="mt-3 text-sm leading-7 text-white/78">
+                    {zh
+                      ? `系统会尽量复刻这张模板图的场景、道具、构图、服饰与氛围，只把里面的宠物替换成 ${latestRecord?.pet?.name || "你的宠物"}，同时保留真实长相。`
+                      : `The system will recreate this template's scene, prop logic, composition, styling, and atmosphere, while replacing the example pet with ${latestRecord?.pet?.name || "your pet"} and keeping the real identity intact.`}
+                  </p>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       </section>
 
-      {deleteNotice ? <p className="mt-6 rounded-2xl bg-[#edf9f1] px-4 py-3 text-sm font-bold text-[#247347]">{deleteNotice}</p> : null}
+      {generationNotice ? <p className="mt-6 rounded-2xl bg-[#edf9f1] px-4 py-3 text-sm font-bold text-[#247347]">{generationNotice}</p> : null}
+      {generationError ? <p className="mt-6 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-bold text-[#b5482e]">{generationError}</p> : null}
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-[1.1fr_.9fr]">
-        <section className="rounded-[2rem] border border-[#eaded2] bg-[linear-gradient(180deg,#fffdf9_0%,#fff7ee_100%)] p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "写真工作台" : "AI Portrait Studio"}</div>
-              <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "定制下一张写真" : "Design your next portrait"}</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-[#7a6d63]">
-                {zh
-                  ? "固定一次只生成一张，不满意就调整提示词重新生成。这一版先把画面配置、提示词优化预览和图库合并到一起。"
-                  : "Generate one image at a time, then refine the prompt if it is not right yet. This version unifies visual controls, prompt preview, and gallery browsing in one place."}
-              </p>
-            </div>
-            <Link href="/account" className="inline-flex rounded-full border border-[#eaded2] bg-white px-5 py-3 text-sm font-black text-[#4f463f] transition hover:border-[#ff7a1a] hover:text-[#ff7a1a]">
-              {zh ? "返回用户中心" : "Back to account"}
-            </Link>
-          </div>
+      <section className="mt-8 rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
+        <div className="flex flex-wrap gap-3">
+          {MODE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-full px-4 py-2 text-sm font-black transition ${activeTab === tab.id ? "bg-[#171514] text-white" : "bg-[#f8efe5] text-[#5d5046] hover:bg-[#f1e4d5]"}`}
+            >
+              {zh ? tab.zh : tab.en}
+            </button>
+          ))}
+        </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <div className="space-y-5">
-              <div>
-                <div className="text-sm font-black text-[#171514]">{zh ? "画幅类型" : "Orientation"}</div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  {(["avatar", "vertical", "landscape"] as StudioOrientation[]).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setOrientation(value)}
-                      className={`rounded-[1.4rem] border px-4 py-4 text-left transition ${orientation === value ? "border-[#ff7a1a] bg-[#fff0e4] shadow-[0_12px_24px_rgba(255,122,26,.12)]" : "border-[#eaded2] bg-white hover:border-[#ffcfab]"}`}
-                    >
-                      <div className="text-sm font-black text-[#171514]">
-                        {value === "avatar" ? (zh ? "头像" : "Avatar") : value === "vertical" ? (zh ? "竖屏" : "Vertical") : (zh ? "横屏" : "Landscape")}
-                      </div>
-                      <div className="mt-1 text-xs leading-6 text-[#8b7c71]">
-                        {value === "avatar"
-                          ? (zh ? "适合头像、封面、社媒缩略图" : "Best for avatar, cover, and social thumbnail use.")
-                          : value === "vertical"
-                            ? (zh ? "适合海报主视觉与人物化呈现" : "Best for hero posters and editorial framing.")
-                            : (zh ? "适合场景化和宽幅叙事画面" : "Best for environmental storytelling and wide scenes.")}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-5 sm:grid-cols-3">
-                {(["background", "styling", "pose"] as const).map((field) => {
-                  const values = zh ? STUDIO_OPTIONS[field].zh : STUDIO_OPTIONS[field].en;
-                  const selected = field === "background" ? backgroundChoice : field === "styling" ? stylingChoice : poseChoice;
-                  const onSelect = field === "background" ? setBackgroundChoice : field === "styling" ? setStylingChoice : setPoseChoice;
-
-                  return (
-                    <div key={field} className="rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
-                      <div className="text-xs font-black uppercase tracking-[.14em] text-[#d96612]">
-                        {field === "background" ? (zh ? "背景" : "Background") : field === "styling" ? (zh ? "服饰" : "Styling") : (zh ? "动作" : "Pose")}
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {values.map((value, index) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => onSelect(index)}
-                            className={`rounded-full px-3 py-2 text-xs font-black transition ${selected === index ? "bg-[#171514] text-white" : "bg-[#f8efe5] text-[#5f5248] hover:bg-[#f2e5d7]"}`}
-                          >
-                            {value}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
-                <label htmlFor="portrait-prompt" className="text-sm font-black text-[#171514]">
-                  {zh ? "补充你的创意想法" : "Add your creative direction"}
-                </label>
-                <textarea
-                  id="portrait-prompt"
-                  value={promptText}
-                  onChange={(event) => setPromptText(event.target.value)}
-                  placeholder={zh ? "例如：法式杂志感、微风草地、佩戴针织围巾、眼神更有互动感" : "For example: French editorial mood, breezy meadow, knitted scarf, stronger eye contact"}
-                  className="mt-3 min-h-[120px] w-full rounded-[1.25rem] border border-[#eaded2] bg-[#fffaf5] px-4 py-3 text-sm text-[#33251d] outline-none transition placeholder:text-[#a39489] focus:border-[#ff7a1a]"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              <div className="rounded-[1.6rem] bg-[#171514] p-5 text-white shadow-[0_20px_40px_rgba(23,21,20,.18)]">
-                <div className="text-xs font-black uppercase tracking-[.15em] text-[#ffb878]">{zh ? "AI 优化后的提示词预览" : "AI-optimized prompt preview"}</div>
-                <p className="mt-4 text-sm leading-7 text-white/78">{generatedPrompt}</p>
-              </div>
-
-              <div className="rounded-[1.6rem] border border-[#eaded2] bg-white p-5">
-                <div className="text-xs font-black uppercase tracking-[.15em] text-[#d96612]">{zh ? "参考图要求" : "Reference image guidance"}</div>
-                <div className="mt-3 space-y-3 text-sm leading-7 text-[#6a5e55]">
-                  <p>{zh ? "建议上传 3 张不同角度的清晰照片，至少包含一张正脸与一张自然互动状态。" : "Use 3 clear reference photos from different angles, including one front-facing and one naturally engaged moment."}</p>
-                  <p>{zh ? "如果原图表情偏平，系统会主动增强眼神交流感、口鼻部神态和整体生命力，避免成片发呆。" : "If the source expression is flat, the system should actively enhance eye contact, muzzle expression, and overall liveliness so the result never feels blank."}</p>
-                </div>
-              </div>
-
-              <div className="rounded-[1.6rem] border border-dashed border-[#e7cdb8] bg-[#fff6ed] p-5">
-                <div className="text-sm font-black text-[#171514]">{zh ? "下一步可直接接入真实生成" : "Ready for real generation wiring"}</div>
-                <p className="mt-2 text-sm leading-7 text-[#7a6d63]">
-                  {zh ? "后续把上传组件、提示词优化接口和单张生成按钮接到这里，就能形成完整的自主写真工作流。" : "The next step is to connect uploads, prompt refinement, and a single-image generation action here for a complete self-serve studio flow."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <aside className="space-y-5">
-          <section className="rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
-            <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "全部图片库" : "Portrait library"}</div>
-            <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? `${portraits.length} 张图片` : `${portraits.length} images`}</h2>
-            <p className="mt-2 text-sm leading-7 text-[#7a6d63]">
-              {zh ? "下面按头像、竖屏、横屏分组管理作品。可以打开原图，也可以删除单张写真。" : "Manage saved work below by avatar, vertical, and landscape groups. Open originals or remove one image at a time."}
-            </p>
-          </section>
-
-          <section className="rounded-[2rem] border border-[#eaded2] bg-[#fffaf5] p-6 shadow-[0_18px_50px_rgba(52,34,20,.04)]">
-            <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "近期作品" : "Recent work"}</div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-              {featuredPortraits.map((portrait) => (
-                <a key={portrait.id} href={portrait.image_url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[1.4rem] border border-[#eaded2] bg-white">
-                  <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="aspect-[4/3] w-full object-cover transition group-hover:scale-[1.02]" />
-                  <div className="p-3">
-                    <div className="text-sm font-black text-[#171514]">{portrait.pet?.name || (zh ? "已保存爱宠" : "Saved pet")}</div>
+        {activeTab === "history" ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {featuredPortraits.length ? (
+              featuredPortraits.map((portrait) => (
+                <a key={portrait.id} href={portrait.image_url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-[1.5rem] border border-[#eaded2] bg-[#fffdf9] shadow-sm transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(52,34,20,.08)]">
+                  <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="aspect-[4/5] w-full object-cover" />
+                  <div className="p-4">
+                    <div className="text-base font-black text-[#171514]">{portrait.pet?.name || (zh ? "已保存爱宠" : "Saved pet")}</div>
                     <div className="mt-1 text-xs font-bold text-[#8c7d72]">{portrait.style_name}</div>
                   </div>
                 </a>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      <div className="mt-8 space-y-8">
-        {groupedPortraits.map((group) => (
-          <section key={group.key} className="rounded-[2rem] border border-[#eaded2] bg-white/82 p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{group.title}</div>
-                <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-[#171514]">{group.portraits.length}</h2>
-                <p className="mt-1 text-sm text-[#7a6d63]">{group.subtitle}</p>
-              </div>
-            </div>
-
-            {group.portraits.length === 0 ? (
-              <div className="mt-5 rounded-[1.5rem] border border-dashed border-[#eaded2] bg-[#fffaf5] px-5 py-8 text-sm font-bold text-[#8f8175]">
-                {zh ? "这个分类里暂时还没有图片。" : "There are no images in this category yet."}
-              </div>
+              ))
             ) : (
-              <div className={`mt-5 grid gap-4 ${group.key === "landscape" ? "md:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
-                {group.portraits.map((portrait) => (
-                  <article key={portrait.id} className="overflow-hidden rounded-[1.6rem] border border-[#eaded2] bg-[#fffdf9] shadow-sm transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(52,34,20,.08)]">
-                    <div className={`overflow-hidden bg-[#f4ece4] ${aspectClass(group.key)}`}>
-                      <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-base font-black text-[#171514]">{portrait.pet?.name || (zh ? "已保存爱宠" : "Saved pet")}</h3>
-                          <p className="mt-1 text-xs font-bold text-[#8c7d72]">{portrait.pet?.species === "dog" ? "Dog" : "Cat"} · {portrait.style_name}</p>
-                        </div>
-                        <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[#d96612]">
-                          {group.key === "avatar" ? "Avatar" : group.key === "vertical" ? "Vertical" : "Landscape"}
-                        </span>
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <a href={portrait.image_url} target="_blank" rel="noreferrer" className="rounded-full bg-[#ff7a1a] px-4 py-2 text-xs font-black text-white transition hover:bg-[#ee6b10]">
-                          {zh ? "打开原图" : "Open image"}
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDeleteError("");
-                            setDeleteTarget({
-                              id: portrait.id,
-                              petName: portrait.pet?.name || (zh ? "这只爱宠" : "This pet"),
-                              styleName: portrait.style_name,
-                            });
-                          }}
-                          className="rounded-full border border-[#e7b7aa] px-4 py-2 text-xs font-black text-[#b5482e] transition hover:bg-[#fff1ec]"
-                        >
-                          {zh ? "删除写真" : "Delete image"}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+              <div className="rounded-[1.5rem] border border-dashed border-[#eaded2] bg-[#fffaf5] px-5 py-10 text-sm font-bold text-[#8f8175] sm:col-span-2 xl:col-span-3">
+                {zh ? "还没有已保存写真。选一张模板就可以开始生成。" : "No saved portraits yet. Pick a template to start generating."}
               </div>
             )}
-          </section>
-        ))}
-      </div>
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {CATEGORY_FILTERS.filter((filter) => activeTab === "free" ? filter.id !== "pet-owner" : filter.id === "all" || filter.id === "pet-owner").map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setActiveCategory(filter.id)}
+                  className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[.12em] transition ${activeCategory === filter.id ? "bg-[#ff7a1a] text-white" : "bg-[#fff3e8] text-[#8a705f] hover:bg-[#ffe7d1]"}`}
+                >
+                  {zh ? filter.zh : filter.en}
+                </button>
+              ))}
+            </div>
 
-      {deleteTarget ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[#171514]/45 px-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-portrait-title">
-          <div className="w-full max-w-md rounded-[1.75rem] border border-[#eaded2] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,.24)]">
-            <div className="text-xs font-black uppercase tracking-[.16em] text-[#b5482e]">{zh ? "永久删除" : "Permanent deletion"}</div>
-            <h2 id="delete-portrait-title" className="mt-3 text-2xl font-black tracking-[-.04em] text-[#171514]">
-              {zh ? `删除 ${deleteTarget.petName} 的这张写真？` : `Delete this portrait for ${deleteTarget.petName}?`}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-[#655a51]">
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {filteredTemplates.map((template) => (
+                <TemplatePreviewCard
+                  key={template.id}
+                  template={template}
+                  zh={zh}
+                  selected={selectedTemplateId === template.id}
+                  onSelect={() => {
+                    setSelectedTemplateId(template.id);
+                    setActiveTab(template.mode);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="mt-8 grid gap-8 xl:grid-cols-[1.05fr_.95fr]">
+        <div className="rounded-[2rem] border border-[#eaded2] bg-[linear-gradient(180deg,#fffdf9_0%,#fff7ee_100%)] p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
+          <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "创作面板" : "Creation panel"}</div>
+          <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "模板驱动生成" : "Template-driven generation"}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-[#7a6d63]">
+            {zh ? "模板会先决定成片目标，你的补充描述只做微调，不再从零开始猜风格。" : "The template sets the final image target first, and your custom notes only refine it instead of forcing the model to guess the style from scratch."}
+          </p>
+
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            <div className="rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
+              <div className="text-xs font-black uppercase tracking-[.14em] text-[#d96612]">{zh ? "模板背景" : "Template background"}</div>
+              <div className="mt-3 text-sm font-bold text-[#4f4238]">{selectedTemplate?.background}</div>
+            </div>
+            <div className="rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
+              <div className="text-xs font-black uppercase tracking-[.14em] text-[#d96612]">{zh ? "模板服饰" : "Template styling"}</div>
+              <div className="mt-3 text-sm font-bold text-[#4f4238]">{selectedTemplate?.outfit}</div>
+            </div>
+            <div className="rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
+              <div className="text-xs font-black uppercase tracking-[.14em] text-[#d96612]">{zh ? "模板动作" : "Template pose"}</div>
+              <div className="mt-3 text-sm font-bold text-[#4f4238]">{selectedTemplate?.pose}</div>
+            </div>
+            <div className="rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
+              <div className="text-xs font-black uppercase tracking-[.14em] text-[#d96612]">{zh ? "模板神态" : "Template expression"}</div>
+              <div className="mt-3 text-sm font-bold text-[#4f4238]">{selectedTemplate?.expression}</div>
+            </div>
+          </div>
+
+          {selectedTemplate?.mode === "duo" ? (
+            <div className="mt-5 rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
+              <div className="text-sm font-black text-[#171514]">{zh ? "上传主人照片" : "Upload owner photos"}</div>
+              <p className="mt-2 text-sm leading-6 text-[#7a6d63]">
+                {zh ? "上传 1-3 张主人半身或全身照片，系统会和宠物一起代入当前模板场景。" : "Upload 1-3 half-body or full-body owner photos so the system can place both the pet and owner inside the selected template."}
+              </p>
+              <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-[1.35rem] border border-dashed border-[#e8d7c7] bg-[#fffaf5] px-4 py-8 text-center">
+                <span className="text-sm font-black text-[#171514]">{zh ? "点击上传主人照片" : "Click to upload owner photos"}</span>
+                <span className="mt-2 text-xs text-[#8f8175]">JPG / PNG / WEBP · 1-3 {zh ? "张" : "images"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    const files = event.target.files;
+                    if (files?.length) void handleOwnerFiles(files);
+                  }}
+                />
+              </label>
+              {ownerPhotos.length ? (
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  {ownerPhotos.map((photo, index) => (
+                    <div key={photo} className="overflow-hidden rounded-[1rem] border border-[#eaded2] bg-[#f7efe8]">
+                      <img src={photo} alt={`Owner upload ${index + 1}`} className="aspect-[4/5] w-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="mt-5 rounded-[1.5rem] border border-[#eaded2] bg-white p-4">
+            <label htmlFor="portrait-prompt" className="text-sm font-black text-[#171514]">
+              {zh ? "补充微调要求" : "Add prompt refinements"}
+            </label>
+            <textarea
+              id="portrait-prompt"
+              value={promptText}
+              onChange={(event) => setPromptText(event.target.value)}
+              placeholder={zh ? "例如：围巾换成奶油白、眼神更自信、背景更干净一些" : "For example: cream scarf instead of red, more confident eyes, cleaner background"}
+              className="mt-3 min-h-[120px] w-full rounded-[1.25rem] border border-[#eaded2] bg-[#fffaf5] px-4 py-3 text-sm text-[#33251d] outline-none transition placeholder:text-[#a39489] focus:border-[#ff7a1a]"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="rounded-[2rem] bg-[#171514] p-6 text-white shadow-[0_22px_56px_rgba(52,34,20,.14)]">
+            <div className="text-xs font-black uppercase tracking-[.16em] text-[#ffb878]">{zh ? "生成说明" : "Generation note"}</div>
+            <p className="mt-3 text-sm leading-7 text-white/78">
               {zh
-                ? `这会永久删除 ${deleteTarget.styleName}，并尝试一并清理存储中的图片文件。此操作无法撤销。`
-                : `This permanently removes the ${deleteTarget.styleName} image and attempts to clean up its stored file as well. This cannot be undone.`}
+                ? `当前流程会优先锁定“${selectedTemplate?.title.zh || "当前模板"}”的构图、场景与道具逻辑，再基于 ${latestRecord?.pet?.name || "你的宠物"} 的真实照片做替换生成。`
+                : `The current flow first locks the composition, scene grammar, and prop logic from "${selectedTemplate?.title.en || "the selected template"}", then rebuilds the image around ${latestRecord?.pet?.name || "your pet"} using the real reference photos.`}
             </p>
-            {deleteError ? <p className="mt-4 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-bold text-[#b5482e]">{deleteError}</p> : null}
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button type="button" disabled={deleting} onClick={() => { setDeleteTarget(null); setDeleteError(""); }} className="rounded-full border border-[#eaded2] px-5 py-3 text-sm font-black text-[#4f463f] disabled:opacity-50">
-                {zh ? "取消" : "Cancel"}
-              </button>
-              <button type="button" disabled={deleting} onClick={confirmDelete} className="rounded-full bg-[#7d2d1e] px-5 py-3 text-sm font-black text-white transition hover:bg-[#692416] disabled:cursor-wait disabled:opacity-60">
-                {deleting ? (zh ? "正在删除…" : "Deleting...") : (zh ? "删除写真" : "Delete image")}
-              </button>
+            <button type="button" onClick={generateFromTemplate} disabled={generating || !selectedTemplate || !latestRecord?.pet} className="mt-5 rounded-full bg-[#ff7a1a] px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
+              {generating ? (zh ? "正在生成…" : "Generating...") : (zh ? "开始生成 1 张" : "Generate 1 image")}
+            </button>
+          </div>
+
+          <div className="rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-[0_18px_50px_rgba(52,34,20,.06)]">
+            <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? "当前限制" : "Current live scope"}</div>
+            <div className="mt-3 space-y-3 text-sm leading-7 text-[#6a5e55]">
+              <p>{zh ? "自由写真模板已接入真实生成：点击模板后会按该模板直接生成，不再随机挑风格。" : "Single-pet templates now drive real generation directly after selection instead of randomly choosing a style."}</p>
+              <p>{zh ? "主宠合影模板现在支持主人照片上传，并会把宠物图与主人图一起送入生成模型。" : "Pet + owner templates now accept owner uploads and send both the pet and owner references into the generation model together."}</p>
+              <p>{zh ? "生成仍然会保留现有的表情增强和 PBTI 气质逻辑，避免成片发呆。" : "Expression enhancement and PBTI-driven emotional styling remain active so results do not feel blank or stiff."}</p>
             </div>
           </div>
         </div>
-      ) : null}
+      </section>
     </div>
   );
 }

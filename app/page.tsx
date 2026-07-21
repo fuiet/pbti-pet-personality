@@ -511,6 +511,7 @@ export default function Home() {
             <Link href="/" className="transition hover:text-[#ff7a1a]">{t("nav.home")}</Link>
             <a href="#method" className="transition hover:text-[#ff7a1a]">{t("nav.method")}</a>
             <Link href="/types" className="transition hover:text-[#ff7a1a]">{t("nav.types")}</Link>
+            <Link href="/account/portraits" className="transition hover:text-[#ff7a1a]">{language === "zh-CN" ? "写真工作台" : "AI Portrait Studio"}</Link>
             <Link href="/account" className="transition hover:text-[#ff7a1a]">{t("nav.account")}</Link>
           </div>
           <div className="flex items-center gap-3">

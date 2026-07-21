@@ -1,4 +1,5 @@
 import type { PetVisualProfile } from "@/lib/visualProfile";
+import { findPortraitStudioTemplateByStyleId, type PortraitStudioTemplate } from "@/lib/portraitStudioTemplates";
 
 export type PortraitStyle = {
   id: string;
@@ -14,6 +15,7 @@ export type PortraitRequestContext = {
   pbtiCode: string;
   personalityName: string;
   visualProfile?: PetVisualProfile | null;
+  ownerIncluded?: boolean;
 };
 
 type TemplateGender = "male" | "female";
@@ -43,6 +45,10 @@ Do not generate any readable words, random letters, brand logos, studio logos, w
 
 const NEGATIVE_PROMPT = `
 Negative prompt: no species change, no breed substitution, no coat-color change, no markings change, no eye-color change, no altered face proportions, no enlarged cartoon eyes unless the selected template is explicitly an illustration, no shortened muzzle, no changed ears, no changed nose, no changed body type, no gender change, no age change, no second animal, no duplicate pet, no extra limbs, no missing limbs, no malformed paws, no floating paws, no twisted joints, no human body, no human face, no aggressive or frightened expression, no blank stare, no vacant eyes, no dull lifeless gaze, no stiff frozen facial expression, no sleepy uninterested look unless the selected template explicitly calls for sleep, no plastic fur, no waxy face, no beauty-filter blur, no low-resolution fur, no tiny distant subject, no extreme fisheye distortion, no cluttered set, no unsafe tight clothing, no covered eyes, no watermark, no copied studio logo, no trademarked wordmark, no random letters, no generated text.
+`;
+
+const DUO_NEGATIVE_PROMPT = `
+Negative prompt: no species change, no breed substitution, no coat-color change, no markings change, no eye-color change, no altered face proportions, no enlarged cartoon eyes unless the selected template is explicitly an illustration, no shortened muzzle, no changed ears, no changed nose, no changed body type, no gender change, no age change, no duplicate pet, no second pet, no extra limbs, no missing limbs, no malformed paws, no floating paws, no twisted joints, no extra human, no missing human, no swapped subject identities, no distorted hands, no broken fingers, no melted face, no aggressive or frightened expression, no blank stare, no vacant eyes, no dull lifeless gaze, no stiff frozen facial expression, no beauty-filter blur, no low-resolution fur, no low-resolution skin, no tiny distant subjects, no extreme fisheye distortion, no cluttered set, no unsafe tight clothing, no covered eyes, no watermark, no copied studio logo, no trademarked wordmark, no random letters, no generated text.
 `;
 
 const PERSONALITY_WARDROBE: Record<string, string> = {
@@ -424,6 +430,32 @@ function pickTemplate(kind: PromptKind, gender?: "male" | "female" | null) {
   return candidates[Math.floor(Math.random() * candidates.length)] || candidates[0];
 }
 
+function promptTemplateFromStudioTemplate(template: PortraitStudioTemplate): PromptTemplate {
+  return {
+    id: template.id,
+    gender: "male",
+    direction: [
+      template.basePrompt,
+      `Template background lock: ${template.background}.`,
+      `Template outfit lock: ${template.outfit}.`,
+      `Template pose lock: ${template.pose}.`,
+      `Template expression goal: ${template.expression}.`,
+      `Template composition lock: ${template.composition}.`,
+    ].join(" "),
+  };
+}
+
+function duoIdentityLock(species: "cat" | "dog") {
+  return [
+    "Create an image of the SAME real pet and the SAME real owner shown in the uploaded reference photos.",
+    "Identity preservation is the highest priority for both subjects.",
+    `The ${species} must remain exactly the same animal from the uploaded pet reference photos.`,
+    "The owner must remain the same person from the uploaded owner reference photos, with natural facial structure, body proportions, and recognizable likeness preserved.",
+    "Use the uploaded owner photos as identity references, not loose inspiration.",
+    "The pet and owner may be re-posed inside the selected template scene, but both must remain immediately recognizable.",
+  ].join(" ");
+}
+
 function kindFromStyleId(styleId: string): PromptKind {
   const baseStyleId = styleId.split("--")[0];
   if (baseStyleId === "white-sketch-avatar") return "avatar";
@@ -449,20 +481,27 @@ export function getPortraitStyleDisplayName(styleId: string, language: string, f
 
 export function buildPortraitPrompt(style: PortraitStyle, context: PortraitRequestContext) {
   const kind = kindFromStyleId(style.id);
-  const template = pickTemplate(kind, context.gender);
+  const studioTemplate = findPortraitStudioTemplateByStyleId(style.id);
+  const template = studioTemplate ? promptTemplateFromStudioTemplate(studioTemplate) : pickTemplate(kind, context.gender);
   const personalityWardrobe = PERSONALITY_WARDROBE[context.pbtiCode] || "safe contemporary pet styling matched to the assigned personality while keeping the pet comfortable and recognizable.";
+  const ownerIncluded = Boolean(context.ownerIncluded || studioTemplate?.mode === "duo");
 
   return [
-    IDENTITY_LOCK,
+    ownerIncluded ? duoIdentityLock(context.species) : IDENTITY_LOCK,
     appearanceLock(context.visualProfile),
     expressionEnhancement(kind, template.id, context.species, context.pbtiCode, context.personalityName, context.visualProfile),
     `Selected output kind: ${kind}. Selected template id: ${template.id}.`,
-    `Use this art direction exactly, replacing any generic pet with the uploaded ${context.species}: ${template.direction}`,
+    ownerIncluded
+      ? "This selected template requires a two-subject portrait: exactly one pet and exactly one owner in the same frame. Preserve believable scale, safe contact, and warm interaction between them."
+      : "This selected template is for a single-pet portrait only.",
+    studioTemplate
+      ? `Use the selected built-in template as the direct generation target. Recreate its exact scene logic, camera distance, composition, wardrobe language, prop logic, and emotional mood, but replace the original example pet completely with the uploaded ${context.species}. ${template.direction}`
+      : `Use this art direction exactly, replacing any generic pet with the uploaded ${context.species}: ${template.direction}`,
     `Personality reference for styling: ${context.pbtiCode} / ${context.personalityName}. If the template allows wardrobe choice, prefer ${personalityWardrobe}`,
     compositionRules(kind),
     UNIVERSAL_NO_TEXT.replace("__PET_NAME__", context.petName),
     `Pet name for website typography only: ${context.petName}.`,
-    NEGATIVE_PROMPT,
+    ownerIncluded ? DUO_NEGATIVE_PROMPT : NEGATIVE_PROMPT,
   ].join("\n\n");
 }
 
