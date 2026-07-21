@@ -241,7 +241,7 @@ export default function QuizPage() {
               </div>
             )}
             <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
-              {zh ? "爱宠档案已就绪" : "Visual profile ready"}
+              {zh ? "测试信息已就绪" : "Visual profile ready"}
             </div>
           </div>
 

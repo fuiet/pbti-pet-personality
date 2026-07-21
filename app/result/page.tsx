@@ -116,8 +116,8 @@ export default function ResultPage() {
           <div className="relative h-72 bg-[#fff0e4] sm:h-96">
             <img src={record.pet.photo_url} alt={`${record.pet.name} profile photo`} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(23,21,20,0)_40%,rgba(23,21,20,.56))]" />
-            <div className="absolute bottom-5 left-5 rounded-full bg-white/92 px-4 py-2 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
-              {record.pet.species === "dog" ? (zh ? "狗狗" : "Dog") : (zh ? "猫咪" : "Cat")} {zh ? "档案" : "profile"}
+              <div className="absolute bottom-5 left-5 rounded-full bg-white/92 px-4 py-2 text-xs font-black text-[#171514] shadow-sm backdrop-blur">
+              {record.pet.species === "dog" ? (zh ? "狗狗" : "Dog") : (zh ? "猫咪" : "Cat")} {zh ? "测试结果" : "result"}
             </div>
           </div>
         ) : null}

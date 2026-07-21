@@ -497,7 +497,7 @@ export default function Home() {
     { label: "PBTI 评分方式", title: "4 个维度，12 种类型", body: "28 道题分别映射到 A/I、E/S、V/C、P/G 四个行为维度，再匹配猫狗共用的 12 种性格原型。" },
   ] : researchPillars;
   const localizedMethodSteps = language === "zh-CN" ? [
-    { index: "01", title: "建立爱宠档案", body: "填写名字、物种、品种和年龄，帮助系统了解爱宠的基本生活背景，但不会用品种刻板印象判断性格。", signal: "基础信息", badge: "档案建立" },
+    { index: "01", title: "开始性格测试", body: "填写名字、物种、品种和年龄，帮助系统了解爱宠的基本生活背景，但不会用品种刻板印象判断性格。", signal: "基础信息", badge: "测试开始" },
     { index: "02", title: "爱宠鉴定", body: "上传最多 3 张照片，识别毛色、脸型、体态和可能的品种构成，为完整报告补充外观信息。", signal: "照片分析", badge: "视觉识别" },
     { index: "03", title: "28 道行为题", body: "根据主人观察到的社交方式、日常规律、探索反应、活跃程度和警觉表现，计算四个 PBTI 行为维度。", signal: "行为评分", badge: "性格计算" },
     { index: "04", title: "生成性格报告", body: "匹配 12 种 PBTI 类型之一，并提供行为依据、相处建议、照护提示、外观信息与分享写真。", signal: "报告输出", badge: "完整解读" },

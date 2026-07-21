@@ -7,7 +7,7 @@ const PORTRAIT_BUCKET = process.env.PBTI_PORTRAIT_BUCKET || "pet-portraits";
 
 export async function POST(request: Request) {
   try {
-    const { action, recordId, petId } = await request.json();
+    const { action, recordId, petId, portraitId } = await request.json();
     const supabase = await createSupabaseServerClient();
     const { data: userResult } = await supabase.auth.getUser();
     const user = userResult.user;
@@ -77,6 +77,44 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json({ deleted: "pet", id: deletedPet.id, storageWarning });
+    }
+
+    if (action === "portrait") {
+      if (!portraitId) return NextResponse.json({ error: "portraitId is required." }, { status: 400 });
+
+      const { data: portrait, error: portraitError } = await supabase
+        .from("pet_portraits")
+        .select("id,storage_path")
+        .eq("id", portraitId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (portraitError) {
+        if (portraitError.code === "42P01") {
+          return NextResponse.json({ error: "Portrait storage is not configured." }, { status: 503 });
+        }
+        return NextResponse.json({ error: portraitError.message }, { status: 500 });
+      }
+      if (!portrait) return NextResponse.json({ error: "Portrait not found or access denied." }, { status: 404 });
+
+      const { data: deletedPortrait, error: deleteError } = await supabase
+        .from("pet_portraits")
+        .delete()
+        .eq("id", portraitId)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+
+      if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      if (!deletedPortrait) return NextResponse.json({ error: "Portrait could not be deleted." }, { status: 404 });
+
+      let storageWarning: string | undefined;
+      if (portrait.storage_path) {
+        const { error: storageError } = await supabase.storage.from(PORTRAIT_BUCKET).remove([portrait.storage_path]);
+        if (storageError) storageWarning = "The portrait record was deleted, but the stored file may require manual cleanup.";
+      }
+
+      return NextResponse.json({ deleted: "portrait", id: deletedPortrait.id, storageWarning });
     }
 
     return NextResponse.json({ error: "Unsupported delete action." }, { status: 400 });

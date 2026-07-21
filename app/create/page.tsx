@@ -173,7 +173,7 @@ export default function CreatePet() {
 
       router.push(`/upload?petId=${pet.id}`);
     } catch (error) {
-      setProfileError(error instanceof Error ? error.message : zh ? "暂时无法保存爱宠档案，请稍后重试。" : "We could not save this pet profile. Please try again.");
+      setProfileError(error instanceof Error ? error.message : zh ? "暂时无法保存测试信息，请稍后重试。" : "We could not save this test setup. Please try again.");
       setIsSaving(false);
     }
   }
@@ -220,7 +220,7 @@ export default function CreatePet() {
         })}
       </div>
 
-      <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "建立爱宠档案" : "Create Your Pet Profile"}</h1>
+      <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "开始爱宠性格测试" : "Start Your Pet Personality Test"}</h1>
       <p className="mt-2 text-sm text-[#7a6d63]">{zh ? "先认识一下你的爱宠，再开始探索它的独特性格。" : "Tell us about your pet to begin the personality discovery journey."}</p>
 
       <div className="mt-8 space-y-5">
@@ -393,7 +393,7 @@ export default function CreatePet() {
         disabled={isSaving}
         className="mt-8 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-wait disabled:opacity-70"
       >
-        {isSaving ? (zh ? "正在保存…" : "Saving profile...") : (zh ? "下一步：上传照片" : "Continue to Photo")}
+        {isSaving ? (zh ? "正在保存…" : "Saving test setup...") : (zh ? "下一步：上传照片" : "Continue to Photo")}
       </button>
       </div>
     </div>

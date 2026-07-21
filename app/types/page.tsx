@@ -135,7 +135,7 @@ const typeDetails = [
 function SpeciesStatus({ species, zh }: { species: PetSpecies; zh: boolean }) {
   return (
     <div className="shrink-0 rounded-full border border-[#eaded2] bg-white/78 px-3 py-1.5 text-xs font-black text-[#6b5f55]">
-      <span>{species === "dog" ? (zh ? "狗狗档案" : "Dog profile") : (zh ? "猫咪档案" : "Cat profile")}</span>
+      <span>{species === "dog" ? (zh ? "狗狗类型" : "Dog type") : (zh ? "猫咪类型" : "Cat type")}</span>
     </div>
   );
 }
@@ -224,7 +224,7 @@ export default function TypesPage() {
                   className="object-contain p-3 transition duration-300 group-hover:scale-105"
                 />
                 <div className="absolute left-4 top-4 rounded-full bg-white/86 px-3 py-1 text-xs font-black text-[#6b5f55]">
-                  {species === "dog" ? (zh ? "狗狗档案" : "Dog profile") : (zh ? "猫咪档案" : "Cat profile")}
+                  {species === "dog" ? (zh ? "狗狗类型" : "Dog type") : (zh ? "猫咪类型" : "Cat type")}
                 </div>
               </div>
               <div className="p-5">

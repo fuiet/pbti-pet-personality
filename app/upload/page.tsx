@@ -146,7 +146,7 @@ export default function UploadPage() {
         setAnalysisProgress(0);
       } catch {
         if (active) {
-          setError("Unable to load your pet profile.");
+          setError("Unable to load your test setup.");
         }
       } finally {
         if (active) {
@@ -222,7 +222,7 @@ export default function UploadPage() {
         setVisualProfile(data.profile || null);
         setVisualFallback(Boolean(data.fallback));
         if (data.saveError) {
-          setError(`Visual profile generated, but database save needs setup: ${data.saveError}`);
+          setError(`Visual analysis was generated, but database save needs setup: ${data.saveError}`);
         }
         setAnalysisProgress(100);
         setAnalysisState("complete");
@@ -379,7 +379,7 @@ export default function UploadPage() {
         <p className="text-sm font-black uppercase tracking-[.18em] text-[#d96612]">{zh ? "第 2 步，共 4 步" : "Step 2 of 4"}</p>
         <h1 className="mt-3 text-4xl font-black tracking-[-.05em] text-[#171514] sm:text-5xl">{zh ? "上传 3 张爱宠照片" : "Upload 3 pet photos"}</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-[#6f6258] lg:text-lg">
-          {zh ? `请上传 ${pet?.name || "爱宠"} 的正面、左侧和右侧清晰照片。正面照将作为档案头像，并用于爱宠鉴定。` : `Please upload three clear photos of ${pet?.name || "your pet"}: front face, left side, and right side. The front photo will be used as the main saved image for visual analysis.`}
+          {zh ? `请上传 ${pet?.name || "爱宠"} 的正面、左侧和右侧清晰照片。正面照将作为主要展示图，并用于爱宠鉴定。` : `Please upload three clear photos of ${pet?.name || "your pet"}: front face, left side, and right side. The front photo will be used as the main display image for visual analysis.`}
         </p>
       </div>
 
@@ -648,7 +648,7 @@ export default function UploadPage() {
           onClick={() => router.push("/create")}
           className="rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-sm font-bold text-[#4f463f] transition hover:bg-white/80"
         >
-          {zh ? "返回档案" : "Back to profile"}
+          {zh ? "返回上一步" : "Back to setup"}
         </button>
         <button
           onClick={() => router.push(`/quiz?petId=${pet?.id || ""}`)}

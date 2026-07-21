@@ -73,8 +73,8 @@ export default function Dashboard() {
         {entries.length === 0 ? (
           <div className="rounded-3xl border border-[#eaded2] bg-white/60 p-12 text-center">
             <div className="text-6xl font-black text-[#ff7a1a]">PBTI</div>
-            <h2 className="mt-4 text-xl font-bold text-[#4f463f]">{zh ? "还没有爱宠档案" : "No pets yet"}</h2>
-            <p className="mt-2 text-sm text-[#7a6d63]">{zh ? "创建第一份档案，发现它独一无二的性格。" : "Create your first pet profile to discover their personality"}</p>
+            <h2 className="mt-4 text-xl font-bold text-[#4f463f]">{zh ? "还没有测试报告" : "No reports yet"}</h2>
+            <p className="mt-2 text-sm text-[#7a6d63]">{zh ? "开始第一次测试，发现它独一无二的性格。" : "Start your first test to discover their personality"}</p>
             <button
               onClick={() => router.push("/create")}
               className="mt-6 rounded-full bg-[#ff7a1a] px-8 py-3 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5"

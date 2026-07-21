@@ -179,7 +179,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     { key: "playfulness", code: "P / G", label: zh ? "玩心与守护" : "Play style", left: zh ? "玩乐" : "Playful", right: zh ? "守护" : "Watchful", value: dimensionScores.playfulness },
   ] as const;
   const chapters = zh
-    ? ["档案封面", "性格速览", "行为维度", "爱宠鉴定", "爱的语言", "相处关系", "个性建议", "今日行动", "写真与分享", "重要声明"]
+    ? ["报告封面", "性格速览", "行为维度", "爱宠鉴定", "爱的语言", "相处关系", "个性建议", "今日行动", "写真与分享", "重要声明"]
     : ["Cover", "At a glance", "Behavior map", "Pet identification", "Love language", "Relationship", "Recommendations", "Action plan", "Portraits & sharing", "Important notice"];
 
   return (
@@ -193,7 +193,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-[#171514] p-7 text-white shadow-[0_28px_80px_rgba(52,34,20,.16)] sm:p-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,122,26,.28),transparent_32%)]" />
         <div className="relative z-10 max-w-[68%]">
-          <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? (species === "dog" ? "狗狗档案" : "猫咪档案") : species === "dog" ? "Dog profile" : "Cat profile"}</div>
+          <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{zh ? (species === "dog" ? "狗狗报告" : "猫咪报告") : species === "dog" ? "Dog report" : "Cat report"}</div>
           <h1 className="mt-4 text-4xl font-black tracking-[-.06em] sm:text-6xl">{record.pet.name}</h1>
           <div className="mt-3 text-2xl font-black text-[#ff9a50]">{personality.code} / {displayPersonality.name}</div>
           <p className="mt-4 max-w-xl text-sm leading-7 text-white/68">{report.summary}</p>
@@ -335,7 +335,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       <section id="chapter-9" className="mt-5 scroll-mt-24">
         <div className="mb-5 rounded-[2rem] border border-[#eaded2] bg-white p-6 shadow-sm sm:p-8">
-          <ReportHeading number="09" title={zh ? "写真与分享" : "Portraits and sharing"} subtitle={zh ? "将本次测试结果整理成可保存、可分享的视觉档案。" : "Turn this assessment into a visual record that can be saved and shared."} />
+          <ReportHeading number="09" title={zh ? "写真与分享" : "Portraits and sharing"} subtitle={zh ? "将本次测试结果整理成可保存、可分享的视觉记录。" : "Turn this assessment into a visual record that can be saved and shared."} />
           <ShareCard
             petName={record.pet.name}
             pbtiId={record.pbti_id}

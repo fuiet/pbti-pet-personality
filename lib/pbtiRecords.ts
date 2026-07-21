@@ -43,8 +43,10 @@ export interface PetProfileInput {
 export interface PetPortraitRecord {
   id: string;
   pet_id: string;
+  style_id: string;
   style_name: string;
   image_url: string;
+  storage_path?: string | null;
   created_at: string;
   pet?: { id: string; name: string; species: "cat" | "dog" } | null;
 }
@@ -655,15 +657,20 @@ export async function listCurrentUserResults() {
     .filter((record) => record.pet?.user_id === user.id);
 }
 
-export async function listCurrentUserPortraits() {
+export async function listCurrentUserPortraits(limit?: number) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("pet_portraits")
-    .select("id,pet_id,style_name,image_url,created_at,pet:pets(id,name,species)")
+    .select("id,pet_id,style_id,style_name,image_url,storage_path,created_at,pet:pets(id,name,species)")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(12);
+    .order("created_at", { ascending: false });
+
+  if (typeof limit === "number") {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     const message = error.message?.toLowerCase() || "";
