@@ -201,11 +201,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             {displayPersonality.traits.map((trait) => <span key={trait} className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-xs font-black text-white/82">{trait}</span>)}
           </div>
         </div>
-        <div className="pointer-events-none absolute -bottom-10 -right-4 h-52 w-52 sm:h-72 sm:w-72">
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[34%] min-w-[260px] overflow-hidden rounded-r-[2rem] sm:w-[39%]">
           <img
             src={avatarPortrait || typeArtwork}
             alt=""
-            className={`h-full w-full drop-shadow-[0_20px_35px_rgba(255,122,26,.22)] ${avatarPortrait ? "object-cover object-center" : "object-contain"}`}
+            className={`h-full w-full drop-shadow-[0_20px_35px_rgba(255,122,26,.22)] ${avatarPortrait ? "object-cover object-center" : "object-contain p-6"}`}
             onError={(event) => {
               const fallback = getPersonalityAsset(defaultPersonalityCode, species);
               if (!event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback;
