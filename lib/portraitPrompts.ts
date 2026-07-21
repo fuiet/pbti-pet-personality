@@ -16,426 +16,229 @@ export type PortraitRequestContext = {
   visualProfile?: PetVisualProfile | null;
 };
 
-export const PORTRAIT_PROMPT_VERSION = "studio-v6";
+type TemplateGender = "male" | "female";
+type PromptKind = "avatar" | "vertical" | "landscape";
+
+type PromptTemplate = {
+  id: string;
+  gender: TemplateGender;
+  direction: string;
+};
+
+export const PORTRAIT_PROMPT_VERSION = "studio-v7";
 
 const IDENTITY_LOCK = `
-Create a portrait of the SAME real pet shown in the reference photos. Identity preservation is the highest priority.
+Create an image of the SAME real pet shown in the uploaded reference photos. Identity preservation is the highest priority.
 The species must remain exactly the same: never turn a cat into a dog or a dog into a cat.
-Keep the original coat colors, coat length, markings, pattern, eye color, face shape, ear shape, muzzle or nose shape, body proportions, sex, and age impression.
-Do not invent breed-specific features that are not visible in the references. Do not make the pet look younger, older, thinner, larger, fluffier, or more muscular than the references.
-The clothing, props, pose, set, lighting, and composition may change, but the pet must remain immediately recognizable.
-Use the reference photos as identity references, not as a loose inspiration.
+Preserve the original breed impression, face shape, muzzle or nose shape, ear shape, eye color, coat color, coat length, markings, pattern, body proportions, sex, age impression, and natural expression.
+The clothes, props, pose, set, lighting, and composition may change, but the pet must remain immediately recognizable to its owner.
+Use the uploaded photos as identity references, not loose inspiration.
 `;
 
-const PHOTOSHOOT_DIRECTION = `
-Create a premium commercial pet-fashion photograph inspired by the best contemporary Asian pet studios and glossy social-media campaigns. Follow the aspect ratio and orientation required by the selected style. The result must look like a real professional studio photograph, not AI art, illustration, fantasy cosplay, or an old-fashioned portrait.
+const UNIVERSAL_NO_TEXT = `
+Do not generate any readable words, random letters, brand logos, studio logos, website names, watermarks, signatures, captions, or trademarks inside the image. The website will add the pet name "__PET_NAME__" and the transparent PBTI logo after generation.
+`;
 
-COMPOSITION: the single pet is the unmistakable hero and fills roughly 65% to 85% of the frame. Keep the face large, unobstructed, and tack sharp. Use either a tight head-and-chest portrait, a three-quarter portrait with the front paws visible, or a playful full-body floor pose. Do not place the pet far away, tiny in a large set, or centered in excessive empty space. Leave only the clean upper or side margin requested by the selected format for later website typography.
-
-CAMERA AND LIGHT: shoot at pet eye level or slightly below with an 35-50mm editorial perspective; a subtle wide-angle feel is welcome but never distort the nose, eyes, head, or body. Use crisp direct flash balanced with a large soft key light, clean catchlights in both eyes, true coat color, bright facial exposure, detailed fur and whiskers, gentle floor shadow, and polished magazine-level retouching. Keep the background and subject clearly separated.
-
-BACKGROUND: for most styles use one saturated seamless-paper color such as cherry red, tangerine orange, sunflower yellow, cobalt blue, or vivid pink, with a smooth floor-to-wall sweep and no visible room. A botanical style may instead use one controlled, lush floral vignette. Avoid generic living rooms, ornate interiors, fake outdoor scenery, busy patterns, clutter, excessive bokeh, and muddy brown grading.
-
-EXPRESSION AND ACTION: capture a charming split-second expression that feels spontaneous but physically believable: bright direct gaze, gentle head tilt, tongue slightly out, one paw stepping forward, a natural stretch, rolling safely on the back, peeking around one prop, or interacting with a cushion. Preserve correct anatomy, real weight on the floor, and species-appropriate movement. Never force a dramatic leap when a close expressive pose would look better.
-
-STYLING: use exactly one coherent wardrobe idea and at most one supporting prop. Clothing must look custom-fitted, comfortable, contemporary, and editorial: a crisp shirt and tie, soft color-block scarf, modern knit wrap, lightweight personality vest, safe statement glasses, floral collar, or one playful cushion. Never stack multiple outfits, hats, glasses, jewelry, and props together. Wardrobe must not hide the face, eyes, ears, nose, paws, identifying markings, or natural silhouette.
-
-FINAL QUALITY: photorealistic premium pet photography, lively but tasteful, bold color, clean graphic silhouette, accurate paws, natural fabric folds, realistic contact shadows, high micro-detail, no plastic fur, no over-smoothed face, no uncanny expression, and no visual clutter.
-`
 const NEGATIVE_PROMPT = `
-No species change, no coat-color change, no pattern change, no eye-color change, no altered facial proportions, no enlarged cartoon eyes, no shortened muzzle, no changed ears, no changed nose, no changed body type, no gender change, no age change, no invented breed traits, no second animal, no duplicate pet, no extra limbs, no missing limbs, no malformed paws, no floating paws, no twisted joints, no human hands, no human body, no aggressive behavior, no frightened expression, no plastic fur, no waxy face, no beauty-filter blur, no low-resolution fur, no tiny distant subject, no extreme fisheye distortion, no tilted horizon, no cluttered set, no multiple costumes, no unsafe tight clothing, no covered eyes, no watermark, no copied studio logo, no trademarked wordmark, no random letters, no generated text, no vintage look, no retro film, no sepia, no faded colors, no painterly style, no 3D render, no cartoon, no ornate classical set, no royal costume, no dark gloomy grade.
+Negative prompt: no species change, no breed substitution, no coat-color change, no markings change, no eye-color change, no altered face proportions, no enlarged cartoon eyes unless the selected template is explicitly an illustration, no shortened muzzle, no changed ears, no changed nose, no changed body type, no gender change, no age change, no second animal, no duplicate pet, no extra limbs, no missing limbs, no malformed paws, no floating paws, no twisted joints, no human body, no human face, no aggressive or frightened expression, no plastic fur, no waxy face, no beauty-filter blur, no low-resolution fur, no tiny distant subject, no extreme fisheye distortion, no cluttered set, no unsafe tight clothing, no covered eyes, no watermark, no copied studio logo, no trademarked wordmark, no random letters, no generated text.
 `;
 
 const PERSONALITY_WARDROBE: Record<string, string> = {
-  ASVG: "A clean contemporary guardian vest in deep navy with a warm orange accent; dependable, steady, and quietly protective.",
-  ISCP: "A soft cloud-toned knit collar or lightweight capelet with a dreamy lavender accent; gentle, imaginative, and calm.",
-  IEVG: "A sleek asymmetrical technical vest with bold cobalt details; independent, unconventional, and self-possessed.",
-  IECG: "A minimalist scholar-style vest with a small modern bow or geometric collar accent; observant, thoughtful, and precise.",
-  AEVG: "A structured statement vest in saturated red with clean gold-toned edging; confident, decisive, and charismatic.",
-  ASCP: "A warm color-block companion knit or bandana with rounded graphic details; affectionate, friendly, and reassuring.",
-  ASCG: "A soft sage-green comfort vest with cream trim; calm, caring, and emotionally attentive.",
-  AEVP: "A sunny yellow varsity-inspired neckerchief or playful cropped vest; optimistic, social, and full of bright energy.",
-  ISCG: "A refined charcoal watch vest with one vivid safety-orange accent; alert, careful, and composed.",
-  AECP: "A bright color-block play vest with a lightweight sporty neckerchief; energetic, curious, and ready for action.",
-  ISVG: "A clean premium knit or lightweight tailored vest in ivory and midnight blue; reserved, dignified, and quietly confident.",
-  IEVP: "A lightweight modern explorer vest in sand and orange with a small contemporary scarf and practical graphic details; independent, curious, and quick-minded.",
+  ASVG: "steady guardian styling: deep navy, warm orange accents, reliable and quietly protective.",
+  ISCP: "dreamy gentle styling: cloud tones, soft lavender accents, calm and imaginative.",
+  IEVG: "independent creative styling: asymmetrical cobalt details, self-possessed and unconventional.",
+  IECG: "minimal scholar styling: clean geometry, small bow or collar accent, observant and precise.",
+  AEVG: "confident leader styling: saturated red, clean gold-toned edges, charismatic and decisive.",
+  ASCP: "warm companion styling: rounded color-block knit or bandana, friendly and reassuring.",
+  ASCG: "comforting healer styling: sage green, cream trim, emotionally attentive and calm.",
+  AEVP: "sunny social styling: yellow, playful sporty details, optimistic and energetic.",
+  ISCG: "alert watchful styling: charcoal and safety-orange accent, careful and composed.",
+  AECP: "active explorer styling: bright color-block sport accents, curious and ready for action.",
+  ISVG: "reserved premium styling: ivory and midnight blue, dignified and quietly confident.",
+  IEVP: "modern explorer styling: sand, orange, lightweight scarf or vest, curious and quick-minded.",
 };
 
-const VERTICAL_CAMPAIGN_TEMPLATES = [
+const AVATAR_TEMPLATES: PromptTemplate[] = [
   {
-    id: "neon-fashion-cover",
-    name: "NEON fashion cover",
+    id: "moon-dream",
     gender: "male",
-    direction: `
-Vertical 4:5 or 2:3 NEON.PET-inspired pet fashion poster. Use the uploaded pet as the only identity reference and preserve the real species, face shape, coat color, markings, eye color, nose, ears, body proportions, age impression, and natural expression. Replace every prompt mention of a generic dog or cat with this exact uploaded pet.
-
-Make a trendy high-saturation seamless crimson-red studio poster with direct flash, crisp shadows, slight wide-angle close framing, vivid commercial color grading, sharp fur and whisker detail, and a playful editorial magazine-cover feeling. Style the pet with one comfortable fashion idea such as oversized round glasses, a crisp light-blue striped shirt, a loose dark navy striped tie, a safe scarf, or a stylish collar; choose only what fits the pet's species and personality, and never hide the eyes, nose, ears, face, paws, markings, or silhouette.
-
-Compose the pet in the lower center or lower-left with strong clean negative space near the top for website typography. Do not generate any words, logos, watermarks, random letters, or brand marks in the image itself. The website will add the pet name in bold poster typography and the transparent PBTI logo after generation.
-`,
+    direction:
+      "Square magical avatar portrait. Place the same pet resting or curling on top of a glowing full-moon sphere at night, deep blue sky, distant horizon, cinematic moonlight, dreamy surreal but still realistic, calm introspective mood, clean centered composition.",
   },
   {
-    id: "premium-emotional-studio",
-    name: "premium emotional studio",
+    id: "ink-cyan-glasses",
     gender: "male",
-    direction: `
-Vertical premium emotional pet studio portrait. Use the uploaded pet as the exact subject, preserving species, breed impression, face shape, coat color, markings, eye color, ear shape, nose, muzzle, body proportions, age impression, and natural expression. The pet must remain immediately recognizable from the reference photos.
-
-Use a refined seamless muted-purple studio background with soft gradient falloff, a clean centered portrait composition, shallow depth of field, glossy catchlights, soft front-left studio lighting, crisp facial focus, natural fur texture, and a warm companion feeling. Add one bright contrasting foreground prop such as a yellow knitted cushion or soft fabric edge only if it helps the pose; keep it minimal and do not cover the pet's face or identifying markings. The pose should be front-facing or gentle three-quarter, with front paws visible when natural.
-
-Leave elegant negative space above the pet for later website typography. Do not render any text, logo, watermark, random letters, or studio name. The website will add the pet name using refined poster typography and place the PBTI logo after generation.
-`,
+    direction:
+      "Square handmade ink-and-watercolor avatar on textured white paper. Draw the same pet as a loose expressive sketch with energetic black fur strokes, minimal gray shading, oversized bright cyan round glasses, a simple white bib or shirt with cyan trim, boutique custom portrait mood.",
   },
   {
-    id: "neon-sunglasses-closeup",
-    name: "NEON sunglasses close-up",
-    gender: "female",
-    direction: `
-Vertical NEON.PET-inspired close-up fashion poster. Use the uploaded pet as the only identity source and preserve the exact species, coat colors, markings, eye color, face proportions, ear shape, nose, muzzle, fur length, body type, sex, age impression, and natural expression. Do not redesign the pet into a different breed or a generic model.
-
-Create an extreme or very close head-and-chest studio portrait on a high-saturation seamless pastel-pink background. Use direct flash, vivid commercial color grading, crisp fur detail, bright eye catchlights, and a modern social-media fashion cover composition. Add one playful glossy black sunglasses accessory pushed up on the forehead or safely above the eyes, or another small fashion accessory if sunglasses would hide identity. The accessory must never cover the pet's eyes, nose, ears, facial markings, or distinctive silhouette.
-
-Frame the pet large in the lower and middle frame, with bold clean negative space at the top for website-composited typography. Do not generate NEON.PET text, pet name, logo, watermark, random letters, or any typography inside the image. The website will replace the poster headline with the real pet name and add the transparent PBTI logo.
-`,
-  },
-  {
-    id: "neon-cute-headwear",
-    name: "NEON cute headwear",
-    gender: "female",
-    direction: `
-Vertical cute NEON.PET-inspired pet fashion poster. Use the uploaded pet as the exact identity reference and preserve species, coat color, markings, face shape, eye color, pink or dark nose as shown, ear shape, fur texture, body proportions, age impression, and natural expression. The generated pet must look like the same pet from the user's photos.
-
-Use a high-saturation seamless pastel-pink studio background with clean cyclorama floor and wall, direct flash lighting, crisp fur and whisker detail, glossy eyes, and a cute premium editorial finish. Pose the pet in a relaxed loaf, seated, or gentle front-facing pose in the lower half of the frame. Add one small playful pet-safe head accessory such as a soft cap, tiny fabric beret, small scarf, or simple heart patch detail; it must feel fashionable and comfortable, not costume-heavy, and it must not cover the eyes, ears, nose, face, markings, or natural silhouette.
-
-Keep generous negative space above the pet for website-composited lettering. Do not render any words, pet name, logo, watermark, random letters, or brand mark inside the model output. The website will add the pet's name with the same poster-style typography and add the transparent PBTI logo.
-`,
-  },
-  {
-    id: "cool-streetwear-sunglasses",
-    name: "cool streetwear sunglasses",
+    id: "snow-selfie-gray",
     gender: "male",
-    direction: `
-Vertical NEON.PET-inspired cool streetwear pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create an extreme close-up studio portrait on a high-saturation deep crimson seamless background. Add one bold fashion accessory such as glossy black triangular sunglasses, a sleek black vest, or a dark streetwear harness, but never hide the pet's identifying facial features. Use direct flash lighting, crisp fur detail, glossy reflections, vivid commercial color grading, and a premium social-media fashion-cover composition.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square adventure selfie avatar. The same pet appears in snowy mountains under a vivid blue sky, wearing yellow or orange sunglasses, white earmuffs, a bright scarf, one paw near the lens as if taking a selfie, playful travel influencer energy, crisp sunlight.",
   },
   {
-    id: "cute-plush-hood",
-    name: "cute plush hood",
-    gender: "female",
-    direction: `
-Vertical NEON.PET-inspired cute plush-hood pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create an extreme close-up portrait on a high-saturation seamless pink studio background. Add one soft pet-safe plush hood or cute head accessory, such as a duck, chick, bear, or bunny-inspired hood, but never hide the eyes, nose, face shape, whiskers, ears, coat markings, or natural silhouette. Use direct flash lighting, glossy eye catchlights, crisp fur detail, soft plush texture, vivid commercial color grading, and a cute premium social-media cover composition.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "glamorous-sequin-runway",
-    name: "glamorous sequin runway",
-    gender: "female",
-    direction: `
-Vertical NEON.PET-inspired glamorous runway pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless pink studio scene with the pet seated or standing near the upper center of the frame. Add one dramatic but pet-safe fashion element such as a soft organza bow, flowing iridescent sequin fabric, sparkling cape, or glossy fabric train that spreads toward the foreground. The outfit must not hide the pet's face, eyes, nose, ears, coat markings, or natural silhouette. Use direct flash lighting, crisp sequin highlights, vivid commercial color grading, strong foreground perspective, and a playful luxury runway editorial composition.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "sunny-botanical",
-    name: "sunny botanical",
-    gender: "female",
-    direction: `
-Vertical NEON.PET-inspired sunny botanical pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless sunflower-yellow studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a bright summer editorial feeling. Add one fresh pet-safe botanical styling idea such as a white flower wreath, green leaf collar, tropical print shirt, or soft floral neck accessory. The flowers and clothing must frame the pet without hiding the eyes, nose, ears, face shape, coat markings, paws, or natural silhouette.
-
-Keep the pet large and close in the frame with clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "smart-urban-newspaper",
-    name: "smart urban newspaper",
+    id: "snow-hiker-tabby",
     gender: "male",
-    direction: `
-Vertical NEON.PET-inspired smart urban pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless pastel-pink studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a humorous fashion-editorial feeling. Add one playful urban prop such as a folded newspaper, magazine, book, or clean graphic paper object angled in the foreground, plus one small fashion accessory such as glossy triangular sunglasses if it does not hide the pet's eyes or identity. The prop may cover part of the body but must never hide the face, eyes, nose, ears, coat markings, or natural silhouette.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square snowy mountain close-up avatar. The same pet faces camera in yellow sunglasses, fluffy white earmuffs, colorful knitted scarf, and small backpack straps, alpine peaks behind, sharp winter sunlight, confident explorer mood.",
   },
   {
-    id: "bold-red-hood-colorblock",
-    name: "bold red hood colorblock",
-    gender: "male",
-    direction: `
-Vertical NEON.PET-inspired bold color-block cozy pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless sunflower-yellow studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a strong red-yellow fashion campaign feeling. Add one pet-safe cozy wardrobe idea such as a bright red knitted hood, chunky scarf, soft cape, or color-block sweater that frames the face without hiding the eyes, nose, ears, muzzle, coat markings, paws, or natural silhouette.
-
-Keep the pet large and centered in the frame with clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "cute-soft-prop",
-    name: "cute soft prop",
+    id: "sleeping-plush-hug",
     gender: "female",
-    direction: `
-Vertical NEON.PET-inspired cute soft-prop pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless pink studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a sweet playful social-media cover feeling. Place the pet leaning over or resting inside one soft pastel prop such as a cushion, pet bag, plush basket, or fabric block, with front paws visible when natural. Add one tiny pet-safe cute accessory such as a small bow clip, collar charm, soft harness, or pastel scarf. Props and accessories must never hide the face, eyes, nose, ears, mouth, coat markings, paws, or natural silhouette.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square cozy bedtime avatar. The same pet sleeps peacefully while hugging a soft pink plush toy, warm indoor bedding, soft heart stickers or gentle dreamy details, intimate close-up, tender healing mood, shallow depth of field.",
   },
   {
-    id: "oversized-bow-prop",
-    name: "oversized bow prop",
+    id: "panda-hood-smile",
     gender: "female",
-    direction: `
-Vertical NEON.PET-inspired oversized bow prop pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless pink studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a cute theatrical gift-like editorial feeling. Place the pet sitting or standing naturally in front of one oversized soft fabric bow, ribbon backdrop, gift prop, or puffy textile shape. The prop should frame the pet and create visual drama, but must never hide the face, eyes, nose, ears, body markings, paws, or natural silhouette.
-
-Keep the pet clearly separated and large enough to recognize with clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square ultra-cute close-up avatar. The same pet wears a fluffy white panda-style hood with black ears, smiling with mouth open, soft bedding or neutral cozy background, big glossy eyes, plush texture, sweet social-media pet mood.",
   },
   {
-    id: "cheerful-toy-flower",
-    name: "cheerful toy flower",
+    id: "tiny-scholar-laptop",
+    gender: "male",
+    direction:
+      "Square cozy scholar avatar. The same pet sits on a bed in round glasses and a delicate blouse or neat collar, small clean laptop in front with no visible brand, warm bedroom light, thoughtful little-professor personality, realistic cute photography.",
+  },
+  {
+    id: "beach-sunset-wave",
+    gender: "male",
+    direction:
+      "Square golden-hour beach avatar. The same pet stands on sand near the ocean at sunset, glowing backlight around fur, one paw raised in a friendly wave, soft lens flare, warm cinematic vacation feeling, cute and optimistic.",
+  },
+  {
+    id: "alpine-sunset-profile",
+    gender: "male",
+    direction:
+      "Square cinematic mountain avatar. The same pet sits in side profile on snowy peaks at sunset, orange rim light outlining the fur, dramatic clouds, majestic landscape, quiet brave explorer mood, premium fantasy-realistic photography.",
+  },
+  {
+    id: "iced-drink-comedy",
+    gender: "male",
+    direction:
+      "Square funny lifestyle avatar. The same pet sits on a sofa sipping a dark iced drink through a clean blue straw from a plain glass with no label, wide curious eyes, cozy home background, humorous candid realism.",
+  },
+  {
+    id: "cow-hood-blue-sky",
     gender: "female",
-    direction: `
-Vertical NEON.PET-inspired cheerful toy-prop pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless teal-blue studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a bright playful children's editorial feeling. Add one oversized cheerful toy prop such as a plush sunflower, smiley flower, soft balloon stem, or cute handmade toy behind or above the pet, plus one pastel pet-safe capelet, bib, scarf, or bow. The prop and clothing must never hide the face, eyes, nose, ears, markings, paws, or natural silhouette.
-
-Keep the pet centered and clearly recognizable with clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square bright cute avatar. The same pet wears a plush cow hood with black ears and tiny horns against a clear saturated blue sky, centered close-up face, glossy eyes, clean daylight, soft toy-like charm without becoming cartoon.",
   },
   {
-    id: "sporty-toy-prop",
-    name: "sporty toy prop",
-    gender: "male",
-    direction: `
-Vertical NEON.PET-inspired sporty toy-prop pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless teal-blue studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a playful athletic editorial feeling. Add one oversized soft sports prop such as a plush soccer ball, tennis ball, basketball, or toy trophy positioned safely above, beside, or near the pet, plus one lightweight pet-safe sporty outfit, scarf, or vest. The prop and clothing must never hide the face, eyes, nose, ears, markings, paws, or natural silhouette.
-
-Keep the pet clearly recognizable with clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "sporty-sunglasses",
-    name: "sporty sunglasses",
-    gender: "male",
-    direction: `
-Vertical NEON.PET-inspired sporty sunglasses pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless hot-pink studio close-up with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and an energetic streetwear editorial feeling. Add one bright sporty accessory such as red sunglasses, athletic goggles pushed above the eyes, a sporty scarf, or lightweight vest. The accessory must never hide the eyes, nose, ears, face shape, markings, paws, or natural silhouette. Use a lively side angle, upward glance, tongue-out smile, or playful head tilt when natural.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "tote-bag-urban",
-    name: "tote bag urban",
-    gender: "male",
-    direction: `
-Vertical NEON.PET-inspired tote-bag pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless sunflower-yellow studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a playful urban shopping editorial feeling. Place the pet safely peeking out from one soft fabric tote bag, basket bag, carrier-style prop, or oversized pouch, with the face and eyes fully visible. Add one small charm or plush keychain if it does not clutter the image. The bag and prop must never hide the face, eyes, nose, ears, coat markings, or natural silhouette. Avoid visible human hands if possible; make the bag safely supported or suspended in a clean studio way.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "birthday-party",
-    name: "birthday party",
+    id: "bubble-duck-bath",
     gender: "female",
-    direction: `
-Vertical NEON.PET-inspired birthday party pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless raspberry-pink studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a sweet festive editorial feeling. Add one pet-safe birthday or celebration styling idea such as a small party hat, soft pom-pom headpiece, oversized pastel bow, ruffled collar, or satin-like skirt. The accessories must never hide the face, eyes, nose, ears, coat markings, paws, or natural silhouette. Use a cute head tilt, gentle direct gaze, or affectionate close-up pose when natural.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square playful bath avatar. The same pet peeks from white sparkling bubble foam in a bathtub with a small yellow rubber duck balanced on the head, tiled bathroom background, close face focus, funny innocent expression.",
   },
   {
-    id: "rebellious-streetwear",
-    name: "rebellious streetwear",
-    gender: "male",
-    direction: `
-Vertical NEON.PET-inspired rebellious streetwear pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation seamless orange studio portrait with direct flash lighting, crisp fur detail, glossy reflections, vivid commercial color grading, and a cool luxury street-fashion editorial feeling. Add one pet-safe bold wardrobe idea such as a black vest, houndstooth panel, faux-leather collar, chain detail, or glossy sunglasses. The styling must never hide the face, eyes, nose, ears, coat markings, paws, or natural silhouette. Use a confident pose such as one paw near the glasses, a side glance, a low head tilt, or a fashion runway stance when natural.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "newspaper-frame",
-    name: "newspaper frame",
-    gender: "male",
-    direction: `
-Vertical NEON.PET-inspired funny newspaper-frame pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation deep magenta studio close-up with direct flash lighting, crisp face detail, glossy eye catchlights, vivid commercial color grading, and a smart humorous editorial feeling. Add one folded newspaper, magazine, book, or clean graphic paper prop very close to the camera, forming a foreground frame around the pet's face. Add one small fashion accessory such as sunglasses pushed above the eyes if it does not hide identity. The prop must never hide the face, eyes, nose, ears, markings, or natural silhouette. Slight wide-angle perspective is allowed for humor, but do not distort the pet beyond recognition.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
-  },
-  {
-    id: "festive-new-year",
-    name: "festive New Year",
+    id: "hamburger-hood",
     gender: "female",
-    direction: `
-Vertical NEON.PET-inspired festive New Year pet fashion poster. Use the uploaded pet as the exact identity reference and preserve its species, face shape, coat color, markings, eye color, nose, ears, fur length, body proportions, age impression, and natural expression.
-
-Create a high-saturation deep pink or magenta seamless studio portrait with direct flash lighting, crisp fur detail, glossy eye catchlights, vivid commercial color grading, and a warm celebratory editorial feeling. Add one festive pet-safe styling idea such as a red knitted sweater, soft red scarf, gold-trimmed collar, floral branch, paper scroll, ribbon, or clean holiday prop. The prop must frame the pet without hiding the face, eyes, nose, ears, coat markings, paws, or natural silhouette. Avoid generating readable Chinese characters or random text on props; use blank decorative paper or abstract calligraphy-like marks if needed.
-
-Leave clean top space for website-composited pet name and PBTI logo. Do not generate text, logo, watermark, or random letters inside the image.
-`,
+    direction:
+      "Square food-costume avatar. The same pet wears a plush hamburger hood framing the face with soft bun, lettuce, and tomato colors, plain light background, centered close-up, adorable round-eyed expression, clean soft studio light.",
   },
-] as const;
+  {
+    id: "pink-tote-peek",
+    gender: "female",
+    direction:
+      "Square pastel fashion avatar. The same pet peeks from a soft pastel pink tote bag wearing a pink plush hood, tongue slightly out when natural, cute shopping-bag composition, all bag text removed, playful feminine sweetness.",
+  },
+  {
+    id: "yellow-plush-hood",
+    gender: "female",
+    direction:
+      "Square soft plush avatar. The same pet wears a fuzzy pale-yellow hood and rests near a pillow with no readable text, front-facing face, simple cozy background, gentle sleepy cuteness, soft indoor light.",
+  },
+  {
+    id: "plush-doll-doodle",
+    gender: "female",
+    direction:
+      "Square kawaii close-up avatar. The same pet holds a small white plush doll wearing black glasses, with a few simple white doodle stickers such as ear outlines, whisker lines, stars, and arrows, black or dark background, cute handcrafted internet aesthetic.",
+  },
+  {
+    id: "black-sunglasses-sweater",
+    gender: "male",
+    direction:
+      "Square cool indoor fashion avatar. The same pet wears oversized black rectangular sunglasses and a fitted black ribbed turtleneck sweater, close head-and-chest crop, cozy white bedding and pillows blurred behind, stylish aloof celebrity attitude.",
+  },
+  {
+    id: "blue-plush-cape",
+    gender: "female",
+    direction:
+      "Square clean studio avatar. The same pet sits front-facing on a white floor against a royal blue background, wearing a fluffy white hooded cape with green trim, small colorful pom-pom decorations, and red drawstrings, calm innocent expression.",
+  },
+  {
+    id: "watercolor-happy-name",
+    gender: "female",
+    direction:
+      "Square minimalist watercolor avatar on pure white background. Draw only the same pet's happy head portrait with soft cream and beige brush strokes, glossy eyes, open-mouth smile when natural, and elegant handwritten pet-name typography below added later by website.",
+  },
+  {
+    id: "soft-sketch-glasses",
+    gender: "male",
+    direction:
+      "Square refined hand-drawn pet head avatar on white paper. The same pet is simplified into loose ink lines and pale watercolor shadows, wearing tasteful oversized glasses, charming curious expression, airy custom illustration, no signature or random text.",
+  },
+];
 
-function pickVerticalCampaignDirection(gender?: "male" | "female" | null) {
-  const pool = gender ? VERTICAL_CAMPAIGN_TEMPLATES.filter((template) => template.gender === gender) : VERTICAL_CAMPAIGN_TEMPLATES;
-  const candidates = pool.length ? pool : VERTICAL_CAMPAIGN_TEMPLATES;
-  const index = Math.floor(Math.random() * candidates.length);
-  return candidates[index] || candidates[0];
-}
+const VERTICAL_TEMPLATES: PromptTemplate[] = [
+  { id: "neon-shirt-tie", gender: "male", direction: "Vertical NEON.PET-style fashion poster, high-saturation crimson or rose seamless studio, direct flash, close slight wide-angle crop. Dress the same pet in oversized glasses, a crisp light-blue striped shirt, and a loose dark tie or smart collar. Bold clean top negative space for later pet-name typography." },
+  { id: "purple-emotional", gender: "male", direction: "Vertical premium emotional studio portrait, muted purple seamless background, soft gradient falloff, centered close portrait, bright catchlights, one yellow knitted cushion or clean foreground fabric edge, calm loyal companion feeling, no generated text." },
+  { id: "pink-sunglasses-close", gender: "female", direction: "Vertical NEON.PET close-up on pastel-pink seamless paper, direct flash, glossy black sunglasses pushed above the eyes, close head-and-chest crop, fashionable cute expression, vivid magazine cover finish, clean top margin." },
+  { id: "pink-cute-headwear", gender: "female", direction: "Vertical cute NEON.PET studio poster on pastel-pink seamless background. Add one small pet-safe cap, beret, heart patch, or soft scarf, relaxed loaf or seated pose, crisp fur detail, sweet premium editorial mood." },
+  { id: "crimson-streetwear", gender: "male", direction: "Vertical cool streetwear poster, deep crimson seamless background, extreme close-up, glossy black triangular sunglasses or dark harness, direct flash, sharp fur, confident side angle, social-media fashion cover energy." },
+  { id: "pink-plush-hood", gender: "female", direction: "Vertical cute plush-hood poster, hot-pink seamless studio, soft duck, chick, bear, or bunny-inspired hood framing the same pet's face, direct flash, glossy eyes, soft plush texture, adorable premium campaign." },
+  { id: "sequin-runway", gender: "female", direction: "Vertical glamorous runway poster, seamless pink studio, same pet with organza bow or iridescent sequin fabric train spreading toward the foreground, direct flash sparkle, luxury playful editorial, face unobstructed." },
+  { id: "sunny-botanical", gender: "female", direction: "Vertical sunflower-yellow studio poster, same pet with white flower wreath, green leaf collar, tropical shirt, or floral neck accessory, direct flash, bright summer editorial color, close face-forward crop." },
+  { id: "newspaper-smart", gender: "male", direction: "Vertical humorous smart poster, pastel-pink or magenta seamless studio, folded newspaper, magazine, book, or graphic paper prop angled in the foreground, optional sunglasses above eyes, direct flash, clever editorial attitude." },
+  { id: "red-hood-yellow", gender: "male", direction: "Vertical bold color-block poster, sunflower-yellow seamless studio, bright red knitted hood, chunky scarf, soft cape, or color-block sweater, crisp direct flash, strong red-yellow fashion campaign mood." },
+  { id: "pink-soft-prop", gender: "female", direction: "Vertical sweet soft-prop poster, seamless pink studio, same pet leaning over or resting inside a pastel cushion, pet bag, plush basket, or fabric block, small bow or collar charm, cute social-media cover look." },
+  { id: "oversized-bow", gender: "female", direction: "Vertical theatrical cute poster, seamless pink studio, oversized soft fabric bow, ribbon backdrop, puffy textile shape, or gift prop framing the same pet, direct flash, sweet dramatic fashion composition." },
+  { id: "teal-flower-toy", gender: "female", direction: "Vertical cheerful toy-flower poster, saturated teal-blue studio, oversized plush sunflower or smiling flower behind the same pet, pastel capelet, bib, scarf, or bow, bright direct flash, playful children's editorial." },
+  { id: "teal-sport-ball", gender: "male", direction: "Vertical sporty toy-prop poster, saturated teal-blue studio, oversized soft soccer ball, tennis ball, basketball, or toy trophy near the same pet, sporty vest or scarf, athletic playful editorial energy." },
+  { id: "hotpink-sport-sunglasses", gender: "male", direction: "Vertical energetic streetwear poster, hot-pink studio close-up, red sunglasses, athletic goggles above eyes, sporty scarf, or lightweight vest, lively side angle, tongue-out smile or playful head tilt." },
+  { id: "yellow-tote", gender: "male", direction: "Vertical playful urban shopping poster, sunflower-yellow seamless studio, same pet safely peeking from a plain soft fabric tote, basket bag, or oversized pouch, optional small charm, direct flash, no human hand if possible." },
+  { id: "birthday-pink", gender: "female", direction: "Vertical birthday party poster, raspberry-pink studio, small party hat, pom-pom headpiece, pastel bow, ruffled collar, or satin skirt, cute head tilt, direct flash, sweet festive editorial." },
+  { id: "orange-rebel", gender: "male", direction: "Vertical rebellious streetwear poster, orange seamless studio, black vest, houndstooth panel, chain detail, or glossy sunglasses, confident paw-near-glasses pose, direct flash, luxury street-fashion mood." },
+  { id: "magenta-newspaper-frame", gender: "male", direction: "Vertical funny newspaper-frame poster, deep magenta studio, folded newspaper or magazine close to camera framing the same pet's face, slight wide-angle humor without identity distortion, crisp flash." },
+  { id: "festive-new-year", gender: "female", direction: "Vertical festive New Year poster, deep pink or magenta studio, red knitted sweater, soft scarf, gold-trimmed collar, floral branch, blank scroll, or ribbon, warm celebratory editorial, no readable characters." },
+];
+
+const LANDSCAPE_TEMPLATES: PromptTemplate[] = [
+  { id: "toy-clothesline-box", gender: "male", direction: "Horizontal pet studio scene on a clean white background. The same pet sits on a cardboard box wearing a tan hoodie, plush animal toys clipped to a clothesline behind, soft rug with scattered pet toys and treats, bright airy commercial photography." },
+  { id: "butterbear-chair", gender: "female", direction: "Horizontal cozy vintage toy-room scene. The same pet lounges on a fluffy cream armchair wearing a yellow gingham shirt, teddy bear beside it, warm butter-yellow bear posters on the wall with no readable text, soft nostalgic indoor light." },
+  { id: "red-cartoon-room", gender: "male", direction: "Horizontal bright red cartoon-inspired room. The same pet wears a red-and-black playful outfit and round-ear bow headband, plush toy cave and character-like toys around it, cheerful theme-room energy, avoid all copyrighted characters and logos." },
+  { id: "autumn-run", gender: "male", direction: "Horizontal autumn forest action photo. The same pet runs toward camera through golden leaves, warm backlight, shallow depth of field, crisp fur, joyful open-mouth expression, clean white editorial text area left blank for website compositing." },
+  { id: "autumn-picnic", gender: "male", direction: "Horizontal outdoor autumn picnic portrait. The same pet sits beside a folding chair, books, small vase, white fabric, and golden forest background, warm sunlight, refined lifestyle photography, calm happy profile." },
+  { id: "halloween-cat", gender: "female", direction: "Horizontal Halloween studio scene. The same pet sits on a wooden crate wearing a black cape with white collar, orange and black props, pumpkins, broom-like decor, spooky but cute atmosphere, no readable Halloween words." },
+  { id: "blue-business-portrait", gender: "male", direction: "Horizontal formal studio portrait on textured blue background. The same pet wears a neat white collar and black tie or smart business accessory, mouth open or alert expression, premium studio lighting, professional pet portrait mood." },
+  { id: "blue-draped-glasses", gender: "male", direction: "Horizontal blue artistic studio. The same pet lies or sits on a textured blue floor wearing round glasses and a dark draped fabric or coat, editorial fashion lighting, polished dramatic composition." },
+  { id: "yellow-cushion-studio", gender: "male", direction: "Horizontal pale-yellow studio with oversized rounded red and yellow cushions around the same pet. Relaxed pose, playful commercial set, bright clean lighting, bold soft-shape composition." },
+  { id: "new-year-sofa", gender: "female", direction: "Horizontal deep red festive New Year scene. The same pet sits on a brown leather sofa with blank red decorative papers and abstract calligraphy-like marks, warm celebratory lighting, no readable Chinese text." },
+  { id: "christmas-fireplace", gender: "male", direction: "Horizontal cozy holiday fireplace portrait. The same pet rests on a red plaid blanket near a glowing fireplace, gift boxes and festive decor in dim background, warm firelight, intimate cinematic mood." },
+  { id: "autumn-cat-low", gender: "male", direction: "Horizontal low-angle autumn forest portrait. The same pet lies among golden leaves near tree trunks, looking upward toward warm sunlight, shallow foreground blur, glowing backlight, quiet cinematic nature mood." },
+  { id: "black-lowkey-paw", gender: "male", direction: "Horizontal low-key black studio portrait. The same pet reaches one paw toward the camera, dramatic rim light outlining whiskers and fur, black background, sharp face detail, elegant mysterious mood." },
+  { id: "pastel-nursery", gender: "female", direction: "Horizontal pastel nursery bed scene. The same pet rests on white bedding with plush toys around and hanging stuffed animals above, pale blue wall, gentle soft light, dreamy cute bedroom atmosphere." },
+  { id: "birthday-cake", gender: "female", direction: "Horizontal bright birthday scene. The same pet sits beside a small pet-safe cake, colorful handmade banner and simple decorations in the background, pearl or cute collar, clean daylight, festive but tasteful." },
+  { id: "urban-red-bench", gender: "male", direction: "Horizontal urban lifestyle photo. The same pet stands on a vivid red bench near a chain-link fence, brick building background with bokeh, pastel outfit or harness, shallow depth of field, cheerful city-pet mood." },
+  { id: "urban-ledge", gender: "male", direction: "Horizontal clean architecture portrait. The same pet stands on a stone ledge in front of a dark modern panel and brick wall, simple striped sweater, confident smile, clean urban editorial photography." },
+  { id: "retro-red-drink", gender: "male", direction: "Horizontal bold red summer studio. The same pet lounges in a striped deck chair wearing mint shirt and tie, plain red coolers and glass soda bottles with all labels removed, high-saturation commercial set." },
+  { id: "blue-cartoon-room", gender: "female", direction: "Horizontal bright blue playful room. The same pet lies on a plush rug wearing a blue-and-white outfit and cap, matching plush bed and toys around, cartoonish but realistic, avoid copyrighted characters and logos." },
+  { id: "wizard-library", gender: "male", direction: "Horizontal magical academy library scene. The same pet wears a black pointed wizard hat and cape, old bookshelves, potion bottles, red wall, warm fantasy studio lighting, avoid copyrighted posters, school names, or readable text." },
+];
 
 export const PORTRAIT_STYLES: PortraitStyle[] = [
-  { id: "white-sketch-avatar", name: "Pet Avatar", category: "classic", direction: "Pure white background, hand-drawn pet character bust in delicate graphite and colored-pencil lines, sparse soft pastel accents sampled from the real coat, expressive half-lidded eyes or a subtle knowing expression, centered head-and-chest composition, generous white space, no clothing and no props." },
-  { id: "landscape-campaign", name: "Landscape Portrait", category: "editorial", direction: "Horizontal 3:2 commercial pet-fashion photograph, saturated seamless-paper studio, pet placed prominently in one side or center-third while filling most of the frame, crisp direct flash, a natural playful action, one contemporary personality outfit, and clean negative space suitable for a social banner." },
-  { id: "vertical-campaign", name: "Vertical Portrait", category: "editorial", direction: "Vertical 4:5 commercial pet-fashion poster, saturated seamless-paper studio, close eye-level camera, pet filling 70-85 percent of the frame, bright catchlights, one personality outfit, one charming spontaneous gesture, and a clean upper margin for later brand compositing." },
-  { id: "crimson-editorial", name: "Cherry Flash", category: "editorial", direction: "Saturated cherry-red seamless backdrop, crisp direct flash, close low-angle fashion crop, sporty color-block bandana, lively confident expression, contemporary campaign energy." },
-  { id: "rose-sequin", name: "Pink Pop", category: "editorial", direction: "Hot-pink seamless paper, bright clean softbox, playful close-up, one modern translucent accessory, glossy current social-editorial finish." },
-  { id: "sunset-studio", name: "Tangerine Jump", category: "editorial", direction: "Vivid tangerine studio sweep, freeze-frame action, crisp direct flash, simple streetwear accent, joyful high-energy commercial pet photography." },
-  { id: "monochrome-runway", name: "Graphic Mono", category: "editorial", direction: "Clean black-and-white graphic set, high-key lighting, bold asymmetrical crop, modern minimal collar, sharp fashion-zine composition without retro styling." },
-  { id: "silver-satin", name: "Chrome Pop", category: "editorial", direction: "Cool light-gray studio with one chrome sphere, bright hard-soft mixed light, sleek contemporary styling, close expressive portrait with clean reflections." },
-  { id: "electric-blue", name: "Cobalt Street", category: "editorial", direction: "Electric cobalt seamless background, crisp contrast, current streetwear shirt or bandana, subtle wide-angle perspective, playful direct-to-camera energy." },
-  { id: "violet-sculpture", name: "Purple Cutout", category: "editorial", direction: "Vivid violet set with one oversized geometric cutout, bright edge light, curious pose, clean modern art-direction and saturated color." },
-  { id: "cream-luxury", name: "Vanilla Clean", category: "classic", direction: "Bright warm-cream seamless studio, airy softbox, close natural portrait, minimal modern knit accent, fresh catalog polish with no vintage mood." },
-  { id: "heritage-tailoring", name: "Lime Club", category: "classic", direction: "Acid-lime background, contemporary varsity-style neck accessory, direct flash, energetic three-quarter crop, youthful fashion-feed styling." },
-  { id: "navy-explorer", name: "Blue Utility", category: "classic", direction: "Clean deep-blue seamless set, modern lightweight utility vest, bright facial lighting, bold low-angle commercial composition with no explorer nostalgia." },
-  { id: "library-scholar", name: "Smart Cookie", category: "classic", direction: "Sunny yellow studio, lightweight modern glasses placed safely without hiding the eyes, one colorful book-like prop with no text, humorous close-up campaign shot." },
-  { id: "royal-portrait", name: "Purple Star", category: "classic", direction: "Saturated purple studio, glossy star-shaped prop, modern statement collar, punchy flash, playful celebrity-cover pose with no ceremonial or royal styling." },
-  { id: "garden-bloom", name: "Garden Bloom", category: "seasonal", direction: "Fresh botanical studio set with flowers and leaves, airy natural light, gentle spring color palette, fashion portrait framing." },
-  { id: "autumn-leaves", name: "Orange Confetti", category: "seasonal", direction: "Bold orange seamless set, a small burst of graphic paper confetti, crisp flash, playful movement, saturated current campaign color without rustic autumn styling." },
-  { id: "winter-scarf", name: "Winter Scarf", category: "seasonal", direction: "Snowy pale-blue studio set, soft knitted scarf, luminous cool light, calm winter portrait with clear face and body." },
-  { id: "summer-poolside", name: "Summer Poolside", category: "seasonal", direction: "Turquoise poolside-inspired studio set, light summer shirt, bright sunlight, playful clean campaign portrait." },
-  { id: "raincoat-day", name: "Raincoat Day", category: "seasonal", direction: "Glossy rainy-day set, small yellow raincoat, reflective floor, soft overcast light, charming editorial portrait." },
-  { id: "lantern-night", name: "Night Flash", category: "seasonal", direction: "Deep teal studio, bright frontal flash with a clean cobalt rim, one translucent colored orb, modern nightlife editorial energy while keeping the eyes fully visible." },
-  { id: "purple-action", name: "Purple Action", category: "playful", direction: "Vivid purple studio, dynamic running or jumping pose that remains anatomically natural, colorful playful outfit, crisp motion energy." },
-  { id: "orange-pillow", name: "Orange Pillow", category: "playful", direction: "Bright tangerine background, oversized soft pillows, playful relaxed pose, cheerful commercial pet photography." },
-  { id: "paper-airplane", name: "Paper Airplane", category: "playful", direction: "Sky-blue paper set with floating paper airplanes, lightweight bandana, curious action pose, clean graphic composition." },
-  { id: "toy-box", name: "Toy Box", category: "playful", direction: "Colorful toy studio set, one simple toy prop, energetic but safe pose, polished children's campaign photography." },
-  { id: "bubble-pop", name: "Bubble Pop", category: "playful", direction: "Pastel bubble studio, soft translucent bubbles, playful collar or bow, bright clean portrait with shallow depth of field." },
-  { id: "comic-frame", name: "Comic Frame", category: "playful", direction: "Graphic primary-color studio panels, simple cape-like clothing, bold editorial framing, no printed words or logos." },
-  { id: "disco-soft", name: "Disco Soft", category: "playful", direction: "Soft disco lights, reflective pastel floor, tiny fashion sunglasses only if they do not cover the eyes, joyful portrait." },
-  { id: "picnic-camp", name: "Snack Club", category: "playful", direction: "Sunny sky-blue set, one oversized graphic snack-shaped prop with no packaging or words, colorful neckerchief, cheeky close-up commercial composition." },
-  { id: "neon-night", name: "Neon Night", category: "cinematic", direction: "Magenta and cyan neon studio, cinematic contrast, tasteful futuristic jacket, clear eye visibility and strong silhouette." },
-  { id: "film-noir", name: "White Flash", category: "cinematic", direction: "Pure white seamless studio, punchy direct flash, high-contrast contemporary black accessory, dynamic off-center crop, sharp fashion-feed finish with no noir or vintage treatment." },
-  { id: "space-cadet", name: "Space Cadet", category: "cinematic", direction: "Deep indigo space-inspired studio with soft stars, comfortable astronaut-inspired vest, cinematic rim light, grounded pose." },
-  { id: "safari-still", name: "Green Screen", category: "cinematic", direction: "Fresh saturated green seamless set, modern mesh vest or bandana, crisp frontal light, close playful portrait with strong color separation and no safari styling." },
-  { id: "retro-cinema", name: "Coral Close-Up", category: "cinematic", direction: "Bright coral studio, extreme but flattering close-up with subtle wide-angle energy, tiny contemporary bow or collar, razor-sharp eyes and fur, no retro treatment." },
-  { id: "glasshouse", name: "Glasshouse", category: "cinematic", direction: "Modern glasshouse set with leafy shadows, clean neutral clothing, natural window light, premium lifestyle portrait." },
-  { id: "midnight-cobalt", name: "Midnight Cobalt", category: "cinematic", direction: "Cobalt blue night set, subtle spotlight, refined leather-free fashion styling, bold centered portrait." },
-  { id: "cloud-studio", name: "Cloud Studio", category: "cinematic", direction: "Soft white cloud-like studio, pale blue wardrobe, luminous high-key light, dreamy but photorealistic portrait." },
+  { id: "white-sketch-avatar", name: "Pet Avatar", category: "classic", direction: "Square 1:1 generated pet avatar selected randomly from the avatar template pool." },
+  { id: "vertical-campaign", name: "Vertical Portrait", category: "editorial", direction: "Vertical generated pet fashion portrait selected randomly from the vertical template pool." },
+  { id: "landscape-campaign", name: "Landscape Portrait", category: "editorial", direction: "Horizontal generated pet scene selected randomly from the landscape template pool." },
 ];
 
 const PORTRAIT_STYLE_NAMES_ZH: Record<string, string> = {
   "white-sketch-avatar": "爱宠头像",
-  "landscape-campaign": "横屏写真",
   "vertical-campaign": "竖屏写真",
-  "crimson-editorial": "樱桃闪光",
-  "rose-sequin": "粉红潮拍",
-  "sunset-studio": "橘色跃动",
-  "monochrome-runway": "黑白几何",
-  "silver-satin": "银色潮流",
-  "electric-blue": "钴蓝街拍",
-  "violet-sculpture": "紫色切面",
-  "cream-luxury": "香草清新",
-  "heritage-tailoring": "青柠俱乐部",
-  "navy-explorer": "深蓝机能",
-  "library-scholar": "聪明曲奇",
-  "royal-portrait": "紫色明星",
-  "garden-bloom": "花园绽放",
-  "autumn-leaves": "橙色彩纸",
-  "winter-scarf": "冬日围巾",
-  "summer-poolside": "夏日泳池",
-  "raincoat-day": "雨衣日记",
-  "lantern-night": "夜色闪光",
-  "purple-action": "紫色行动",
-  "orange-pillow": "橙色软垫",
-  "paper-airplane": "纸飞机",
-  "toy-box": "玩具盒",
-  "bubble-pop": "泡泡乐园",
-  "comic-frame": "漫画画框",
-  "disco-soft": "柔光迪斯科",
-  "picnic-camp": "零食俱乐部",
-  "neon-night": "霓虹夜色",
-  "film-noir": "白色闪光",
-  "space-cadet": "太空萌宠",
-  "safari-still": "绿色影棚",
-  "retro-cinema": "珊瑚特写",
-  "glasshouse": "玻璃花房",
-  "midnight-cobalt": "午夜钴蓝",
-  "cloud-studio": "云朵影棚",
+  "landscape-campaign": "横屏写真",
 };
 
-export function getPortraitStyleDisplayName(styleId: string, language: string, fallback?: string) {
-  const baseStyleId = styleId.split("--")[0];
-  const isFixedFormat = ["white-sketch-avatar", "vertical-campaign", "landscape-campaign"].includes(baseStyleId);
-  if (language === "zh-CN") return isFixedFormat ? PORTRAIT_STYLE_NAMES_ZH[baseStyleId] : "写真作品";
-  return isFixedFormat ? (PORTRAIT_STYLES.find((style) => style.id === baseStyleId)?.name || fallback || "Portrait") : "Portrait";
-}
-
-const ACTIONS_BY_STYLE: Record<string, string> = {
-  "landscape-campaign": "Use a natural horizontal action: walking across the frame, leaning toward one side, playing beside one soft prop, or looking back over the shoulder, while keeping the face prominent.",
-  "vertical-campaign": "Use a vertical-cover gesture: a close head tilt, tongue slightly out, one paw stepping toward camera, or a safe playful floor pose with the eyes and face clearly visible.",
-  "crimson-editorial": "Lean slightly toward the lens with one front paw forward and a lively direct gaze.",
-  "rose-sequin": "Turn the head toward camera during a playful side-step, framed in a close crop.",
-  "sunset-studio": "Freeze a natural small jump, pounce, or quick step with correct paws and a joyful expression.",
-  "monochrome-runway": "Walk toward camera with a clear full-body stride and an energetic off-center composition.",
-  "silver-satin": "Investigate the chrome sphere with a curious head tilt while keeping the full face visible.",
-  "electric-blue": "Make a small natural hop or side-step toward the lens with the body angled diagonally.",
-  "violet-sculpture": "Peek through the geometric cutout or reach one paw naturally around its edge.",
-  "cream-luxury": "Hold a relaxed close seated pose with one front paw slightly nearer the camera.",
-  "heritage-tailoring": "Turn quickly toward an off-camera sound with a bright alert expression.",
-  "navy-explorer": "Take one confident step toward the low camera with the lightweight vest clearly visible.",
-  "library-scholar": "Tilt the head toward the lens beside the colorful blank prop, with bright unobstructed eyes.",
-  "royal-portrait": "Reach one paw toward the star prop or pose beside it with a playful head tilt.",
-  "garden-bloom": "Lean forward to inspect one flower with a curious, gentle neck movement.",
-  "autumn-leaves": "Move through the confetti with one paw lifted at the moment of a lively step.",
-  "winter-scarf": "Stand naturally and look back over one shoulder while keeping the scarf below the face.",
-  "summer-poolside": "Reach one paw toward a floating toy or turn playfully toward the camera.",
-  "raincoat-day": "Step through the scene with one paw forward as if crossing a shallow puddle.",
-  "lantern-night": "Turn toward the translucent orb with one paw lifted and a bright flash-lit expression.",
-  "purple-action": "Perform a natural playful pounce or short leap with all paws anatomically correct.",
-  "orange-pillow": "Climb onto a pillow, peek over its edge, or lounge with one paw hanging down.",
-  "paper-airplane": "Reach upward toward a paper airplane or take a curious step beneath it.",
-  "toy-box": "Lean over the toy box and bat one simple toy with one front paw.",
-  "bubble-pop": "Turn toward a nearby bubble with one front paw lifted in mid-reach.",
-  "comic-frame": "Step through the graphic frame or place one paw on its lower edge.",
-  "disco-soft": "Make a playful side-step with a natural head turn and balanced footing.",
-  "picnic-camp": "Interact with the oversized snack-shaped prop or peek around it toward camera.",
-  "neon-night": "Walk through the neon set in a confident stride or hold a strong three-quarter turn.",
-  "film-noir": "Step toward the direct flash or turn sharply back toward camera in a dynamic close crop.",
-  "space-cadet": "Stand with one paw on the platform and look toward the circular portal.",
-  "safari-still": "Lean slightly toward the camera with a curious head tilt and one paw forward.",
-  "retro-cinema": "Move the nose slightly closer to the wide-angle lens while keeping the face natural and recognizable.",
-  "glasshouse": "Walk through the window light or look through a translucent glass panel.",
-  "midnight-cobalt": "Hold a strong three-quarter stance with one paw placed forward.",
-  "cloud-studio": "Step between the cloud props or look upward with one front paw lifted.",
-};
 function appearanceLock(profile?: PetVisualProfile | null) {
   if (!profile) return "No visual profile is available; preserve every visible feature directly from the reference photos and do not guess hidden traits.";
 
@@ -447,35 +250,52 @@ function appearanceLock(profile?: PetVisualProfile | null) {
   ].join(" ");
 }
 
-export function buildPortraitPrompt(style: PortraitStyle, context: PortraitRequestContext) {
-  const personalityWardrobe = PERSONALITY_WARDROBE[context.pbtiCode] || "A safe contemporary pet-fashion accessory that visually expresses the assigned personality while keeping the pet comfortable and recognizable.";
-  const baseStyleId = style.id.split("--")[0];
-  const verticalTemplate = baseStyleId === "vertical-campaign" ? pickVerticalCampaignDirection(context.gender) : null;
-  if (style.id.split("--")[0] === "white-sketch-avatar") {
-    return [
-      IDENTITY_LOCK,
-      appearanceLock(context.visualProfile),
-      `Draw the SAME real ${context.species} from the reference photos as a refined hand-drawn character portrait on a perfectly pure white background. This is a square 1:1 centered head-and-upper-chest avatar, not a photograph. Preserve the real pet's exact species, coat colors, markings, eye color, ear shape, muzzle, face proportions, fur length, and distinctive silhouette so the owner immediately recognizes the pet.`,
-      "STYLE: elegant loose graphite pencil sketch with many fine, slightly imperfect wispy fur strokes; restrained colored-pencil shading sampled from the pet's real coat; tiny pale cyan, warm yellow, peach, or lavender accent strokes; subtle pink inside the ears and a very light cheek blush only when natural. Keep most of the paper white and unpainted. Use crisp black detail only for eyes, nose, mouth, and a few defining fur edges.",
-      "EXPRESSION: give the portrait a quiet, witty, slightly proud personality through a subtle head tilt, half-lidded or gently narrowed eyes, and a tiny closed mouth. Keep it affectionate rather than angry. For a dog, the chest or front paws may form a simple self-assured pose; for a cat, use an elegant upright bust or neatly tucked paws. Anatomy must remain natural and species-correct.",
-      "COMPOSITION: one pet only, centered, occupying about 55-70 percent of the square canvas, with generous clean white space on every side. No ground line, no scenery, no frame, no shadow box, no clothing, no accessories, no props, no text, no logo, no watermark.",
-      "Avoid photorealism, oil paint, watercolor wash, thick marker outlines, vector icon style, flat emoji style, chibi proportions, oversized eyes, human eyebrows, human hands, generic breed substitution, extra limbs, malformed paws, dense background marks, gray paper, cream paper, colored background, paper texture, random letters, signature, or watermark.",
-    ].join("\n\n");
+function pickTemplate(kind: PromptKind, gender?: "male" | "female" | null) {
+  const source = kind === "avatar" ? AVATAR_TEMPLATES : kind === "vertical" ? VERTICAL_TEMPLATES : LANDSCAPE_TEMPLATES;
+  const pool = gender ? source.filter((template) => template.gender === gender) : source;
+  const candidates = pool.length ? pool : source;
+  return candidates[Math.floor(Math.random() * candidates.length)] || candidates[0];
+}
+
+function kindFromStyleId(styleId: string): PromptKind {
+  const baseStyleId = styleId.split("--")[0];
+  if (baseStyleId === "white-sketch-avatar") return "avatar";
+  if (baseStyleId === "landscape-campaign") return "landscape";
+  return "vertical";
+}
+
+function compositionRules(kind: PromptKind) {
+  if (kind === "avatar") {
+    return "Final format: square 1:1 avatar image, single pet only, face prominent, social-media-ready, clean readable silhouette, suitable as one of the three generated portrait assets.";
   }
+  if (kind === "landscape") {
+    return "Final format: horizontal landscape image, preferably 16:9 or 3:2, single pet as the hero, face clearly visible, enough clean visual space for website share-card use.";
+  }
+  return "Final format: vertical portrait poster, preferably 2:3 or 4:5, single pet as the hero, close fashionable framing, clean upper space for website-composited typography.";
+}
+
+export function getPortraitStyleDisplayName(styleId: string, language: string, fallback?: string) {
+  const baseStyleId = styleId.split("--")[0];
+  if (language === "zh-CN") return PORTRAIT_STYLE_NAMES_ZH[baseStyleId] || "写真作品";
+  return PORTRAIT_STYLES.find((style) => style.id === baseStyleId)?.name || fallback || "Portrait";
+}
+
+export function buildPortraitPrompt(style: PortraitStyle, context: PortraitRequestContext) {
+  const kind = kindFromStyleId(style.id);
+  const template = pickTemplate(kind, context.gender);
+  const personalityWardrobe = PERSONALITY_WARDROBE[context.pbtiCode] || "safe contemporary pet styling matched to the assigned personality while keeping the pet comfortable and recognizable.";
+
   return [
     IDENTITY_LOCK,
     appearanceLock(context.visualProfile),
-    "Art direction: " + (verticalTemplate ? `${verticalTemplate.name}: ${verticalTemplate.direction}` : style.direction),
-    `Personality wardrobe for ${context.pbtiCode} / ${context.personalityName}: ${personalityWardrobe} This wardrobe direction is required and should be clearly visible, but it must never cover identifying facial or coat features.`,
-    PHOTOSHOOT_DIRECTION,
-    "Required action variation: " + (ACTIONS_BY_STYLE[baseStyleId] || "Use a natural, species-appropriate action that differs from the reference pose."),
-    "The selected style is the primary art direction. Do not blend it into a generic portrait. Make the requested pose, action, background, prop relationship, camera angle, lighting, and poster composition visibly present in the final frame. The pose may differ from every reference photo while the pet's anatomy and identity remain consistent.",
-    "The wardrobe and props are styling only. They must fit the species safely and must not hide the face, eyes, ears, nose, coat pattern, or identifying markings. Keep the eyes visible and preserve the real eye color even under colored lighting.",
-    `Leave a clean area for website compositing. Do not render any words, pet name, website name, logo, watermark, or brand mark inside the image; the website will add the pet name "${context.petName}" in poster typography and the transparent PBTI logo after generation.`,
-    `Pet name for website typography: ${context.petName}. PBTI type for metadata only: ${context.pbtiCode}, ${context.personalityName}.`,
-    verticalTemplate ? `Selected vertical template id for metadata: ${verticalTemplate.id}.` : "",
+    `Selected output kind: ${kind}. Selected template id: ${template.id}.`,
+    `Use this art direction exactly, replacing any generic pet with the uploaded ${context.species}: ${template.direction}`,
+    `Personality reference for styling: ${context.pbtiCode} / ${context.personalityName}. If the template allows wardrobe choice, prefer ${personalityWardrobe}`,
+    compositionRules(kind),
+    UNIVERSAL_NO_TEXT.replace("__PET_NAME__", context.petName),
+    `Pet name for website typography only: ${context.petName}.`,
     NEGATIVE_PROMPT,
-  ].filter(Boolean).join("\n\n");
+  ].join("\n\n");
 }
 
 export function choosePortraitStyles(count = 3, random = Math.random) {
