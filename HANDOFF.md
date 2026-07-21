@@ -1,6 +1,213 @@
 # PBTI Project Handoff
 
-Last updated: 2026-07-15
+Last updated: 2026-07-21
+
+## 2026-07-21 Current Context — Read This First
+
+This section is the authoritative current handoff. Older sections below are retained for background but may describe tasks that have since been completed.
+
+Current workspace:
+
+- Project path: `C:\Users\Administrator\Documents\Pbti`
+- Branch: `main`
+- Remote: `https://github.com/fuiet/pbti-pet-personality.git`
+- Production deploy target: Cloudflare Pages, auto-deployed from pushes to `main`
+- Production URL: `https://pbti-pet-personality.pages.dev`
+- Current git state before this handoff edit: clean
+
+Latest deployed commits:
+
+- `42cfc5b Enlarge report cover avatar`
+- `6e30114 Add varied portrait typography layouts`
+- `d98e95d Refresh portrait prompt pools and report artwork`
+- `4c462d9 Split vertical portrait prompts by pet gender`
+- `3edff8e Add vertical portrait prompt template pool`
+- `8f569bc Make portrait generation reliable before reports`
+- `8681f85 Stabilize portrait generation and restore type artwork`
+- `70fa955 Use email confirmation links for registration`
+
+Recent validation commands that passed:
+
+```powershell
+$env:PATH='C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;' + $env:PATH; & 'C:\Users\Administrator\Documents\Pbti\node_modules\.bin\tsc.CMD' --noEmit
+$env:PATH='C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;' + $env:PATH; & 'C:\Users\Administrator\Documents\Pbti\node_modules\.bin\next.CMD' build
+```
+
+### Current Product Direction
+
+PBTI is now a bilingual pet personality and portrait-generation website.
+
+Supported languages:
+
+- English: default/international language
+- Simplified Chinese: native Chinese wording, not literal machine translation
+
+Do not add Japanese or other languages unless the user explicitly asks again. Do not change the canonical English four-letter PBTI codes.
+
+Canonical product claims currently used:
+
+- 28 behavior questions
+- 12 shared cat/dog personality types
+- 10-chapter report
+- 3 generated portrait assets
+
+### Completed Since the Old 2026-07-15 Handoff
+
+The old “Latest Unfinished Report Task” is mostly completed:
+
+- Full report was expanded into a richer 10-chapter layout.
+- Visible “Research Basis” and “Custom Model Boundary” cards were removed from the report.
+- “Appearance Analysis” was renamed conceptually to “Pet Identification / 爱宠鉴定”.
+- Photo-quality score was removed from the visible identification cards.
+- A final disclaimer/important notice section was added.
+- Report content is generated deterministically from the current model so old saved rows render safely.
+
+Portrait and report work completed:
+
+- Reports now route through `/report/[id]/preparing` before opening.
+- Preparing page shows progress such as visual analysis, behavior analysis, portrait generation, and report preparation.
+- The report opens only after all three portraits are generated/saved, reducing broken-image states.
+- Portrait persistence uses Supabase `pet_portraits`; saved portraits are reused for the same pet/report instead of regenerating every view.
+- Missing portrait table still requires running `supabase/pet-portraits.sql` in Supabase SQL Editor.
+- Portrait generation is constrained to provider-supported 2K sizes:
+  - avatar: `2048*2048`
+  - vertical: `1632*2048`
+  - landscape: `2048*1152` or provider-supported equivalent as implemented in `app/api/portraits/route.ts`
+- The report cover's right-side image and the share-card artwork now use the avatar portrait, not the vertical portrait.
+- The report cover avatar is enlarged to fill the right side from the top border.
+- The built-in personality/type artwork was restored as fallback cover art if generated images fail to load.
+
+Portrait prompt system completed:
+
+- File: `lib/portraitPrompts.ts`
+- Prompt version: `studio-v7`
+- Old fixed prompt/style library was removed.
+- There are now three fixed output slots:
+  - `white-sketch-avatar` → 爱宠头像
+  - `vertical-campaign` → 竖屏写真
+  - `landscape-campaign` → 横屏写真
+- Each slot has a template pool and randomly selects one prompt at generation time.
+- Template pools are split by pet gender:
+  - `male` pets prioritize cooler, sporty, explorer, scholar, streetwear, adventure, and urban directions.
+  - `female` pets prioritize softer, cute, plush, pink, floral, celebration, dreamy, and healing directions.
+  - If gender is not set, selection falls back to the full pool for that output kind.
+- All prompts include strict identity preservation:
+  - same species
+  - same face shape
+  - same coat color and markings
+  - same eye color
+  - same ears, nose/muzzle, body proportions, sex, and age impression
+- Prompts instruct the image model not to generate words, logos, brand names, or watermarks; website post-processing adds the pet name and PBTI logo.
+
+Portrait typography/compositing completed:
+
+- File: `components/PortraitGenerator.tsx`
+- The site composites the pet name and transparent PBTI logo after generation.
+- `public/pbti-logo-transparent.png` is used; do not add a white backing rectangle.
+- Download/copy use the composited PNG.
+- The old single fixed text design was replaced by 7 stable-random typography layouts:
+  - top-left bold headline with accent bars
+  - slanted large poster type
+  - bottom rounded name badge
+  - orange outlined title
+  - vertical side title
+  - handwritten-style lower-right title
+  - centered glowing line title
+- The chosen text layout is deterministic per image URL + pet name, so it does not change randomly on every refresh.
+
+User/account work completed:
+
+- Account center supports deleting pets and reports, with confirmation.
+- Account center pet/report avatars use user-uploaded pet photos when available.
+- Account center portrait gallery shows saved portrait assets with pet association.
+- Header shows the user's configured username instead of email when available.
+
+Auth status:
+
+- Registration was changed back to Supabase email confirmation link flow, not manual OTP code entry.
+- UI should clearly tell users to click the confirmation link in their email.
+- Login uses email + password; username login was intentionally not implemented.
+- Google login can fail locally/for some users due to `accounts.google.com ERR_CONNECTION_CLOSED`; that is generally network/proxy-related rather than site code, but auth redirect configuration should still be preserved.
+
+Question/test status:
+
+- The quiz is 28 questions: 4 dimensions × 7 questions each.
+- Chinese question wording was rewritten to sound natural in Simplified Chinese.
+- Quiz page supports going back to the previous question.
+- Home page statistic was changed from 36 questions to 28.
+
+Create/profile status:
+
+- Age and gender are side-by-side; gender is optional.
+- Chinese gender labels should be `公 / 母`, not `妈妈`.
+- Breed selector has localized Chinese breed names when language is Chinese.
+
+Home page status:
+
+- Added user stories, FAQ, and user feedback/review section.
+- Fake/social-proof stats were toned down:
+  - cumulative assessments should be around ten-thousand-plus, not 247,392
+  - satisfaction label should not say “模拟满意度”
+- If future work changes public stats, keep them plausible until real analytics are wired.
+
+### Current High-Priority Follow-Up Checks
+
+These are not necessarily broken, but are worth verifying after future changes:
+
+1. Generate a brand-new report with a pet that has gender set to `公` and confirm:
+   - preparing page creates all three portraits
+   - avatar/vertical/landscape records save with `studio-v7`
+   - report cover and share card use avatar
+   - portrait gallery still shows all three assets
+2. Generate a brand-new report with gender set to `母` and confirm gender-specific template selection feels softer/cuter.
+3. Test a report where existing old `studio-v6` portraits exist; verify preparing page creates/reuses the expected current `studio-v7` assets rather than showing broken images.
+4. Test Chinese mode end-to-end:
+   - profile create
+   - breed selector
+   - optional gender
+   - upload
+   - quiz back button
+   - report, share card, and portrait labels
+5. Re-check portrait post-processing on generated images:
+   - transparent PBTI logo has no white box
+   - text variety is visible
+   - long Chinese pet names do not overflow
+   - download and copy export PNG with name/logo
+
+### Important Current Files
+
+- `lib/portraitPrompts.ts` — authoritative prompt template pools for avatar, vertical, and landscape portraits.
+- `components/PortraitGenerator.tsx` — generation UI, composited name/logo, copy/download, typography layouts.
+- `app/api/portraits/route.ts` — portrait generation, persistence, provider sizes, existing-asset reuse.
+- `app/report/[id]/preparing/page.tsx` — report preparation/progress flow before opening report.
+- `app/report/[id]/page.tsx` — 10-chapter report display, avatar cover image, share card source.
+- `components/ShareCard.tsx` — downloadable/shareable report card using avatar artwork.
+- `app/create/page.tsx` — pet profile, breed, age, optional gender.
+- `app/quiz/page.tsx` — 28-question quiz, previous question support.
+- `data/zhQuestions.ts` — natural Chinese question copy.
+- `data/personalityLocalization.ts` — localized type names/explanations.
+- `data/breedLocalization.ts` — Chinese breed display names.
+
+### Current Working Rules
+
+- Preserve all user changes. Never use `git reset --hard` or discard local edits unless the user explicitly asks.
+- Do not regenerate the built-in cat/dog personality images.
+- Do not mix Cat artwork and Dog artwork for known species.
+- Do not change the canonical 12 personality names/codes without explicit user direction.
+- Do not claim medical, legal, ancestry, or scientific certainty.
+- Do not expose secrets or commit API keys.
+- Verify locally before committing/deploying.
+- Do not push/deploy unless the user explicitly says to submit, deploy, push, or similar.
+
+### Current Task Starter
+
+Use this message when starting a new Codex task:
+
+```text
+项目目录：C:\Users\Administrator\Documents\Pbti
+
+请先阅读 HANDOFF.md 顶部的“2026-07-21 Current Context”，再检查 git status 和最近提交。继续用户最新明确任务。保留所有已有修改，不要重新生成内置性格图片；代码修改后先本地验证；除非我明确要求，否则不要自动提交、推送或部署。
+```
 
 This document is the durable context for continuing PBTI development in a new Codex task. Read this file first, then inspect `git status`, the latest commits, and the relevant source files before editing. Preserve all existing user work and uncommitted changes.
 
