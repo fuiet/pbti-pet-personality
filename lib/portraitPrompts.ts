@@ -15,7 +15,7 @@ export type PortraitRequestContext = {
   visualProfile?: PetVisualProfile | null;
 };
 
-export const PORTRAIT_PROMPT_VERSION = "studio-v4";
+export const PORTRAIT_PROMPT_VERSION = "studio-v5";
 
 const IDENTITY_LOCK = `
 Create a portrait of the SAME real pet shown in the reference photos. Identity preservation is the highest priority.
@@ -59,6 +59,58 @@ const PERSONALITY_WARDROBE: Record<string, string> = {
   ISVG: "A clean premium knit or lightweight tailored vest in ivory and midnight blue; reserved, dignified, and quietly confident.",
   IEVP: "A lightweight modern explorer vest in sand and orange with a small contemporary scarf and practical graphic details; independent, curious, and quick-minded.",
 };
+
+const VERTICAL_CAMPAIGN_TEMPLATES = [
+  {
+    id: "neon-fashion-cover",
+    name: "NEON fashion cover",
+    direction: `
+Vertical 4:5 or 2:3 NEON.PET-inspired pet fashion poster. Use the uploaded pet as the only identity reference and preserve the real species, face shape, coat color, markings, eye color, nose, ears, body proportions, age impression, and natural expression. Replace every prompt mention of a generic dog or cat with this exact uploaded pet.
+
+Make a trendy high-saturation seamless crimson-red studio poster with direct flash, crisp shadows, slight wide-angle close framing, vivid commercial color grading, sharp fur and whisker detail, and a playful editorial magazine-cover feeling. Style the pet with one comfortable fashion idea such as oversized round glasses, a crisp light-blue striped shirt, a loose dark navy striped tie, a safe scarf, or a stylish collar; choose only what fits the pet's species and personality, and never hide the eyes, nose, ears, face, paws, markings, or silhouette.
+
+Compose the pet in the lower center or lower-left with strong clean negative space near the top for website typography. Do not generate any words, logos, watermarks, random letters, or brand marks in the image itself. The website will add the pet name in bold poster typography and the transparent PBTI logo after generation.
+`,
+  },
+  {
+    id: "premium-emotional-studio",
+    name: "premium emotional studio",
+    direction: `
+Vertical premium emotional pet studio portrait. Use the uploaded pet as the exact subject, preserving species, breed impression, face shape, coat color, markings, eye color, ear shape, nose, muzzle, body proportions, age impression, and natural expression. The pet must remain immediately recognizable from the reference photos.
+
+Use a refined seamless muted-purple studio background with soft gradient falloff, a clean centered portrait composition, shallow depth of field, glossy catchlights, soft front-left studio lighting, crisp facial focus, natural fur texture, and a warm companion feeling. Add one bright contrasting foreground prop such as a yellow knitted cushion or soft fabric edge only if it helps the pose; keep it minimal and do not cover the pet's face or identifying markings. The pose should be front-facing or gentle three-quarter, with front paws visible when natural.
+
+Leave elegant negative space above the pet for later website typography. Do not render any text, logo, watermark, random letters, or studio name. The website will add the pet name using refined poster typography and place the PBTI logo after generation.
+`,
+  },
+  {
+    id: "neon-sunglasses-closeup",
+    name: "NEON sunglasses close-up",
+    direction: `
+Vertical NEON.PET-inspired close-up fashion poster. Use the uploaded pet as the only identity source and preserve the exact species, coat colors, markings, eye color, face proportions, ear shape, nose, muzzle, fur length, body type, sex, age impression, and natural expression. Do not redesign the pet into a different breed or a generic model.
+
+Create an extreme or very close head-and-chest studio portrait on a high-saturation seamless pastel-pink background. Use direct flash, vivid commercial color grading, crisp fur detail, bright eye catchlights, and a modern social-media fashion cover composition. Add one playful glossy black sunglasses accessory pushed up on the forehead or safely above the eyes, or another small fashion accessory if sunglasses would hide identity. The accessory must never cover the pet's eyes, nose, ears, facial markings, or distinctive silhouette.
+
+Frame the pet large in the lower and middle frame, with bold clean negative space at the top for website-composited typography. Do not generate NEON.PET text, pet name, logo, watermark, random letters, or any typography inside the image. The website will replace the poster headline with the real pet name and add the transparent PBTI logo.
+`,
+  },
+  {
+    id: "neon-cute-headwear",
+    name: "NEON cute headwear",
+    direction: `
+Vertical cute NEON.PET-inspired pet fashion poster. Use the uploaded pet as the exact identity reference and preserve species, coat color, markings, face shape, eye color, pink or dark nose as shown, ear shape, fur texture, body proportions, age impression, and natural expression. The generated pet must look like the same pet from the user's photos.
+
+Use a high-saturation seamless pastel-pink studio background with clean cyclorama floor and wall, direct flash lighting, crisp fur and whisker detail, glossy eyes, and a cute premium editorial finish. Pose the pet in a relaxed loaf, seated, or gentle front-facing pose in the lower half of the frame. Add one small playful pet-safe head accessory such as a soft cap, tiny fabric beret, small scarf, or simple heart patch detail; it must feel fashionable and comfortable, not costume-heavy, and it must not cover the eyes, ears, nose, face, markings, or natural silhouette.
+
+Keep generous negative space above the pet for website-composited lettering. Do not render any words, pet name, logo, watermark, random letters, or brand mark inside the model output. The website will add the pet's name with the same poster-style typography and add the transparent PBTI logo.
+`,
+  },
+] as const;
+
+function pickVerticalCampaignDirection() {
+  const index = Math.floor(Math.random() * VERTICAL_CAMPAIGN_TEMPLATES.length);
+  return VERTICAL_CAMPAIGN_TEMPLATES[index] || VERTICAL_CAMPAIGN_TEMPLATES[0];
+}
 
 export const PORTRAIT_STYLES: PortraitStyle[] = [
   { id: "white-sketch-avatar", name: "Pet Avatar", category: "classic", direction: "Pure white background, hand-drawn pet character bust in delicate graphite and colored-pencil lines, sparse soft pastel accents sampled from the real coat, expressive half-lidded eyes or a subtle knowing expression, centered head-and-chest composition, generous white space, no clothing and no props." },
@@ -198,6 +250,8 @@ function appearanceLock(profile?: PetVisualProfile | null) {
 
 export function buildPortraitPrompt(style: PortraitStyle, context: PortraitRequestContext) {
   const personalityWardrobe = PERSONALITY_WARDROBE[context.pbtiCode] || "A safe contemporary pet-fashion accessory that visually expresses the assigned personality while keeping the pet comfortable and recognizable.";
+  const baseStyleId = style.id.split("--")[0];
+  const verticalTemplate = baseStyleId === "vertical-campaign" ? pickVerticalCampaignDirection() : null;
   if (style.id.split("--")[0] === "white-sketch-avatar") {
     return [
       IDENTITY_LOCK,
@@ -212,16 +266,17 @@ export function buildPortraitPrompt(style: PortraitStyle, context: PortraitReque
   return [
     IDENTITY_LOCK,
     appearanceLock(context.visualProfile),
-    "Art direction: " + style.direction,
+    "Art direction: " + (verticalTemplate ? `${verticalTemplate.name}: ${verticalTemplate.direction}` : style.direction),
     `Personality wardrobe for ${context.pbtiCode} / ${context.personalityName}: ${personalityWardrobe} This wardrobe direction is required and should be clearly visible, but it must never cover identifying facial or coat features.`,
     PHOTOSHOOT_DIRECTION,
-    "Required action variation: " + (ACTIONS_BY_STYLE[style.id.split("--")[0]] || "Use a natural, species-appropriate action that differs from the reference pose."),
+    "Required action variation: " + (ACTIONS_BY_STYLE[baseStyleId] || "Use a natural, species-appropriate action that differs from the reference pose."),
     "The selected style is the primary art direction. Do not blend it into a generic portrait. Make the requested pose, action, background, prop relationship, camera angle, lighting, and poster composition visibly present in the final frame. The pose may differ from every reference photo while the pet's anatomy and identity remain consistent.",
     "The wardrobe and props are styling only. They must fit the species safely and must not hide the face, eyes, ears, nose, coat pattern, or identifying markings. Keep the eyes visible and preserve the real eye color even under colored lighting.",
-    "Leave a clean area for website compositing. Do not render any words, pet name, website name, logo, watermark, or brand mark inside the image; the website will add a small PBTI logo and the pet name after generation.",
-    "Pet name for metadata only: " + context.petName + ". PBTI type for metadata only: " + context.pbtiCode + ", " + context.personalityName + ".",
+    `Leave a clean area for website compositing. Do not render any words, pet name, website name, logo, watermark, or brand mark inside the image; the website will add the pet name "${context.petName}" in poster typography and the transparent PBTI logo after generation.`,
+    `Pet name for website typography: ${context.petName}. PBTI type for metadata only: ${context.pbtiCode}, ${context.personalityName}.`,
+    verticalTemplate ? `Selected vertical template id for metadata: ${verticalTemplate.id}.` : "",
     NEGATIVE_PROMPT,
-  ].join("\n\n");
+  ].filter(Boolean).join("\n\n");
 }
 
 export function choosePortraitStyles(count = 3, random = Math.random) {
