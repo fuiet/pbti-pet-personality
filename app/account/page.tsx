@@ -19,8 +19,8 @@ function formatDate(value: string, language: string) {
   }).format(new Date(value));
 }
 
-function speciesLabel(species: string | undefined, zh: boolean) {
-  return species === "dog" ? (zh ? "Dog" : "Dog") : (zh ? "Cat" : "Cat");
+function speciesLabel(species: string | undefined) {
+  return species === "dog" ? "Dog" : "Cat";
 }
 
 export default function AccountPage() {
@@ -174,7 +174,7 @@ export default function AccountPage() {
                           }}
                         />
                         <span className="absolute bottom-1 left-1 rounded-full bg-white/88 px-1.5 py-0.5 text-[9px] font-black text-[#d96612]">
-                          {speciesLabel(pet?.species, zh)}
+                          {speciesLabel(pet?.species)}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -183,7 +183,7 @@ export default function AccountPage() {
                           <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-xs font-black text-[#d96612]">{personality.code} / {displayPersonality.name}</span>
                         </div>
                         <p className="mt-1 text-sm text-[#7a6d63]">
-                          {speciesLabel(pet?.species, zh)}
+                          {speciesLabel(pet?.species)}
                           {pet?.breed ? ` - ${pet.breed}` : ""}
                           {pet?.age ? ` - ${pet.age}` : ""}
                           {" - "}
@@ -193,9 +193,6 @@ export default function AccountPage() {
                       <div className="flex flex-wrap gap-2">
                         <Link href={`/report/${record.pbti_id}/preparing`} className="rounded-full bg-[#ff7a1a] px-5 py-2.5 text-xs font-black text-white">
                           {zh ? "报告" : "Report"}
-                        </Link>
-                        <Link href={`/memory/${record.pbti_id}`} className="rounded-full border border-[#eaded2] px-5 py-2.5 text-xs font-black text-[#4f463f]">
-                          {zh ? "回忆" : "Memory"}
                         </Link>
                         <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget({ recordId: record.id, petName: pet?.name || "This pet" }); }} className="rounded-full border border-[#e7b7aa] px-4 py-2.5 text-xs font-black text-[#b5482e] transition hover:bg-[#fff1ec]">
                           {zh ? "删除报告" : "Delete report"}

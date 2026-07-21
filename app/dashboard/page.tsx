@@ -9,7 +9,8 @@ import { useRequireAuth } from "@/lib/useRequireAuth";
 import { useLanguage } from "@/components/LanguageProvider";
 
 export default function Dashboard() {
-  const { language } = useLanguage(); const zh = language === "zh-CN";
+  const { language } = useLanguage();
+  const zh = language === "zh-CN";
   const router = useRouter();
   const { loading: authLoading } = useRequireAuth();
   const [entries, setEntries] = useState<ResultRecord[]>([]);
@@ -97,7 +98,7 @@ export default function Dashboard() {
                   <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#fff0e4] text-base font-black text-[#d96612]">
                     {speciesLabel(pet?.species || "cat")}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h2 className="text-xl font-bold text-[#171514]">{pet?.name || (zh ? "未命名爱宠" : "Unnamed Pet")}</h2>
                     <p className="text-sm text-[#7a6d63]">
                       {speciesLabel(pet?.species || "cat")}
@@ -125,12 +126,6 @@ export default function Dashboard() {
                       className="rounded-full bg-[#ff7a1a] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#ee6b10]"
                     >
                       {zh ? "报告" : "Report"}
-                    </button>
-                    <button
-                      onClick={() => router.push(`/memory/${entry.pbti_id}`)}
-                      className="rounded-full border border-[#eaded2] px-5 py-2 text-xs font-bold text-[#4f463f] transition hover:bg-white/80"
-                    >
-                      {zh ? "回忆" : "Memory"}
                     </button>
                   </div>
                 </div>
