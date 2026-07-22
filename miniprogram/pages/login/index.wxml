@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="card hero">
+    <text class="eyebrow">账号入口</text>
+    <view class="title">微信登录与账号绑定</view>
+    <view class="subtitle">网站端使用邮箱和 Google 账户，而小程序端以微信登录作为身份入口，并会自动保存会话。</view>
+  </view>
+
+  <view class="card info">
+    <view class="row"><text>当前身份</text><view>{{user ? user.nickname : '未登录'}}</view></view>
+    <view class="row"><text>会话类型</text><view>{{user && user.mock ? '本地演示' : '微信会话'}}</view></view>
+    <view class="row"><text>会话状态</text><view>{{user ? '可用' : '未建立'}}</view></view>
+  </view>
+
+  <view wx:if="{{message}}" class="card notice">{{message}}</view>
+
+  <view class="actions">
+    <button class="primary" bindtap="doLogin" loading="{{loading}}">微信登录</button>
+    <button class="secondary" bindtap="rebindSession" loading="{{loading}}">重新绑定会话</button>
+  </view>
+
+  <view class="card tip">
+    <view class="notice-title">和网站端的区别</view>
+    <text>小程序不会使用邮箱密码注册，而是直接使用微信账号身份。只要登录成功，后续创建宠物、保存报告和生成写真都会自动关联到当前会话。</text>
+  </view>
+</view>

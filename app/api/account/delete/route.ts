@@ -13,11 +13,11 @@ export async function POST(request: Request) {
     const user = userResult.user;
 
     if (!user) {
-      return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+      return NextResponse.json({ error: "请先登录。" }, { status: 401 });
     }
 
     if (action === "report") {
-      if (!recordId) return NextResponse.json({ error: "recordId is required." }, { status: 400 });
+      if (!recordId) return NextResponse.json({ error: "recordId 不能为空。" }, { status: 400 });
 
       const { data, error } = await supabase
         .from("personality_results")
@@ -28,12 +28,12 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      if (!data) return NextResponse.json({ error: "Report not found or access denied." }, { status: 404 });
+      if (!data) return NextResponse.json({ error: "没有找到这份报告，或者你没有权限。" }, { status: 404 });
       return NextResponse.json({ deleted: "report", id: data.id });
     }
 
     if (action === "pet") {
-      if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
+      if (!petId) return NextResponse.json({ error: "petId 不能为空。" }, { status: 400 });
 
       const { data: pet, error: petError } = await supabase
         .from("pets")
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (petError) return NextResponse.json({ error: petError.message }, { status: 500 });
-      if (!pet) return NextResponse.json({ error: "Pet not found or access denied." }, { status: 404 });
+      if (!pet) return NextResponse.json({ error: "没有找到这只宠物，或者你没有权限。" }, { status: 404 });
 
       const { data: portraitRows, error: portraitError } = await supabase
         .from("pet_portraits")
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
-      if (!deletedPet) return NextResponse.json({ error: "Pet could not be deleted." }, { status: 404 });
+      if (!deletedPet) return NextResponse.json({ error: "宠物档案删除失败。" }, { status: 404 });
 
       const storagePaths = (portraitRows || [])
         .map((row) => row.storage_path)
@@ -73,14 +73,14 @@ export async function POST(request: Request) {
 
       if (storagePaths.length) {
         const { error: storageError } = await supabase.storage.from(PORTRAIT_BUCKET).remove(storagePaths);
-        if (storageError) storageWarning = "The pet was deleted, but some portrait files may require storage cleanup.";
+        if (storageError) storageWarning = "宠物已删除，但部分写真文件可能需要手动清理。";
       }
 
       return NextResponse.json({ deleted: "pet", id: deletedPet.id, storageWarning });
     }
 
     if (action === "portrait") {
-      if (!portraitId) return NextResponse.json({ error: "portraitId is required." }, { status: 400 });
+      if (!portraitId) return NextResponse.json({ error: "portraitId 不能为空。" }, { status: 400 });
 
       const { data: portrait, error: portraitError } = await supabase
         .from("pet_portraits")
@@ -91,11 +91,11 @@ export async function POST(request: Request) {
 
       if (portraitError) {
         if (portraitError.code === "42P01") {
-          return NextResponse.json({ error: "Portrait storage is not configured." }, { status: 503 });
+          return NextResponse.json({ error: "写真存储还未配置。" }, { status: 503 });
         }
         return NextResponse.json({ error: portraitError.message }, { status: 500 });
       }
-      if (!portrait) return NextResponse.json({ error: "Portrait not found or access denied." }, { status: 404 });
+      if (!portrait) return NextResponse.json({ error: "没有找到这张写真，或者你没有权限。" }, { status: 404 });
 
       const { data: deletedPortrait, error: deleteError } = await supabase
         .from("pet_portraits")
@@ -106,19 +106,19 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
-      if (!deletedPortrait) return NextResponse.json({ error: "Portrait could not be deleted." }, { status: 404 });
+      if (!deletedPortrait) return NextResponse.json({ error: "写真删除失败。" }, { status: 404 });
 
       let storageWarning: string | undefined;
       if (portrait.storage_path) {
         const { error: storageError } = await supabase.storage.from(PORTRAIT_BUCKET).remove([portrait.storage_path]);
-        if (storageError) storageWarning = "The portrait record was deleted, but the stored file may require manual cleanup.";
+        if (storageError) storageWarning = "写真记录已删除，但存储文件可能需要手动清理。";
       }
 
       return NextResponse.json({ deleted: "portrait", id: deletedPortrait.id, storageWarning });
     }
 
-    return NextResponse.json({ error: "Unsupported delete action." }, { status: 400 });
+    return NextResponse.json({ error: "不支持的删除操作。" }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to delete this item." }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "无法删除该项目。" }, { status: 500 });
   }
 }

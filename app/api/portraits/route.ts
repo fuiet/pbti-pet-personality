@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { personalities, defaultPersonalityCode } from "@/data/personalities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { buildMiniProgramAuthError, resolveRequestUserId } from "@/lib/miniprogramSession";
 import { buildPortraitPrompt, PORTRAIT_PROMPT_VERSION, PORTRAIT_STYLES, type PortraitStyle } from "@/lib/portraitPrompts";
 import { normalizeVisualProfile } from "@/lib/visualProfile";
 import { buildTemplateStyleId, findPortraitStudioTemplate } from "@/lib/portraitStudioTemplates";
@@ -10,8 +11,6 @@ export const runtime = "edge";
 const IMAGE_MODEL = process.env.QWEN_IMAGE_MODEL || "wan2.7-image";
 const IMAGE_ENDPOINT = process.env.QWEN_IMAGE_ENDPOINT || "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
 const PORTRAIT_BUCKET = process.env.PBTI_PORTRAIT_BUCKET || "pet-portraits";
-// DashScope image-to-image generation accepts up to 2K. Keep this fixed so a
-// stale 4K environment override cannot make portrait generation fail.
 const IMAGE_SIZE_BY_STYLE: Record<string, string> = {
   "white-sketch-avatar": "2048*2048",
   "vertical-campaign": "1632*2048",
@@ -60,6 +59,7 @@ async function savePortraitAsset(
   if (!contentType.toLowerCase().startsWith("image/") || bytes.byteLength === 0) {
     throw new Error("The image service returned an invalid portrait file.");
   }
+
   const storagePath = `${userId}/${petId}/${crypto.randomUUID()}.${extensionForContentType(contentType)}`;
   const upload = await supabase.storage.from(PORTRAIT_BUCKET).upload(storagePath, bytes, {
     contentType,
@@ -127,13 +127,12 @@ async function createPortraitPetRecord(
       species,
       breed: null,
       age: null,
-      gender: null,
     })
     .select("id,name,species")
     .single();
 
   if (error) {
-    throw new Error(`Unable to prepare a pet profile for portrait generation: ${error.message}`);
+    throw new Error(`Unable to prepare a creation record for portrait generation: ${error.message}`);
   }
 
   return data as { id: string; name: string; species: "cat" | "dog" };
@@ -143,10 +142,16 @@ export async function POST(request: Request) {
   try {
     const { petId, resultId, styleId, templateId, ownerPhotos, customPrompt, petPhotos, petSpecies, petName } = await request.json();
 
-    const supabase = await createSupabaseServerClient();
-    const { data: userResult } = await supabase.auth.getUser();
-    const user = userResult.user;
-    if (!user) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    const { supabase, userId, miniProgramSession } = await resolveRequestUserId(request);
+    if (!userId) {
+      if (miniProgramSession) {
+        return NextResponse.json({
+          ...buildMiniProgramAuthError(),
+          sessionMode: miniProgramSession.mode,
+        }, { status: 401 });
+      }
+      return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    }
 
     const uploadedPetPhotos = Array.isArray(petPhotos) ? petPhotos.filter((item) => typeof item === "string" && item).slice(0, 3) : [];
     let pet: any = null;
@@ -155,7 +160,7 @@ export async function POST(request: Request) {
     let resolvedPetId = typeof petId === "string" && petId ? petId : "";
 
     if (resolvedPetId) {
-      const { data: petRow, error: petError } = await supabase.from("pets").select("*").eq("id", resolvedPetId).eq("user_id", user.id).maybeSingle();
+      const { data: petRow, error: petError } = await supabase.from("pets").select("*").eq("id", resolvedPetId).eq("user_id", userId).maybeSingle();
       if (petError) return NextResponse.json({ error: petError.message }, { status: 500 });
       if (!petRow) return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
 
@@ -169,7 +174,7 @@ export async function POST(request: Request) {
       if (!species) return NextResponse.json({ error: "petSpecies is required when generating from new uploads." }, { status: 400 });
       if (!photos.length) return NextResponse.json({ error: "Upload at least one pet photo before generating portraits." }, { status: 400 });
 
-      const createdPet = await createPortraitPetRecord(supabase, user.id, species, typeof petName === "string" ? petName : "");
+      const createdPet = await createPortraitPetRecord(supabase, userId, species, typeof petName === "string" ? petName : "");
       resolvedPetId = createdPet.id;
       pet = {
         id: createdPet.id,
@@ -194,7 +199,7 @@ export async function POST(request: Request) {
         .from("pet_portraits")
         .select("id,style_id,style_name,image_url,storage_path,created_at")
         .eq("pet_id", resolvedPetId)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("style_id", resolvedStyleId)
         .maybeSingle();
 
@@ -209,7 +214,7 @@ export async function POST(request: Request) {
     }
 
     const { data: result } = resultId
-      ? await supabase.from("personality_results").select("personality_type").eq("pbti_id", resultId).eq("user_id", user.id).maybeSingle()
+      ? await supabase.from("personality_results").select("personality_type").eq("pbti_id", resultId).eq("user_id", userId).maybeSingle()
       : { data: null };
     const personality = personalities[result?.personality_type as keyof typeof personalities] || personalities[defaultPersonalityCode];
 
@@ -217,7 +222,7 @@ export async function POST(request: Request) {
       .from("pet_visual_profiles")
       .select("species,breed_candidates,coat,face,body_language,visual_signals,photo_quality,raw_analysis")
       .eq("pet_id", resolvedPetId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -257,6 +262,7 @@ export async function POST(request: Request) {
           }
           return resolvedStyleId?.endsWith(`--${PORTRAIT_PROMPT_VERSION}`) ? { ...selected, id: resolvedStyleId } : selected;
         })();
+
     const prompt = buildPortraitPrompt(style, {
       petName: pet.name,
       species,
@@ -267,6 +273,7 @@ export async function POST(request: Request) {
       ownerIncluded: selectedTemplate?.mode === "duo",
       customPrompt: typeof customPrompt === "string" ? customPrompt : "",
     });
+
     const apiKey = process.env.DASHSCOPE_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "DASHSCOPE_API_KEY is not configured for portrait generation." }, { status: 503 });
 
@@ -304,7 +311,7 @@ export async function POST(request: Request) {
     const imageUrl = extractImageUrl(data);
     if (!imageUrl) return NextResponse.json({ error: "The image model returned no portrait." }, { status: 502 });
 
-    const asset = await savePortraitAsset(supabase, user.id, resolvedPetId, style, prompt, imageUrl, IMAGE_MODEL);
+    const asset = await savePortraitAsset(supabase, userId, resolvedPetId, style, prompt, imageUrl, IMAGE_MODEL);
     return NextResponse.json({ portrait: asset, style: { id: style.id, name: style.name }, petName: pet.name });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to generate portrait." }, { status: 500 });
@@ -316,19 +323,25 @@ export async function GET(request: Request) {
     const petId = new URL(request.url).searchParams.get("petId");
     if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
 
-    const supabase = await createSupabaseServerClient();
-    const { data: userResult } = await supabase.auth.getUser();
-    const user = userResult.user;
-    if (!user) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    const { supabase, userId, miniProgramSession } = await resolveRequestUserId(request);
+    if (!userId) {
+      if (miniProgramSession) {
+        return NextResponse.json({
+          ...buildMiniProgramAuthError(),
+          sessionMode: miniProgramSession.mode,
+        }, { status: 401 });
+      }
+      return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    }
 
-    const { data: pet } = await supabase.from("pets").select("id,name").eq("id", petId).eq("user_id", user.id).maybeSingle();
+    const { data: pet } = await supabase.from("pets").select("id,name").eq("id", petId).eq("user_id", userId).maybeSingle();
     if (!pet) return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
 
     const { data, error } = await supabase
       .from("pet_portraits")
       .select("id,style_id,style_name,image_url,storage_path,created_at")
       .eq("pet_id", petId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(12);
 
@@ -338,7 +351,7 @@ export async function GET(request: Request) {
     const durablePortraits = (data || []).filter((portrait) => Boolean(portrait.storage_path));
     const temporaryPortraitIds = (data || []).filter((portrait) => !portrait.storage_path).map((portrait) => portrait.id);
     if (temporaryPortraitIds.length) {
-      await supabase.from("pet_portraits").delete().in("id", temporaryPortraitIds).eq("user_id", user.id);
+      await supabase.from("pet_portraits").delete().in("id", temporaryPortraitIds).eq("user_id", userId);
     }
 
     return NextResponse.json({ portraits: durablePortraits, petName: pet.name });

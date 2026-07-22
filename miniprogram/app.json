@@ -1,0 +1,45 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/create/index",
+    "pages/upload/index",
+    "pages/quiz/index",
+    "pages/result/index",
+    "pages/preparing/index",
+    "pages/report/index",
+    "pages/portraits/index",
+    "pages/types/index",
+    "pages/dashboard/index",
+    "pages/about/index",
+    "pages/login/index",
+    "pages/library/index",
+    "pages/account/index",
+    "pages/sharecard/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "PBTI 宠物性格",
+    "navigationBarBackgroundColor": "#fff8ef",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fff8ef"
+  },
+  "tabBar": {
+    "color": "#8a796c",
+    "selectedColor": "#ff7622",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/portraits/index",
+        "text": "AI写真"
+      },
+      {
+        "pagePath": "pages/account/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

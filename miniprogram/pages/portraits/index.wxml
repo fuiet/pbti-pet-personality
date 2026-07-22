@@ -1,0 +1,101 @@
+<view class="page">
+  <view class="hero card">
+  <view class="between">
+   <view>
+    <text class="eyebrow">AI 宠物写真</text>
+    <view class="section-title heading">创作与合照</view>
+   </view>
+   <text class="link" bindtap="library">作品库</text>
+  </view>
+
+  <view class="mode-switch">
+   <button class="{{mode === 'create' ? 'on' : ''}}" data-mode="create" bindtap="switchMode">创作</button>
+   <button class="{{mode === 'duo' ? 'on' : ''}}" data-mode="duo" bindtap="switchMode">合照</button>
+  </view>
+
+  <view class="mode-hint" wx:if="{{mode === 'create'}}">创作模式里可以选择宠物类型、展开模板、填写自定义提示词，作品不会绑定宠物档案。</view>
+  <view class="mode-hint" wx:else>合照模式会使用宠物 + 主人照片，生成更有故事感的双人画面。</view>
+ </view>
+
+ <view class="grid">
+  <view class="left">
+   <view class="card panel">
+    <view class="block-title">作品标题</view>
+    <textarea placeholder="例如：秋日花园里的小王子" bindinput="inputTitle" value="{{title}}"/>
+   </view>
+
+   <view class="card panel">
+    <view class="block-title">宠物类型</view>
+    <view class="species-toggle">
+     <button class="{{petType==='cat'?'on':''}}" data-v="cat" bindtap="switchPetType">猫</button>
+     <button class="{{petType==='dog'?'on':''}}" data-v="dog" bindtap="switchPetType">狗</button>
+    </view>
+   </view>
+
+   <view class="card panel">
+    <view class="block-title">上传照片</view>
+    <view wx:if="{{mode === 'create'}}" class="upload" bindtap="choosePetPhoto">
+     <image wx:if="{{petPhoto}}" src="{{petPhoto}}" mode="aspectFill"/>
+     <view wx:else>
+      <text class="upload-plus">+</text>
+      <text>选择宠物照片</text>
+     </view>
+    </view>
+    <view wx:else class="upload" bindtap="chooseOwnerPhoto">
+     <image wx:if="{{ownerPhoto}}" src="{{ownerPhoto}}" mode="aspectFill"/>
+     <view wx:else>
+      <text class="upload-plus">+</text>
+      <text>选择主人的照片</text>
+     </view>
+    </view>
+    <view class="photo-hint">{{mode === 'duo' ? '建议使用清晰半身照，便于合照构图。' : '建议使用清晰正面照，便于创作。'}}</view>
+    <view wx:if="{{mode === 'duo'}}" class="upload secondary-upload" bindtap="choosePetPhoto">
+     <image wx:if="{{petPhoto}}" src="{{petPhoto}}" mode="aspectFill"/>
+     <view wx:else>
+      <text class="upload-plus">+</text>
+      <text>再选择一张宠物照片</text>
+     </view>
+    </view>
+   </view>
+
+   <view class="card panel" wx:if="{{mode === 'create'}}">
+    <view class="between">
+     <view class="block-title">模板选择</view>
+     <button class="toggle" bindtap="toggleTemplates">{{templateOpen ? '收起' : '展开'}}</button>
+    </view>
+    <view wx:if="{{templateOpen}}" class="template-grid">
+     <button class="template-item {{template===item.id?'on':''}}" wx:for="{{templates}}" wx:key="id" data-v="{{item.id}}" bindtap="chooseTemplate">
+      <view class="template-name">{{item.name}}</view>
+      <view class="template-hint">{{item.hint}}</view>
+     </button>
+    </view>
+    <view wx:else class="template-summary">
+     <view class="template-name">{{selectedTemplate.name}}</view>
+     <view class="template-hint">{{selectedTemplate.hint}}</view>
+    </view>
+   </view>
+
+   <view class="card panel">
+    <view class="block-title">自定义提示词</view>
+    <textarea placeholder="例如：戴一条橙色围巾，在秋天的公园里" bindinput="inputPrompt" value="{{prompt}}"/>
+   </view>
+
+   <view class="ad-slot">激励视频广告入口 · 看完生成 1 张写真</view>
+   <button class="primary generate" bindtap="generate">{{generating ? '正在生成写真…' : (mode === 'duo' ? '生成合照' : '生成宠物肖像')}}</button>
+  </view>
+
+  <view class="right">
+   <view class="preview card">
+    <image wx:if="{{generatedPreview}}" src="{{generatedPreview}}" mode="aspectFill" class="preview-image"/>
+    <view wx:elif="{{mode === 'create'}}" class="preview-empty">
+     <text class="preview-title">准备好创造一点魔法！</text>
+     <text class="preview-desc">左边上传照片并点生成，作品会出现在这里。</text>
+    </view>
+    <view wx:else class="preview-empty">
+     <text class="preview-title">合照模式</text>
+     <text class="preview-desc">选择宠物和主人的照片后，就能生成更有故事感的作品。</text>
+    </view>
+   </view>
+  </view>
+ </view>
+</view>

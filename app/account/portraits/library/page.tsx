@@ -8,7 +8,7 @@ import { useRequireAuth } from "@/lib/useRequireAuth";
 
 type PortraitDeleteTarget = {
   id: string;
-  petName: string;
+  title: string;
   styleName: string;
 };
 
@@ -33,15 +33,15 @@ function aspectClass(kind: PortraitGroup["key"]) {
 }
 
 function groupTitle(kind: PortraitGroup["key"], zh: boolean) {
-  if (kind === "avatar") return zh ? "头像写真" : "Avatar portraits";
-  if (kind === "landscape") return zh ? "横屏写真" : "Landscape portraits";
-  return zh ? "竖屏写真" : "Vertical portraits";
+  if (kind === "avatar") return zh ? "头像作品" : "Avatar portraits";
+  if (kind === "landscape") return zh ? "横屏作品" : "Landscape portraits";
+  return zh ? "竖屏作品" : "Vertical portraits";
 }
 
 function groupSubtitle(kind: PortraitGroup["key"], zh: boolean) {
-  if (kind === "avatar") return zh ? "适合头像、封面与分享卡使用。" : "Best for covers, avatars, and share cards.";
-  if (kind === "landscape") return zh ? "更适合场景化海报与横向展示。" : "Better suited to wide posters and horizontal layouts.";
-  return zh ? "主视觉写真，适合海报展示。" : "Primary poster portraits for the main visual showcase.";
+  if (kind === "avatar") return zh ? "适合头像、封面和分享卡。" : "Best for covers, avatars, and share cards.";
+  if (kind === "landscape") return zh ? "更适合海报展示与横向布局。" : "Better suited to wide posters and horizontal layouts.";
+  return zh ? "主视觉作品，适合展示成片。" : "Primary poster portraits for the main visual showcase.";
 }
 
 export default function AccountPortraitLibraryPage() {
@@ -57,7 +57,6 @@ export default function AccountPortraitLibraryPage() {
 
   useEffect(() => {
     if (authLoading) return;
-
     let active = true;
 
     listCurrentUserPortraits()
@@ -80,7 +79,6 @@ export default function AccountPortraitLibraryPage() {
     const avatar = portraits.filter((portrait) => classifyPortrait(portrait) === "avatar");
     const vertical = portraits.filter((portrait) => classifyPortrait(portrait) === "vertical");
     const landscape = portraits.filter((portrait) => classifyPortrait(portrait) === "landscape");
-
     return [
       { key: "avatar", title: groupTitle("avatar", zh), subtitle: groupSubtitle("avatar", zh), portraits: avatar },
       { key: "vertical", title: groupTitle("vertical", zh), subtitle: groupSubtitle("vertical", zh), portraits: vertical },
@@ -102,23 +100,22 @@ export default function AccountPortraitLibraryPage() {
         body: JSON.stringify({ action: "portrait", portraitId: deleteTarget.id }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || (zh ? "暂时无法删除这张写真，请稍后重试。" : "Unable to delete this portrait."));
+      if (!response.ok) {
+        throw new Error(data?.error || (zh ? "暂时无法删除这张作品，请稍后重试。" : "Unable to delete this portrait."));
+      }
 
       setPortraits((current) => current.filter((portrait) => portrait.id !== deleteTarget.id));
-      setDeleteNotice(
-        data?.storageWarning ||
-          (zh ? `${deleteTarget.petName} 的 ${deleteTarget.styleName} 已删除。` : `${deleteTarget.petName}'s ${deleteTarget.styleName} was deleted.`),
-      );
+      setDeleteNotice(data?.storageWarning || (zh ? `${deleteTarget.title} 已删除。` : `${deleteTarget.title} was deleted.`));
       setDeleteTarget(null);
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : (zh ? "暂时无法删除这张写真，请稍后重试。" : "Unable to delete this portrait."));
+      setDeleteError(error instanceof Error ? error.message : (zh ? "暂时无法删除这张作品，请稍后重试。" : "Unable to delete this portrait."));
     } finally {
       setDeleting(false);
     }
   }
 
   if (authLoading || loadingPortraits) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
+    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载图片库..." : "Loading gallery..."}</div>;
   }
 
   return (
@@ -127,15 +124,15 @@ export default function AccountPortraitLibraryPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(255,122,26,.25),transparent_28%)]" />
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "全部写真" : "Portrait library"}</div>
+            <div className="text-xs font-black uppercase tracking-[.18em] text-[#ffb878]">{zh ? "全部图片库" : "Portrait library"}</div>
             <h1 className="mt-3 text-5xl font-black tracking-[-.06em]">{zh ? "全部图片" : "All images"}</h1>
             <p className="mt-4 text-sm leading-7 text-white/72">
-              {zh ? "按头像、竖屏与横屏分类查看全部写真。你可以集中浏览、打开原图，并删除不再需要的单张写真。" : "Browse every saved portrait by avatar, vertical, and landscape categories. Open originals or remove individual images you no longer need."}
+              {zh ? "按头像、竖屏与横屏分类查看全部作品。你可以集中浏览、打开原图，并删除不再需要的单张作品。" : "Browse every saved portrait by avatar, vertical, and landscape categories. Open originals or remove individual images you no longer need."}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/account/portraits" className="rounded-full border border-white/14 bg-white/8 px-5 py-3 text-sm font-black text-white transition hover:bg-white/14">
-              {zh ? "返回写真工作台" : "Back to studio"}
+              {zh ? "返回创作页" : "Back to studio"}
             </Link>
             <div className="rounded-full bg-[#ff7a1a] px-5 py-3 text-sm font-black text-white shadow-[0_16px_30px_rgba(255,122,26,.28)]">
               {zh ? `${portraits.length} 张图片` : `${portraits.length} images`}
@@ -148,12 +145,12 @@ export default function AccountPortraitLibraryPage() {
 
       {portraits.length === 0 ? (
         <section className="mt-8 rounded-[2rem] border border-dashed border-[#e5d2bf] bg-[#fff9f2] p-12 text-center">
-          <h2 className="text-3xl font-black text-[#171514]">{zh ? "还没有保存的写真" : "No saved portraits yet"}</h2>
+          <h2 className="text-3xl font-black text-[#171514]">{zh ? "还没有保存的作品" : "No saved portraits yet"}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[#7a6d63]">
-            {zh ? "打开一份报告后，系统会自动生成头像、竖屏与横屏三张写真，并在这里分类保存。" : "Open a report and the system will automatically generate avatar, vertical, and landscape portraits for this gallery."}
+            {zh ? "打开创作页开始生成，作品会自动进入这里并按类型分类保存。" : "Open the studio to generate your first work. New portraits will appear here and be sorted automatically."}
           </p>
           <Link href="/account/portraits" className="mt-6 inline-flex rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white">
-            {zh ? "返回写真工作台" : "Back to studio"}
+            {zh ? "返回创作页" : "Back to studio"}
           </Link>
         </section>
       ) : (
@@ -182,8 +179,8 @@ export default function AccountPortraitLibraryPage() {
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-base font-black text-[#171514]">{portrait.pet?.name || (zh ? "已保存爱宠" : "Saved pet")}</h3>
-                            <p className="mt-1 text-xs font-bold text-[#8c7d72]">{portrait.pet?.species === "dog" ? "Dog" : "Cat"} · {portrait.style_name}</p>
+                            <h3 className="text-base font-black text-[#171514]">{portrait.pet?.name || (zh ? "已保存作品" : "Saved work")}</h3>
+                            <p className="mt-1 text-xs font-bold text-[#8c7d72]">{portrait.style_name}</p>
                           </div>
                           <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[#d96612]">
                             {group.key === "avatar" ? "Avatar" : group.key === "vertical" ? "Vertical" : "Landscape"}
@@ -199,13 +196,13 @@ export default function AccountPortraitLibraryPage() {
                               setDeleteError("");
                               setDeleteTarget({
                                 id: portrait.id,
-                                petName: portrait.pet?.name || (zh ? "这只爱宠" : "This pet"),
+                                title: portrait.pet?.name || (zh ? "这张作品" : "This work"),
                                 styleName: portrait.style_name,
                               });
                             }}
                             className="rounded-full border border-[#e7b7aa] px-4 py-2 text-xs font-black text-[#b5482e] transition hover:bg-[#fff1ec]"
                           >
-                            {zh ? "删除写真" : "Delete image"}
+                            {zh ? "删除作品" : "Delete image"}
                           </button>
                         </div>
                       </div>
@@ -223,10 +220,10 @@ export default function AccountPortraitLibraryPage() {
           <div className="w-full max-w-md rounded-[1.75rem] border border-[#eaded2] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,.24)]">
             <div className="text-xs font-black uppercase tracking-[.16em] text-[#b5482e]">{zh ? "永久删除" : "Permanent deletion"}</div>
             <h2 id="delete-portrait-title" className="mt-3 text-2xl font-black tracking-[-.04em] text-[#171514]">
-              {zh ? `删除 ${deleteTarget.petName} 的这张写真？` : `Delete this portrait for ${deleteTarget.petName}?`}
+              {zh ? `删除 ${deleteTarget.title} ？` : `Delete ${deleteTarget.title}?`}
             </h2>
             <p className="mt-3 text-sm leading-7 text-[#655a51]">
-              {zh ? `这会永久删除 ${deleteTarget.styleName}，并尝试一并清理存储中的图片文件。此操作无法撤销。` : `This permanently removes the ${deleteTarget.styleName} image and attempts to clean up its stored file as well. This cannot be undone.`}
+              {zh ? `这会永久删除 ${deleteTarget.styleName}，并尝试清理存储中的图片文件。此操作无法撤销。` : `This permanently removes the ${deleteTarget.styleName} image and attempts to clean up its stored file as well. This cannot be undone.`}
             </p>
             {deleteError ? <p className="mt-4 rounded-2xl bg-[#fff0e4] px-4 py-3 text-sm font-bold text-[#b5482e]">{deleteError}</p> : null}
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -234,7 +231,7 @@ export default function AccountPortraitLibraryPage() {
                 {zh ? "取消" : "Cancel"}
               </button>
               <button type="button" disabled={deleting} onClick={confirmDelete} className="rounded-full bg-[#7d2d1e] px-5 py-3 text-sm font-black text-white transition hover:bg-[#692416] disabled:cursor-wait disabled:opacity-60">
-                {deleting ? (zh ? "正在删除…" : "Deleting...") : (zh ? "删除写真" : "Delete image")}
+                {deleting ? (zh ? "正在删除…" : "Deleting...") : (zh ? "删除作品" : "Delete image")}
               </button>
             </div>
           </div>

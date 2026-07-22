@@ -1,0 +1,95 @@
+<view class="page">
+ <view class="hero card">
+  <view class="hero-top">
+   <view>
+    <text class="eyebrow">我的 PBTI</text>
+    <view class="title">宠物档案与作品管理</view>
+   </view>
+   <button size="mini" class="ghost" bindtap="openDashboard">概览</button>
+  </view>
+  <view class="profile-mini">
+   <view class="avatar">微</view>
+   <view class="profile-copy">
+    <view class="profile-name">{{user.nickname||'微信用户'}}</view>
+    <text>当前会话 · {{historySource === 'cloud' ? '云端同步' : '本地缓存'}}</text>
+   </view>
+  </view>
+  <view class="hero-actions">
+   <button class="primary" bindtap="newTest">重新测试</button>
+   <button class="secondary" bindtap="openPortraitStudio">进入写真创作</button>
+   <button class="secondary" bindtap="openLogin">登录与绑定</button>
+  </view>
+ </view>
+
+ <view class="stats-grid">
+  <view class="stat card">
+   <text>历史报告</text>
+   <view>{{history.length}}</view>
+  </view>
+  <view class="stat card">
+   <text>写真作品</text>
+   <view>{{portraitCount}}</view>
+  </view>
+  <view class="stat card">
+   <text>宠物档案</text>
+   <view>{{pet ? 1 : 0}}</view>
+  </view>
+ </view>
+
+ <view class="section card" wx:if="{{pet}}">
+  <view class="section-head">
+   <view>
+    <text class="eyebrow">我的宠物</text>
+    <view class="section-title">{{pet.name}}</view>
+   </view>
+   <button size="mini" class="danger" bindtap="removePet">删除档案</button>
+  </view>
+  <view class="pet-meta">{{pet.species==='cat'?'猫咪':'狗狗'}} · {{pet.breed}} · {{pet.age}} 岁</view>
+ </view>
+
+ <view class="section card">
+  <view class="section-head">
+   <view>
+    <text class="eyebrow">写真作品</text>
+    <view class="section-title">最近作品</view>
+   </view>
+   <button size="mini" class="ghost" bindtap="openPortraitStudio">去创作</button>
+  </view>
+  <view wx:if="{{portraits.length}}" class="portrait-grid">
+   <view class="portrait-item" wx:for="{{portraits}}" wx:key="id" data-i="{{index}}" bindtap="previewPortrait">
+    <image src="{{item.url}}" mode="aspectFill"/>
+    <view class="portrait-meta">
+     <view>{{item.template}}</view>
+     <text>{{item.createdLabel}}</text>
+    </view>
+   </view>
+  </view>
+  <view wx:else class="empty-block">完成一次写真创作后，这里会显示最近作品。</view>
+ </view>
+
+ <view class="section card">
+  <view class="section-head">
+   <view>
+    <text class="eyebrow">历史报告</text>
+    <view class="section-title">最近测试记录</view>
+   </view>
+   <text class="muted">{{history.length}} 份</text>
+  </view>
+
+  <view wx:if="{{history.length}}" class="history-list">
+   <view class="history-item" wx:for="{{history}}" wx:key="id">
+    <view class="history-main" data-i="{{index}}" bindtap="open">
+     <view>
+      <view class="history-name">{{item.pet.name}} · {{item.result.personality.name}}</view>
+      <text>{{item.result.code}} · {{item.result.personality.title}}</text>
+     </view>
+     <text>→</text>
+    </view>
+    <button size="mini" class="ghost danger-text" data-i="{{index}}" bindtap="removeRecord">删除</button>
+   </view>
+  </view>
+  <view wx:else class="empty-block">完成测试后，报告会自动出现在这里。</view>
+ </view>
+
+ <view class="ad-slot">我的页面广告位</view>
+</view>

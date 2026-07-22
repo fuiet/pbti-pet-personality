@@ -1,0 +1,19 @@
+.preparing{padding-bottom:40rpx}
+.hero{background:linear-gradient(145deg,#211a16,#3a2a1f);color:#fff}
+.hero-title{font-size:72rpx;font-weight:900;margin-top:24rpx}
+.hero-subtitle{margin-top:12rpx;font-size:28rpx;color:#ffb07a}
+.progress-box{margin-top:36rpx}
+.progress-track{height:18rpx;border-radius:999rpx;background:rgba(255,255,255,0.12);overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#ffb07a,#ff7622);border-radius:999rpx}
+.progress-text{display:block;margin-top:16rpx;font-size:24rpx;color:#f3ddd0}
+.flow,.note{margin-top:26rpx}
+.step{display:flex;align-items:flex-start;gap:20rpx;padding:24rpx 0;border-top:1rpx solid #efe4da}
+.step:first-of-type{border-top:none}
+.step-dot{width:20rpx;height:20rpx;border-radius:50%;background:#dbc8bb;margin-top:12rpx;flex:0 0 auto}
+.step.active .step-dot{background:#ffb07a;box-shadow:0 0 0 10rpx rgba(255,118,34,0.12)}
+.step.done .step-dot{background:#ff7622}
+.step-body{flex:1}
+.step-title{font-size:29rpx;font-weight:800;color:#2f2823}
+.step-body text{display:block;margin-top:10rpx;font-size:25rpx;line-height:1.8;color:#7b6d62}
+.step-state{font-size:22rpx;color:#d76a1a;margin-top:6rpx}
+.note text{display:block;margin-top:16rpx;font-size:26rpx;line-height:1.8;color:#6d5f55}

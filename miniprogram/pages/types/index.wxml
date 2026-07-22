@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="hero card">
+    <image class="hero-logo" src="/images/pbti-logo-transparent.png" mode="aspectFit"/>
+    <text class="eyebrow">PBTI 性格图鉴</text>
+    <view class="title">12 种宠物性格，一次看懂</view>
+    <view class="subtitle">四字母代码是核心识别方式，每个类型都配有对应的性格名称、行为特征和相处建议。</view>
+
+    <view class="species-switch">
+      <button class="{{species === 'cat' ? 'active' : ''}}" data-species="cat" bindtap="switchSpecies">猫咪版本</button>
+      <button class="{{species === 'dog' ? 'active' : ''}}" data-species="dog" bindtap="switchSpecies">狗狗版本</button>
+    </view>
+  </view>
+
+  <view class="section-title">类型列表</view>
+  <view class="type-list">
+    <view class="type-card card" wx:for="{{types}}" wx:key="code">
+      <view class="type-image-wrap">
+        <image class="type-image" src="{{species === 'cat' ? item.catImage : item.dogImage}}" mode="aspectFit"/>
+        <view class="species-tag">{{species === 'cat' ? '猫咪' : '狗狗'}}图鉴</view>
+      </view>
+      <view class="type-head">
+        <view>
+          <text class="type-code">{{item.code}}</text>
+          <view class="type-name">{{item.name}}</view>
+        </view>
+      </view>
+      <view class="type-tone">{{item.tone}}</view>
+      <view class="type-trait">特征：{{item.trait}}</view>
+      <view class="type-care">照护建议：{{item.care}}</view>
+    </view>
+  </view>
+
+  <view class="card notice">
+    <view class="notice-title">继续测试</view>
+    <text>如果你还没做测试，可以先从 28 道题开始，再回来看它属于哪一种类型。</text>
+    <button class="primary" bindtap="start">开始免费测试</button>
+  </view>
+</view>

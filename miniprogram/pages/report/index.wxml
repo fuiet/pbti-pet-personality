@@ -1,0 +1,86 @@
+<view class="page" wx:if="{{r && report}}">
+ <view class="cover">
+  <text class="cover-title">PBTI 专属报告</text>
+  <view class="cover-name">{{r.pet.name}}</view>
+  <view class="cover-code">{{r.result.code}} · {{r.result.personality.name}}</view>
+  <text class="cover-subtitle">基于 28 个日常行为观察</text>
+ </view>
+
+ <view class="ad-slot">报告内原生广告位</view>
+
+ <view class="chapter card">
+  <text class="chapter-title">01 性格速览</text>
+  <text>{{report.summary}}</text>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">02 四维行为地图</text>
+  <view class="line" wx:for="{{report.dimensionNarrative}}" wx:key="*this">{{item}}</view>
+  <text class="fit">{{report.fitIndex}}</text>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">03 爱宠鉴定</text>
+  <text>{{report.appearance.summary}}</text>
+  <view class="detail-row" wx:for="{{report.appearance.details}}" wx:key="label">
+   <text class="detail-label">{{item.label}}</text>
+   <text class="detail-value">{{item.value}}</text>
+  </view>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">04 爱的语言</text>
+  <view class="section-box" wx:for="{{report.loveLanguage}}" wx:key="title">
+   <view class="section-name">{{item.title}}</view>
+   <text>{{item.body}}</text>
+  </view>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">05 相处关系</text>
+  <view class="section-box" wx:for="{{report.relationship}}" wx:key="title">
+   <view class="section-name">{{item.title}}</view>
+   <text>{{item.body}}</text>
+  </view>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">06 个性化建议</text>
+  <view class="tips" wx:for="{{report.recommendations}}" wx:key="title">
+   <view class="section-name">{{item.title}}</view>
+   <text>{{item.detail}}</text>
+   <view class="basis">{{item.basis}}</view>
+  </view>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">07 今天就能开始的行动</text>
+  <view class="action-box" wx:for="{{report.actions}}" wx:key="title">
+   <view class="section-name">{{index + 1}}. {{item.title}}</view>
+   <text>{{item.detail}}</text>
+  </view>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">08 测试方法</text>
+  <text>{{report.methodology}}</text>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">09 写真与分享</text>
+  <text>你可以继续前往 AI 写真页生成宠物写真，也可以直接使用小程序原生分享，把这份结果发给朋友。</text>
+  <view class="detail-row" wx:if="{{sharePayload}}">
+   <text class="detail-label">分享标题</text>
+   <text class="detail-value">{{sharePayload.title}}</text>
+  </view>
+ </view>
+
+ <view class="chapter card">
+  <text class="chapter-title">10 重要说明</text>
+  <text>PBTI 是基于主人观察的养宠教育工具，不是兽医诊断、品种判断或血统鉴定，也不代表绝对不变的性格。若宠物身体或行为突然改变、持续异常，或明显影响生活，请优先联系专业宠医。</text>
+ </view>
+
+ <button class="primary portrait" bindtap="portraits">生成专属 AI 写真</button>
+ <button class="secondary portrait" bindtap="saveShareCard">保存分享卡片</button>
+ <button class="secondary portrait" open-type="share">分享给朋友</button>
+</view>

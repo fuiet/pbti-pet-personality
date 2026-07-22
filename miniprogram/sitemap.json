@@ -1,0 +1,1 @@
+{ "desc": "PBTI pages", "rules": [{ "action": "allow", "page": "*" }] }

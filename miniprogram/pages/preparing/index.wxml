@@ -1,0 +1,28 @@
+<view class="page preparing" wx:if="{{record}}">
+ <view class="hero card">
+  <text class="eyebrow">报告准备中</text>
+  <view class="hero-title">{{record.pet.name}}</view>
+  <view class="hero-subtitle">{{record.result.code}} · {{record.result.personality.name}}</view>
+  <view class="progress-box">
+   <view class="progress-track"><view class="progress-fill" style="width:{{progress}}%"></view></view>
+   <text class="progress-text">{{progress}}%</text>
+  </view>
+ </view>
+
+ <view class="card flow">
+  <view class="section-title">准备流程</view>
+  <view class="step {{item.status}}" wx:for="{{steps}}" wx:key="key">
+   <view class="step-dot"></view>
+   <view class="step-body">
+    <view class="step-title">{{item.title}}</view>
+    <text>{{item.detail}}</text>
+   </view>
+   <text class="step-state">{{item.status === 'done' ? '已完成' : item.status === 'active' ? '进行中' : '等待中'}}</text>
+  </view>
+ </view>
+
+ <view class="card note">
+  <view class="section-title">当前版本说明</view>
+  <text>小程序会先准备完整报告和可复用写真资产，再进入正式报告页。后续接入云端后，这里会继续承接真实视觉识别、云端写真生成与结果复用。</text>
+ </view>
+</view>

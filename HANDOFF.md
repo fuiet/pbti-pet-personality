@@ -17,14 +17,14 @@ Current workspace:
 
 Latest deployed commits:
 
-- `42cfc5b Enlarge report cover avatar`
-- `6e30114 Add varied portrait typography layouts`
-- `d98e95d Refresh portrait prompt pools and report artwork`
-- `4c462d9 Split vertical portrait prompts by pet gender`
-- `3edff8e Add vertical portrait prompt template pool`
-- `8f569bc Make portrait generation reliable before reports`
-- `8681f85 Stabilize portrait generation and restore type artwork`
-- `70fa955 Use email confirmation links for registration`
+- `d228100 Simplify portrait creation flow`
+- `1ee53d9 Rename account portrait gallery button`
+- `38df76a Point account portraits card to gallery`
+- `69ae4de Refine portrait studio workspace`
+- `6016cd7 Upgrade AI Portrait Studio templates`
+- `ff48d0a Add AI Portrait Studio workspace`
+- `33352f6 Remove memory entry points and enrich portrait expressions`
+- `924be2d Update project handoff context`
 
 Recent validation commands that passed:
 
@@ -32,6 +32,81 @@ Recent validation commands that passed:
 $env:PATH='C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;' + $env:PATH; & 'C:\Users\Administrator\Documents\Pbti\node_modules\.bin\tsc.CMD' --noEmit
 $env:PATH='C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;' + $env:PATH; & 'C:\Users\Administrator\Documents\Pbti\node_modules\.bin\next.CMD' build
 ```
+
+### Immediate Handoff Priorities
+
+- The website is live and currently deploys from pushes to `main`.
+- The user's next major direction is to turn this product into a WeChat Mini Program.
+- Treat the current website as the reference product for flows, copy, prompt logic, and visual behavior.
+- If Mini Program work starts, begin from feature-parity planning instead of redesigning the product from scratch.
+
+### Most Recent Portrait Studio State
+
+- Main create page: `app/account/portraits/page.tsx`
+- Full library page: `app/account/portraits/library/page.tsx`
+- Portrait API: `app/api/portraits/route.ts`
+- The portrait creation page was simplified heavily because the older version was too hard to understand.
+- It now behaves more like a lightweight AI photo tool:
+  - upload pet photo
+  - optionally upload owner photo
+  - optionally choose a built-in template
+  - optionally add one short custom prompt
+  - generate one image
+- The right side is now a clean preview / empty state rather than a dense explanation panel.
+- The "history" tab on the create page only shows recent work.
+- The full saved gallery remains at `/account/portraits/library`.
+
+### New Portrait Generation Behavior
+
+- Portrait generation no longer has to start from an existing saved `petId`.
+- `POST /api/portraits` now supports:
+  - legacy mode: generate from an existing saved pet
+  - upload-first mode: generate directly from `petPhotos`, `petSpecies`, and optional `petName`
+- In upload-first mode, the backend automatically creates a lightweight pet record before saving the generated portrait.
+- This means the new web flow supports:
+  - open page
+  - upload a new pet photo
+  - generate a portrait directly
+- Duo mode still requires owner photo upload.
+
+### Account / Routing Details That Must Not Be Lost
+
+- In account center, the "My portraits" card now links to `/account/portraits/library`, not to the portrait creation page.
+- In account center, the gallery button wording was changed to:
+  - Chinese: `写真图片库`
+  - English: `Portrait gallery`
+- The library page is the view-images destination.
+- The portrait creation page should now be treated as a fresh generation surface, not a gallery.
+
+### Migration Notes For WeChat Mini Program
+
+- The strongest candidate for first Mini Program parity is the simplified portrait creation flow.
+- Current web dependencies still include:
+  - Supabase auth
+  - Supabase database
+  - Supabase storage
+  - server-side DashScope/Qwen image generation through `/api/portraits`
+- A Mini Program version will need equivalents for:
+  - WeChat-compatible login/session strategy
+  - mobile album/camera upload flow
+  - backend generation proxy for DashScope
+  - saved portrait persistence and gallery retrieval
+- Preserve these output-quality rules during migration:
+  - template image as actual generation reference
+  - pet identity lock
+  - anti-stiff-expression logic
+  - PBTI-driven temperament / expression strategy
+
+### Mini Program Feature-Parity Pages
+
+- `/account/portraits`
+  - simplified portrait creation entry
+- `/account/portraits/library`
+  - full saved portrait library
+- `/report/[id]` and `/report/[id]/preparing`
+  - report orchestration and portrait generation sequencing
+- `/create`, `/upload`, `/quiz`
+  - original report / test funnel
 
 ### Current Product Direction
 

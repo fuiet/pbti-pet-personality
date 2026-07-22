@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { buildMiniProgramAuthError, resolveRequestUserId } from "@/lib/miniprogramSession";
 import { normalizeVisualProfile, type RawVisualProfileInput } from "@/lib/visualProfile";
 
 export const runtime = "edge";
@@ -112,10 +113,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "petId is required." }, { status: 400 });
     }
 
-    const supabase = await createSupabaseServerClient();
-    const { data: userResult, error: userError } = await supabase.auth.getUser();
+    const { supabase, userId, miniProgramSession } = await resolveRequestUserId(request);
 
-    if (userError || !userResult.user) {
+    if (!userId) {
+      if (miniProgramSession) {
+        return NextResponse.json({
+          ...buildMiniProgramAuthError(),
+          sessionMode: miniProgramSession.mode,
+        }, { status: 401 });
+      }
       return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
     }
 
@@ -123,7 +129,7 @@ export async function POST(request: Request) {
       .from("pets")
       .select("*")
       .eq("id", petId)
-      .eq("user_id", userResult.user.id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (petError) {
@@ -149,7 +155,7 @@ const dashscopeKey = process.env.DASHSCOPE_API_KEY;
 
     if (!dashscopeKey) {
       const profile = makeFallbackProfile(species);
-      const saveError = await saveVisualProfile(supabase, userResult.user.id, petId, profile, { fallback: true });
+      const saveError = await saveVisualProfile(supabase, userId, petId, profile, { fallback: true });
       return NextResponse.json({ profile, fallback: true, saveError });
     }
 
@@ -185,7 +191,7 @@ const dashscopeKey = process.env.DASHSCOPE_API_KEY;
     const outputText = extractQwenMessageText(data);
     const raw = parseJsonObject(outputText);
     const profile = normalizeVisualProfile(raw, QWEN_MODEL);
-    const saveError = await saveVisualProfile(supabase, userResult.user.id, petId, profile, { provider: VISUAL_MODEL_PROVIDER, model: QWEN_MODEL, raw });
+    const saveError = await saveVisualProfile(supabase, userId, petId, profile, { provider: VISUAL_MODEL_PROVIDER, model: QWEN_MODEL, raw });
 
     return NextResponse.json({ profile, fallback: false, saveError });
   } catch (error) {

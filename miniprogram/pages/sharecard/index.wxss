@@ -1,0 +1,20 @@
+.hero{background:linear-gradient(145deg,#211a16,#3a2a1f);color:#fff}
+.hero-title{font-size:72rpx;font-weight:900;margin-top:24rpx}
+.hero-code{font-size:30rpx;color:#ffb07a;font-weight:900;margin-top:12rpx}
+.hero-subtitle{font-size:28rpx;line-height:1.7;color:#f3ddd0;margin-top:18rpx}
+.tags{display:flex;gap:12rpx;flex-wrap:wrap;margin-top:24rpx}
+.tags text{padding:10rpx 18rpx;border-radius:99rpx;background:#ffffff18;font-size:22rpx}
+.summary,.dims,.tips{margin-top:26rpx}
+.poster-box{margin-top:26rpx}
+.summary text,.tips text{display:block;margin-top:18rpx;font-size:26rpx;line-height:1.8;color:#6d5f55}
+.poster-preview{width:100%;border-radius:24rpx;margin-top:18rpx}
+.poster-loading{margin-top:18rpx;padding:36rpx;border-radius:20rpx;background:#fff5ed;color:#8a796c;font-size:25rpx;text-align:center}
+.dim{margin-top:24rpx}
+.dim text{color:#ff7622;font-weight:900}
+.track{height:14rpx;background:#f0e2d7;border-radius:99rpx;margin-top:12rpx}
+.track view{height:100%;background:linear-gradient(90deg,#ffad75,#ff7622);border-radius:99rpx}
+.fit{text-align:right;color:#89786c;font-size:22rpx;margin-top:26rpx}
+.action{height:92rpx;line-height:92rpx;margin-top:22rpx}
+.empty{text-align:center;padding:80rpx 36rpx}
+.empty text{display:block;margin-top:18rpx;color:#8a796c;font-size:26rpx;line-height:1.8}
+.hidden-canvas{position:fixed;left:-9999rpx;top:-9999rpx;width:1080rpx;height:1440rpx;opacity:0;pointer-events:none}
