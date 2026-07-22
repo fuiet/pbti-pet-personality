@@ -25,12 +25,14 @@ export async function POST(request: Request) {
 
     if (!appId || !appSecret) {
       const mockOpenId = `mock_${(await sha256(code)).slice(0, 24)}`;
+      const mockOpenIdHash = await sha256(mockOpenId);
+
       return NextResponse.json({
         ok: true,
         mock: true,
         user: {
           id: `wechat_${mockOpenId}`,
-          openidHash: sha256(mockOpenId),
+          openidHash: mockOpenIdHash,
           nickname: "微信用户",
           mappedUserId: devMappedUserId,
         },
@@ -55,35 +57,44 @@ export async function POST(request: Request) {
     const data: any = await wechatResponse.json();
 
     if (!wechatResponse.ok || data?.errcode || !data?.openid) {
-      return NextResponse.json({
-        error: data?.errmsg || "微信 code2Session 交换失败。",
-        detail: data?.errcode || null,
-      }, { status: 502 });
+      return NextResponse.json(
+        {
+          error: data?.errmsg || "微信 code2Session 交换失败。",
+          detail: data?.errcode || null,
+        },
+        { status: 502 }
+      );
     }
 
     const openid = String(data.openid);
     const unionid = data.unionid ? String(data.unionid) : "";
     const sessionSeed = `${openid}:${data.session_key || ""}:${Date.now()}:${crypto.randomUUID()}`;
+    const openidHash = await sha256(openid);
+    const unionidHash = unionid ? await sha256(unionid) : "";
+    const sessionToken = await sha256(sessionSeed);
 
     return NextResponse.json({
       ok: true,
       mock: false,
       user: {
-        id: `wechat_${sha256(openid).slice(0, 24)}`,
-        openidHash: sha256(openid),
-        unionidHash: unionid ? sha256(unionid) : "",
+        id: `wechat_${openidHash.slice(0, 24)}`,
+        openidHash,
+        unionidHash,
         nickname: "微信用户",
         mappedUserId: devMappedUserId,
       },
       session: {
-        token: `wechat_session_${sha256(sessionSeed)}`,
+        token: `wechat_session_${sessionToken}`,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       },
       message: "微信会话初始化成功。",
     });
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "初始化微信会话失败。",
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "初始化微信会话失败。",
+      },
+      { status: 500 }
+    );
   }
 }
