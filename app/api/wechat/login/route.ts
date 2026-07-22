@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const devMappedUserId = process.env.MINIPROGRAM_DEV_USER_ID || "";
 
     if (!appId || !appSecret) {
-      const mockOpenId = `mock_${sha256(code).slice(0, 24)}`;
+      const mockOpenId = `mock_${(await sha256(code)).slice(0, 24)}`;
       return NextResponse.json({
         ok: true,
         mock: true,
