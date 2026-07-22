@@ -1,5 +1,5 @@
 module.exports = {
-  apiBaseUrl: 'https://你的正式后端域名',
+  apiBaseUrl: 'https://pbti-pet-personality.pages.dev',
   upload: {
     petPhotosPath: '/api/miniprogram/pet-photos'
   },
