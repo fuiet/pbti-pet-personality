@@ -1,11 +1,10 @@
-import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { buildMiniProgramAuthError, resolveRequestUserId } from "@/lib/miniprogramSession";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 function makeRecordId() {
-  return `PBTI-${randomUUID().slice(0, 8).toUpperCase()}`;
+  return `PBTI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
 function isResultReportSchemaError(error: { message?: string } | null | undefined) {
