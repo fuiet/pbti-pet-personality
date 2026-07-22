@@ -1,10 +1,13 @@
-import { createHash, randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
-function sha256(value: string) {
-  return createHash("sha256").update(value).digest("hex");
+async function sha256(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function POST(request: Request) {
@@ -21,18 +24,18 @@ export async function POST(request: Request) {
     const devMappedUserId = process.env.MINIPROGRAM_DEV_USER_ID || "";
 
     if (!appId || !appSecret) {
-      const mockOpenId = `mock_${sha256(code).slice(0, 24)}`;
+      const mockOpenId = `mock_${(await sha256(code)).slice(0, 24)}`;
       return NextResponse.json({
         ok: true,
         mock: true,
         user: {
           id: `wechat_${mockOpenId}`,
-          openidHash: sha256(mockOpenId),
+          openidHash: await sha256(mockOpenId),
           nickname: "微信用户",
           mappedUserId: devMappedUserId,
         },
         session: {
-          token: `mock_session_${randomUUID()}`,
+          token: `mock_session_${crypto.randomUUID()}`,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         },
         message: "当前未配置微信服务端参数，已自动切换为本地演示会话。",
@@ -60,20 +63,23 @@ export async function POST(request: Request) {
 
     const openid = String(data.openid);
     const unionid = data.unionid ? String(data.unionid) : "";
-    const sessionSeed = `${openid}:${data.session_key || ""}:${Date.now()}:${randomUUID()}`;
+    const sessionSeed = `${openid}:${data.session_key || ""}:${Date.now()}:${crypto.randomUUID()}`;
+    const openidHash = await sha256(openid);
+    const unionidHash = unionid ? await sha256(unionid) : "";
+    const sessionToken = await sha256(sessionSeed);
 
     return NextResponse.json({
       ok: true,
       mock: false,
       user: {
-        id: `wechat_${sha256(openid).slice(0, 24)}`,
-        openidHash: sha256(openid),
-        unionidHash: unionid ? sha256(unionid) : "",
+        id: `wechat_${openidHash.slice(0, 24)}`,
+        openidHash,
+        unionidHash,
         nickname: "微信用户",
         mappedUserId: devMappedUserId,
       },
       session: {
-        token: `wechat_session_${sha256(sessionSeed)}`,
+        token: `wechat_session_${sessionToken}`,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       },
       message: "微信会话初始化成功。",

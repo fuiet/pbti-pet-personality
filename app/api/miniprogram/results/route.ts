@@ -1,11 +1,18 @@
-import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { buildMiniProgramAuthError, resolveRequestUserId } from "@/lib/miniprogramSession";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 function makeRecordId() {
-  return `PBTI-${randomUUID().slice(0, 8).toUpperCase()}`;
+  return `PBTI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+}
+
+async function sha256(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function isResultReportSchemaError(error: { message?: string } | null | undefined) {
@@ -126,18 +133,18 @@ export async function POST(request: Request) {
     if (response.error && isResultReportSchemaError(response.error)) {
       response = await supabase
         .from("personality_results")
-        .insert(insertPayload)
-        .select("id,pbti_id,personality_type,scores,created_at,pet_id")
-        .single();
+      .insert(insertPayload)
+      .select("id,pbti_id,personality_type,scores,created_at,pet_id")
+      .single();
     }
 
     if (response.error && isResultUserSchemaError(response.error)) {
       response = await supabase
         .from("personality_results")
-        .insert({
-          ...legacyInsertPayload,
-          report,
-        })
+      .insert({
+        ...legacyInsertPayload,
+        report,
+      })
         .select("id,pbti_id,personality_type,scores,report,created_at,pet_id")
         .single();
     }
@@ -145,9 +152,9 @@ export async function POST(request: Request) {
     if (response.error && isResultUserSchemaError(response.error) && isResultReportSchemaError(response.error)) {
       response = await supabase
         .from("personality_results")
-        .insert(legacyInsertPayload)
-        .select("id,pbti_id,personality_type,scores,created_at,pet_id")
-        .single();
+      .insert(legacyInsertPayload)
+      .select("id,pbti_id,personality_type,scores,created_at,pet_id")
+      .single();
     }
 
     if (response.error) {
