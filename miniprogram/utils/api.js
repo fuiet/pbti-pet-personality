@@ -1,9 +1,4 @@
-let config = null;
-try {
-  config = require('../config');
-} catch (_) {
-  config = require('../config.example');
-}
+const config = require('../config.example');
 
 function normalizedBaseUrl() {
   const base = config && typeof config.apiBaseUrl === 'string' ? config.apiBaseUrl.trim() : '';
@@ -160,10 +155,7 @@ function analyzeVisualProfile(petId, imageUrl) {
 }
 
 function generatePortrait(payload) {
-  const generatePath = config && config.portraits && config.portraits.generatePath
-    ? config.portraits.generatePath
-    : '/api/portraits';
-  return request(generatePath, {
+  return request('/api/portraits', {
     method: 'POST',
     data: payload
   });

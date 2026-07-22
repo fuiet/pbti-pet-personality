@@ -25,16 +25,16 @@ const FREE_TEMPLATES = [
     name: '纸袋头像',
     hint: '荒诞有趣、头像风格',
     title: { en: 'Paper Bag Portrait', zh: '纸袋头像' },
-    subtitle: { en: 'A quirky studio concept with a cutout paper-bag mask.', zh: '带有荒诞趣味的纸袋头像。' },
+    subtitle: { en: 'A quirky studio concept with a cutout paper-bag mask.', zh: '带有荒诞趣味的纸袋棚拍造型。' },
     previewImage: '/images/personalities/cats/11-player-cat.webp',
     basePrompt: 'Recreate the selected quirky studio template with the same pastel pink background, oversized paper-bag mask prop with a face cutout, simple cream outfit, and centered absurd-fashion composition. Replace the original pet with the user\'s real pet while preserving the deadpan humor.'
   },
   {
     id: 'pink-plush-room',
-    name: '粉色软绒房',
-    hint: '甜感、软绒、收藏感',
-    title: { en: 'Pink Plush Room', zh: '粉色软绒房' },
-    subtitle: { en: 'A sweet pink room built from plush props and soft shapes.', zh: '粉色软绒房间与玩偶收藏感。' },
+    name: '粉色软绵房',
+    hint: '甜感、软绵、收藏感',
+    title: { en: 'Pink Plush Room', zh: '粉色软绵房' },
+    subtitle: { en: 'A sweet pink room built from plush props and soft shapes.', zh: '软绵粉色房间与玩偶收集感。' },
     previewImage: '/images/personalities/cats/07-companion-cat.webp',
     basePrompt: 'Recreate the selected dreamy pink-room template with the same plush bed, pastel character-room styling, oversized soft props, and highly curated cute composition. Replace the example pet with the user\'s real pet while preserving the room\'s soft collectible atmosphere.'
   }
@@ -53,6 +53,7 @@ Page({
     templates: FREE_TEMPLATES,
     selectedTemplate: FREE_TEMPLATES[0],
     generating: false,
+    source: 'local',
     generatedPreview: ''
   },
 
@@ -66,12 +67,14 @@ Page({
       selectedTemplate: FREE_TEMPLATES[0],
       petType: 'cat',
       petPhoto: '',
-      generatedPreview: ''
+      generatedPreview: '',
+      source: 'local'
     });
   },
 
   switchMode(e) {
-    this.setData({ mode: e.currentTarget.dataset.mode });
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ mode });
   },
 
   choosePetPhoto() {
@@ -105,16 +108,34 @@ Page({
   },
 
   chooseTemplate(e) {
-    const selectedTemplate = FREE_TEMPLATES.find((item) => item.id === e.currentTarget.dataset.v) || FREE_TEMPLATES[0];
-    this.setData({
-      template: selectedTemplate.id,
-      selectedTemplate,
-      templateOpen: false
-    });
+    const v = e.currentTarget.dataset.v;
+    const selectedTemplate = FREE_TEMPLATES.find((item) => item.id === v) || FREE_TEMPLATES[0];
+    this.setData({ template: v, selectedTemplate, templateOpen: false });
   },
 
   switchPetType(e) {
     this.setData({ petType: e.currentTarget.dataset.v });
+  },
+
+  buildLocalItem() {
+    const now = Date.now();
+    const isDuo = this.data.mode === 'duo';
+    const title = this.data.title || (isDuo ? '合照创作' : this.data.selectedTemplate.name);
+
+    return {
+      id: `portrait_${now}`,
+      url: isDuo ? (this.data.ownerPhoto || this.data.petPhoto) : this.data.petPhoto,
+      template: isDuo ? '合照模式' : this.data.selectedTemplate.name,
+      prompt: this.data.prompt || '未补充描述',
+      petName: title,
+      species: this.data.petType || 'dog',
+      code: this.data.mode === 'duo' ? 'DUO' : 'CREATE',
+      personality: isDuo ? '合照写真' : '独立创作',
+      createdAt: now,
+      createdLabel: portraits.formatTime(now),
+      source: 'local',
+      mode: this.data.mode
+    };
   },
 
   async uploadSourcePhotos(petRecord) {
@@ -130,24 +151,27 @@ Page({
       throw new Error('后端接口未配置');
     }
 
-    const petRecord = await api.createPetProfile({
+    const createPayload = {
       name: this.data.title.trim() || this.data.selectedTemplate.name,
       species: this.data.petType,
       breed: '',
       age: '',
       gender: ''
-    });
+    };
 
+    const petRecord = await api.createPetProfile(createPayload);
     const uploadedPhotoUrls = await this.uploadSourcePhotos(petRecord);
     if (!uploadedPhotoUrls.length) {
       throw new Error('图片上传失败');
     }
 
     const templateId = this.data.mode === 'duo' ? 'owner-cozy-duo' : this.data.selectedTemplate.id;
+    const petPhotos = [uploadedPhotoUrls[0]];
+    const ownerPhotos = this.data.mode === 'duo' && uploadedPhotoUrls[1] ? [uploadedPhotoUrls[1]] : [];
     const response = await api.generatePortrait({
       petId: petRecord.id,
-      petPhotos: [uploadedPhotoUrls[0]],
-      ownerPhotos: this.data.mode === 'duo' && uploadedPhotoUrls[1] ? [uploadedPhotoUrls[1]] : [],
+      petPhotos,
+      ownerPhotos,
       petSpecies: this.data.petType,
       petName: this.data.title.trim() || this.data.selectedTemplate.name,
       templateId,
@@ -162,9 +186,9 @@ Page({
       id: response.portrait.id,
       url: response.portrait.image_url,
       template: response.style && response.style.name ? response.style.name : (this.data.mode === 'duo' ? '合照模式' : this.data.selectedTemplate.name),
-      prompt: this.data.prompt || '已调用后端图片生成模型',
+      prompt: this.data.prompt || '已调用后端图片模型生成',
       petName: this.data.title.trim() || this.data.selectedTemplate.name,
-      species: this.data.petType || 'cat',
+      species: this.data.petType || 'dog',
       code: this.data.mode === 'duo' ? 'DUO' : 'CREATE',
       personality: this.data.mode === 'duo' ? '合照写真' : '独立创作',
       createdAt: Date.now(),
@@ -200,13 +224,14 @@ Page({
       getApp().globalData.lastPortrait = item;
       this.setData({
         generating: false,
+        source: 'cloud',
         generatedPreview: item.url
       });
       wx.showModal({
         title: '写真已生成',
-        content: '已调用后端图片生成模型，并保存到作品库。',
+        content: '已调用后端图片模型生成，并保存到作品库。',
         confirmText: '查看作品库',
-        cancelText: '继续停留在这里',
+        cancelText: '继续留在这里',
         success: (res) => {
           if (res.confirm) {
             wx.navigateTo({ url: '/pages/library/index' });
@@ -214,12 +239,24 @@ Page({
         }
       });
     } catch (error) {
-      this.setData({ generating: false });
+      const item = this.buildLocalItem();
+      portraits.save(item);
+      getApp().globalData.lastPortrait = item;
+      this.setData({
+        generating: false,
+        source: 'local',
+        generatedPreview: item.url
+      });
       wx.showModal({
-        title: '写真生成失败',
-        content: error instanceof Error ? error.message : '后端生成失败，请稍后重试。',
-        confirmText: '知道了',
-        showCancel: false
+        title: '已保存本地创作',
+        content: error instanceof Error ? `${error.message}，已先保存为本地作品。` : '后端生成失败，已先保存为本地作品。',
+        confirmText: '查看作品库',
+        cancelText: '继续留在这里',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/library/index' });
+          }
+        }
       });
     }
   },
