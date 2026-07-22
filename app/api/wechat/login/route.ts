@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
     const openid = String(data.openid);
     const unionid = data.unionid ? String(data.unionid) : "";
-    const sessionSeed = `${openid}:${data.session_key || ""}:${Date.now()}:${randomUUID()}`;
+    const sessionSeed = `${openid}:${data.session_key || ""}:${Date.now()}:${crypto.randomUUID()}`;
 
     return NextResponse.json({
       ok: true,
