@@ -1,0 +1,11 @@
+<view class="page">
+  <view class="hero">
+    <text class="title">PBTI 云开发版</text>
+    <text class="subtitle">现在开始把登录、数据和写真生成接进云开发。</text>
+  </view>
+
+  <view class="actions">
+    <button class="primary" bindtap="goPortraits">进入写真页</button>
+    <button class="ghost" bindtap="goAccount">我的</button>
+  </view>
+</view>

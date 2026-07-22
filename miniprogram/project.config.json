@@ -1,0 +1,18 @@
+{
+  "description": "PBTI 云开发小程序",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.7.0",
+  "appid": "touristappid",
+  "projectname": "pbti-miniprogram",
+  "miniprogramRoot": "./",
+  "cloudfunctionRoot": "../cloudfunctions/"
+}
