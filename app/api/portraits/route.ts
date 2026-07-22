@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { personalities, defaultPersonalityCode } from "@/data/personalities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { buildMiniProgramAuthError, resolveRequestUserId } from "@/lib/miniprogramSession";
 import { buildPortraitPrompt, PORTRAIT_PROMPT_VERSION, PORTRAIT_STYLES, type PortraitStyle } from "@/lib/portraitPrompts";
 import { normalizeVisualProfile } from "@/lib/visualProfile";
 import { buildTemplateStyleId, findPortraitStudioTemplate } from "@/lib/portraitStudioTemplates";
@@ -142,16 +141,10 @@ export async function POST(request: Request) {
   try {
     const { petId, resultId, styleId, templateId, ownerPhotos, customPrompt, petPhotos, petSpecies, petName } = await request.json();
 
-    const { supabase, userId, miniProgramSession } = await resolveRequestUserId(request);
-    if (!userId) {
-      if (miniProgramSession) {
-        return NextResponse.json({
-          ...buildMiniProgramAuthError(),
-          sessionMode: miniProgramSession.mode,
-        }, { status: 401 });
-      }
-      return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
-    }
+    const supabase = await createSupabaseServerClient();
+    const { data: userResult, error: userError } = await supabase.auth.getUser();
+    const userId = userResult.user?.id || "";
+    if (userError || !userId) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
 
     const uploadedPetPhotos = Array.isArray(petPhotos) ? petPhotos.filter((item) => typeof item === "string" && item).slice(0, 3) : [];
     let pet: any = null;
@@ -323,16 +316,10 @@ export async function GET(request: Request) {
     const petId = new URL(request.url).searchParams.get("petId");
     if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
 
-    const { supabase, userId, miniProgramSession } = await resolveRequestUserId(request);
-    if (!userId) {
-      if (miniProgramSession) {
-        return NextResponse.json({
-          ...buildMiniProgramAuthError(),
-          sessionMode: miniProgramSession.mode,
-        }, { status: 401 });
-      }
-      return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
-    }
+    const supabase = await createSupabaseServerClient();
+    const { data: userResult, error: userError } = await supabase.auth.getUser();
+    const userId = userResult.user?.id || "";
+    if (userError || !userId) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
 
     const { data: pet } = await supabase.from("pets").select("id,name").eq("id", petId).eq("user_id", userId).maybeSingle();
     if (!pet) return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });

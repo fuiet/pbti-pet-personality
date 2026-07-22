@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { buildMiniProgramAuthError, resolveRequestUserId } from "@/lib/miniprogramSession";
 import { normalizeVisualProfile, type RawVisualProfileInput } from "@/lib/visualProfile";
 
 export const runtime = "edge";
@@ -113,17 +112,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "petId is required." }, { status: 400 });
     }
 
-    const { supabase, userId, miniProgramSession } = await resolveRequestUserId(request);
-
-    if (!userId) {
-      if (miniProgramSession) {
-        return NextResponse.json({
-          ...buildMiniProgramAuthError(),
-          sessionMode: miniProgramSession.mode,
-        }, { status: 401 });
-      }
-      return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
-    }
+    const supabase = await createSupabaseServerClient();
+    const { data: userResult, error: userError } = await supabase.auth.getUser();
+    const userId = userResult.user?.id || "";
+    if (userError || !userId) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
 
     const { data: pet, error: petError } = await supabase
       .from("pets")
