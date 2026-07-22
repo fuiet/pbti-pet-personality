@@ -35,7 +35,7 @@ export async function POST(request: Request) {
           mappedUserId: devMappedUserId,
         },
         session: {
-          token: `mock_session_${randomUUID()}`,
+          token: `mock_session_${crypto.randomUUID()}`,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         },
         message: "当前未配置微信服务端参数，已自动切换为本地演示会话。",
