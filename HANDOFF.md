@@ -1,5 +1,71 @@
 # PBTI Project Handoff
 
+## 2026-08-01 Current Context - Read This First
+
+This section is the authoritative handoff for the current implementation. Older sections below are retained as history and may contain stale paths, commit hashes, or unfinished-task notes.
+
+### Repository and Deployment
+
+- Workspace: `C:\Users\Administrator\Documents\Pbti`
+- Branch: `main`
+- GitHub remote: `https://github.com/fuiet/pbti-pet-personality.git`
+- Latest commit: `cda1116 Improve anonymous test conversion and harden product flows`
+- Working tree: clean after the latest commit
+- Production target: Cloudflare Pages at `https://pbti-pet-personality.pages.dev`
+- Cloudflare Pages is configured to auto-deploy from pushes to `main`; the production URL returned HTTP 200 after the latest push.
+- `wrangler.toml` exists, but Wrangler is not installed locally and no local Cloudflare login/token is configured. Do not run a direct Wrangler deploy unless those prerequisites are intentionally added.
+
+### Product Direction
+
+- The primary conversion goal is to let a new visitor start the personality test without signing in.
+- Login is required only when the visitor chooses to save the full report.
+- The portrait studio is an independent creation system and must not require or look up a saved pet profile.
+- The portrait library is for viewing/deleting generated images; the portrait studio is for creating new images.
+- Keep the current product model truthful: the website currently has 12 canonical custom personality prototypes and 28 scored questions. Do not silently claim or implement a 16-type model without a complete scoring, copy, asset, and migration plan.
+
+### Anonymous Test Flow
+
+- `lib/guestTest.ts` stores a validated anonymous test session in `sessionStorage` under `pbti-guest-test-v1`.
+- `/create` is public and stores the initial profile locally for anonymous users.
+- `/upload?guest=1` accepts optional photos without creating a database pet record.
+- `/quiz?guest=1` records answers locally and routes to `/result?guest=1` after all 28 questions.
+- `/result?guest=1` renders a result summary without a login wall.
+- The full-report CTA routes to `/login?next=%2Fresult%3Fguest%3D1%26save%3D1`; after login, the result page migrates the anonymous profile into the authenticated account and saves the report.
+- Protected middleware paths are limited to `/account`, `/dashboard`, and `/report`; create/upload/quiz/result are intentionally public.
+
+### Recent Quality Fixes
+
+- Removed the fabricated homepage `12,847` and `98%` claims; current copy uses real/neutral counts.
+- Added the no-login-needed message beside the main test CTA.
+- Added `translate="no"` / `notranslate` around personality codes so browser translation does not turn codes into organization names.
+- Hardened portrait asset fetching, MIME checks, size limits, timeouts, redirects, and storage-path handling.
+- Tightened Supabase ownership/RLS SQL and nullable portrait `pet_id` support for independent portrait creation.
+- Removed unused website modules and exports. The Mini Program and Cloud Functions files are intentional project assets, not dead code.
+- Added `priority` to the result-page above-the-fold personality artwork after browser QA reported an LCP hint.
+
+### Verification Completed
+
+```powershell
+pnpm run typecheck
+pnpm run build
+pnpm audit --prod
+git diff --check
+```
+
+- Typecheck passed.
+- Production build passed: 19 static pages generated.
+- Production dependency audit reported no known vulnerabilities.
+- Browser QA passed on the local app: home -> create -> anonymous upload -> skip photos -> all 28 quiz answers -> result summary -> login handoff.
+- Browser QA found no blank page, blocking error overlay, or console error in the tested flow.
+- A normal responsive mobile viewport was also checked; reset the browser viewport after testing.
+
+### Operational Notes
+
+- The local dev server used for QA was stopped after verification.
+- If the Codex response reports `stream disconnected before completion`, treat it as a transport/network interruption first. Verify `git status`, the latest commit, build output, and deployment separately; the error does not imply that a completed git operation was rolled back.
+- Supabase SQL changes still need to be applied in the Supabase SQL Editor when the database schema/RLS is not already up to date. Do not run those migrations against Cloudflare.
+- Do not expose or commit `.env` secrets. `.env.example` is safe to keep tracked.
+
 Last updated: 2026-07-21
 
 ## 2026-07-21 Current Context — Read This First
