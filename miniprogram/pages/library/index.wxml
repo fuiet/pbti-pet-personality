@@ -1,0 +1,23 @@
+<view class="screen stack">
+  <view class="card stack">
+    <text class="section-title">写真库</text>
+    <text class="muted">这里会保存你生成过的所有 AI 写真。</text>
+
+    <view wx:if="{{portraitAssets.length}}" class="portrait-grid">
+      <view
+        wx:for="{{portraitAssets}}"
+        wx:key="_id"
+        class="portrait-item"
+        data-url="{{item.imageUrl}}"
+        bindtap="previewPortrait"
+      >
+        <image class="portrait-item-image" src="{{item.imageUrl}}" mode="aspectFill" />
+        <text class="portrait-item-title">{{item.templateName || 'AI 写真'}}</text>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <text class="muted">暂时还没有作品，生成完成后会自动出现在这里。</text>
+    </view>
+  </view>
+</view>

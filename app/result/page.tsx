@@ -7,8 +7,10 @@ import { defaultPersonalityCode, personalities } from "@/data/personalities";
 import { localizePersonality } from "@/data/personalityLocalization";
 import { getPersonalityAsset } from "@/data/personalityAssets";
 import { dimensionScoresFromTraitScores, generatePetReport } from "@/lib/reportGenerator";
-import { getLatestResultForCurrentUser, getResultByRecordId, type ResultRecord } from "@/lib/pbtiRecords";
-import { useRequireAuth } from "@/lib/useRequireAuth";
+import { createPetRecord, getLatestResultForCurrentUser, getResultByRecordId, savePersonalityResult, type ResultRecord } from "@/lib/pbtiRecords";
+import { getCurrentUser } from "@/lib/auth";
+import { clearGuestTest, readGuestTest } from "@/lib/guestTest";
+import { calculatePBTI } from "@/lib/pbtiEngine";
 import { useLanguage } from "@/components/LanguageProvider";
 
 function getResultIdFromLocation() {
@@ -22,18 +24,64 @@ export default function ResultPage() {
   const { language } = useLanguage();
   const zh = language === "zh-CN";
   const router = useRouter();
-  const { loading: authLoading } = useRequireAuth();
   const [record, setRecord] = useState<ResultRecord | null>(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
 
   useEffect(() => {
-    if (authLoading) return;
-
     let active = true;
     const resultId = getResultIdFromLocation();
+    const isGuest = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("guest") === "1";
+    const shouldSave = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("save") === "1";
 
     async function loadRecord() {
       try {
+        if (isGuest) {
+          const guestState = readGuestTest();
+          if (!guestState || guestState.answers.length === 0) {
+            router.replace("/create");
+            return;
+          }
+
+          const result = calculatePBTI(guestState.answers);
+          if (shouldSave && await getCurrentUser()) {
+            const savedPet = await createPetRecord({
+              name: guestState.pet.name,
+              species: guestState.pet.species,
+              breed: guestState.pet.breed || undefined,
+              age: guestState.pet.age || undefined,
+              gender: guestState.pet.gender || undefined,
+            });
+            const saved = await savePersonalityResult(savedPet, result, guestState.answers);
+            clearGuestTest();
+            router.replace(`/report/${saved.pbti_id}/preparing`);
+            return;
+          }
+
+          const report = generatePetReport({
+            petName: guestState.pet.name,
+            pbtiType: result.code,
+            personalityName: result.personality.name,
+            traits: result.personality.traits,
+            advice: result.personality.advice,
+            dimensionScores: result.dimensionScores,
+            fitScore: result.fitScore,
+            modelVersion: result.modelVersion,
+            modelCue: result.personality.modelCue,
+            language,
+          });
+          setRecord({
+            id: "guest",
+            pbti_id: "guest",
+            personality_type: result.code,
+            scores: result.scores,
+            report: { ...report, answers: guestState.answers },
+            is_premium: false,
+            created_at: guestState.pet.created_at,
+            pet: guestState.pet,
+          });
+          return;
+        }
+
         const saved = resultId ? await getResultByRecordId(resultId) : await getLatestResultForCurrentUser();
 
         if (!active) return;
@@ -60,9 +108,9 @@ export default function ResultPage() {
     return () => {
       active = false;
     };
-  }, [authLoading, router]);
+  }, [language, router]);
 
-  if (authLoading || loadingRecord || !record || !record.pet) {
+  if (loadingRecord || !record || !record.pet) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-4xl animate-pulse">{zh ? "正在分析…" : "Analyzing..."}</div>
@@ -88,6 +136,14 @@ export default function ResultPage() {
     modelCue: personality.modelCue,
     language,
   });
+  const isGuestResult = record.pbti_id === "guest";
+  const openFullReport = () => {
+    if (isGuestResult) {
+      router.push(`/login?next=${encodeURIComponent("/result?guest=1&save=1")}`);
+      return;
+    }
+    router.push(`/report/${record.pbti_id}/preparing`);
+  };
   const premiumSections = zh ? [
     "四维行为得分解析", "28 道题行为模式分析", "品种、毛色、脸型与体态鉴定", "混血可能性与外观特征", "情绪与社交风格", "个性化养护指南", "游戏与丰容计划", "主人关系指南", "潜在挑战与支持建议", "写真海报与分享卡片",
   ] : [
@@ -124,7 +180,7 @@ export default function ResultPage() {
 
         <div className="relative p-8 text-center">
                     <div className="pointer-events-none absolute right-3 top-3 hidden h-28 w-28 opacity-90 sm:block">
-            <Image src={typeArtwork} alt="" fill unoptimized sizes="112px" className="object-contain drop-shadow-[0_12px_20px_rgba(52,34,20,.16)]" />
+            <Image src={typeArtwork} alt="" fill priority unoptimized sizes="112px" className="object-contain drop-shadow-[0_12px_20px_rgba(52,34,20,.16)]" />
           </div><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff0e4] text-2xl font-black text-[#ff7a1a]">{personality.emoji}</div>
           <div className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-[#a3968a]">{zh ? "结果概览" : "Cover / result summary"}</div>
           <h1 className="mt-3 text-7xl font-black leading-none tracking-[-.08em] text-[#171514]">{personality.code}</h1>
@@ -155,24 +211,24 @@ export default function ResultPage() {
           ))}
         </div>
         <button
-          onClick={() => router.push(`/report/${record.pbti_id}/preparing`)}
+          onClick={openFullReport}
           className="mt-7 w-full rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] sm:w-auto"
         >
-          {zh ? "打开完整报告" : "Open full report"}
+          {isGuestResult ? (zh ? "登录保存完整报告" : "Sign in to save the full report") : (zh ? "打开完整报告" : "Open full report")}
         </button>
       </section>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={() => router.push(`/report/${record.pbti_id}/preparing`)}
+          onClick={openFullReport}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          {zh ? "查看完整报告" : "View complete report"}
+          {isGuestResult ? (zh ? "登录保存完整报告" : "Sign in to save the full report") : (zh ? "查看完整报告" : "View complete report")}
         </button>
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push(isGuestResult ? "/create" : "/dashboard")}
           className="flex-1 rounded-full border-2 border-[#eaded2] bg-white px-8 py-4 text-center font-bold text-[#4f463f] transition hover:bg-white/80"
         >
-          {zh ? "我的用户中心" : "My Dashboard"}
+          {isGuestResult ? (zh ? "再测一次" : "Retake the test") : (zh ? "我的用户中心" : "My Dashboard")}
         </button>
       </div>
 

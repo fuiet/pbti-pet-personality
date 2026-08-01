@@ -16,16 +16,6 @@ function loadImage(source: string) {
   });
 }
 
-function fitFontSize(context: CanvasRenderingContext2D, text: string, maxWidth: number, preferredSize: number, minimumSize: number) {
-  let size = preferredSize;
-  while (size > minimumSize) {
-    context.font = `900 ${size}px "Arial Black", "Microsoft YaHei", sans-serif`;
-    if (context.measureText(text).width <= maxWidth) break;
-    size -= 2;
-  }
-  return size;
-}
-
 function drawSpacedText(context: CanvasRenderingContext2D, text: string, x: number, y: number, spacing: number) {
   let cursor = x;
   for (const character of text) {
@@ -314,7 +304,10 @@ export default function PortraitGenerator({ petId, resultId, petName, pbtiCode, 
 
   async function copyPortrait(id: string, imageUrl: string) {
     try {
-      const blob = await fetch(imageUrl).then((response) => response.blob());
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error("Unable to download the portrait for copying.");
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("The portrait download returned an invalid file.");
       if (!navigator.clipboard || typeof ClipboardItem === "undefined") throw new Error("Image copy is not supported in this browser.");
       await navigator.clipboard.write([new ClipboardItem({ [blob.type || "image/png"]: blob })]);
       setCopiedId(id);

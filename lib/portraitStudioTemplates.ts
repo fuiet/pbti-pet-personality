@@ -1,6 +1,6 @@
-export type PortraitStudioMode = "free" | "duo";
+type PortraitStudioMode = "free" | "duo";
 export type PortraitStudioOrientation = "avatar" | "vertical" | "landscape";
-export type PortraitStudioCategory = "trending" | "avatars" | "posters" | "landscapes" | "holiday" | "pet-owner";
+type PortraitStudioCategory = "trending" | "avatars" | "posters" | "landscapes" | "holiday" | "pet-owner";
 
 export type PortraitStudioTemplate = {
   id: string;

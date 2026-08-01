@@ -1,0 +1,68 @@
+<view class="screen stack portrait-page">
+  <view class="card stack portrait-preview-card">
+    <view class="portrait-preview-visual">
+      <view class="portrait-preview-badge">AI 写真</view>
+      <text class="portrait-preview-title">{{previewTitle}}</text>
+      <text class="portrait-preview-desc">{{previewDesc}}</text>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <view class="portrait-header-row">
+      <text class="section-title">模板选择</text>
+      <view class="mini-chip" bindtap="toggleTemplates">{{templatesExpanded ? '收起' : '展开'}}</view>
+    </view>
+    <view wx:if="{{templatesExpanded}}" class="template-list">
+      <view wx:for="{{templateList}}" wx:key="name" class="template-item {{selectedTemplate === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectTemplate">
+        <image class="template-thumb" src="{{item.src}}" mode="aspectFill" />
+        <view class="template-copy">
+          <text class="template-name">{{item.name}}</text>
+          <text class="template-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="template-current" bindtap="toggleTemplates">
+      <image class="template-current-thumb" src="{{templateList[selectedTemplate].src}}" mode="aspectFill" />
+      <view class="template-copy">
+        <text class="template-name">{{templateList[selectedTemplate].name}}</text>
+        <text class="template-desc">{{templateList[selectedTemplate].desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">上传宠物照片</text>
+    <text class="photo-tip">上传 1-3 张都可以，分别为正面、左侧和右侧。角度越多越清晰，生成效果越逼真。</text>
+    <view class="photo-panel">
+      <view wx:for="{{photoSlots}}" wx:key="key" class="photo-mini">
+        <view class="photo-mini-head">
+          <text class="photo-mini-title">{{item.label}}</text>
+          <text class="photo-mini-state {{item.path || item.fileId ? 'done' : ''}}">{{item.path || item.fileId ? '已上传' : '未上传'}}</text>
+        </view>
+        <view class="photo-mini-body" bindtap="pickPhoto" data-key="{{item.key}}">
+          <image wx:if="{{item.path}}" class="photo-mini-image" src="{{item.path}}" mode="aspectFill" data-path="{{item.path}}" bindtap="previewImage" />
+          <view wx:else class="photo-mini-empty">
+            <text class="photo-mini-plus">+</text>
+            <text class="photo-mini-empty-text">点击上传</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="upload-progress-row">
+      <view class="upload-progress-track"><view class="upload-progress-fill" style="width: {{uploadProgress}}%;"></view></view>
+      <text class="upload-progress-text">{{uploadProgress}}%</text>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">自定义提示词</text>
+    <view class="prompt-box">
+      <textarea class="prompt-input" placeholder="例如：戴着格纹围巾，在秋天的公园里" value="{{promptText}}" bindinput="bindPromptInput"></textarea>
+    </view>
+    <view class="row prompt-actions">
+      <button class="button-secondary" bindtap="optimizePrompt">AI 优化</button>
+    </view>
+  </view>
+
+  <button class="button-primary" bindtap="showComingSoon">生成 AI 写真</button>
+</view>

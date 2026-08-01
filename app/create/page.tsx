@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 import { getBreedDisplayName } from "@/data/breedLocalization";
 import { createPetRecord } from "@/lib/pbtiRecords";
-import { useRequireAuth } from "@/lib/useRequireAuth";
+import { getCurrentUser } from "@/lib/auth";
+import { startGuestTest } from "@/lib/guestTest";
 import { useLanguage } from "@/components/LanguageProvider";
 
 const progressSteps = ["Profile", "Photo", "Test", "Report"] as const;
@@ -135,7 +136,6 @@ export default function CreatePet() {
   const router = useRouter();
   const { language } = useLanguage();
   const zh = language === "zh-CN";
-  const { loading } = useRequireAuth();
   const [name, setName] = useState("");
   const [species, setSpecies] = useState<"cat" | "dog">("cat");
   const [breed, setBreed] = useState("");
@@ -163,23 +163,26 @@ export default function CreatePet() {
     setIsSaving(true);
 
     try {
-      const pet = await createPetRecord({
+      const profile = {
         name: name.trim(),
         species,
         breed: breed.trim(),
         age: age.trim(),
         gender: gender || undefined,
-      });
+      };
+      const user = await getCurrentUser();
 
-      router.push(`/upload?petId=${pet.id}`);
+      if (user) {
+        const pet = await createPetRecord(profile);
+        router.push(`/upload?petId=${pet.id}`);
+      } else {
+        startGuestTest(profile);
+        router.push("/upload?guest=1");
+      }
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : zh ? "暂时无法保存测试信息，请稍后重试。" : "We could not save this test setup. Please try again.");
       setIsSaving(false);
     }
-  }
-
-  if (loading) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
   return (

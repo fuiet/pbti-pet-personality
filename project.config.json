@@ -1,0 +1,22 @@
+{
+  "description": "PBTI mini program project config",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "bundle": false,
+    "es6": true,
+    "minified": true,
+    "postcss": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "uglifyFileName": false
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.17.0",
+  "appid": "wxd1374ee104fe5288",
+  "projectname": "Pbti",
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/"
+}

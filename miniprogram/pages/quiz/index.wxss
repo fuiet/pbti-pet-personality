@@ -1,0 +1,45 @@
+.quiz-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.quiz-percent {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #ff6a1a;
+}
+
+.quiz-progress-track {
+  width: 100%;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #f2e4d8;
+  overflow: hidden;
+}
+
+.quiz-progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #ff8a2a 0%, #ff6a1a 100%);
+  transition: width 180ms ease;
+}
+
+.quiz-stage {
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.quiz-stage.enter {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.quiz-stage.leave {
+  opacity: 0;
+  transform: translateY(12rpx);
+}
+
+.quiz-option {
+  text-align: left;
+}

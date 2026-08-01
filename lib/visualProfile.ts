@@ -1,12 +1,12 @@
-export type VisualTag = "Smart Fluff" | "Stubborn Fluff" | "Royal Fur" | "Chaos Bean" | "Soft Soul" | "Watchful Eyes";
+type VisualTag = "Smart Fluff" | "Stubborn Fluff" | "Royal Fur" | "Chaos Bean" | "Soft Soul" | "Watchful Eyes";
 
-export interface BreedCandidate {
+interface BreedCandidate {
   breed: string;
   confidence: number;
   note?: string;
 }
 
-export interface PetVisualSignals {
+interface PetVisualSignals {
   eyeFocus: "soft" | "focused" | "watchful" | "unclear";
   posture: "relaxed" | "stable" | "upright" | "active" | "tense" | "unclear";
   faceDirection: "front-facing" | "side-facing" | "partially visible" | "unclear";
@@ -66,8 +66,6 @@ export interface RawVisualProfileInput {
   summary?: string;
 }
 
-const VISUAL_TAGS: VisualTag[] = ["Smart Fluff", "Stubborn Fluff", "Royal Fur", "Chaos Bean", "Soft Soul", "Watchful Eyes"];
-
 function clampConfidence(value: number) {
   if (!Number.isFinite(value)) return 0.3;
   return Math.max(0, Math.min(1, value));
@@ -83,7 +81,7 @@ function normalizeSignal<T extends string>(value: string | undefined, allowed: r
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
-export function deriveVisualTags(signals: PetVisualSignals, photoQualityScore: number): VisualTag[] {
+function deriveVisualTags(signals: PetVisualSignals, photoQualityScore: number): VisualTag[] {
   const tags = new Set<VisualTag>();
 
   if (signals.eyeFocus === "focused" && ["stable", "upright"].includes(signals.posture) && signals.faceDirection === "front-facing") {
@@ -169,8 +167,4 @@ export function normalizeVisualProfile(raw: RawVisualProfileInput, providerModel
     summary: raw.summary || "Visible traits were analyzed for photo quality, coat, expression, and body language cues.",
     disclaimer: "Visual analysis describes visible traits only. Personality results require the behavior assessment.",
   };
-}
-
-export function isVisualTag(value: string): value is VisualTag {
-  return VISUAL_TAGS.includes(value as VisualTag);
 }

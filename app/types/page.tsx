@@ -231,7 +231,7 @@ export default function TypesPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-xs font-black uppercase tracking-[.16em] text-[#d96612]">{String(index + 1).padStart(2, "0")}</div>
-                    <h2 className="mt-1 text-[2.6rem] font-black leading-none tracking-[-.06em] text-[#171514]">{type.code}</h2>
+                    <h2 translate="no" className="notranslate mt-1 text-[2.6rem] font-black leading-none tracking-[-.06em] text-[#171514]">{type.code}</h2>
                     <div className="mt-2 text-lg font-black tracking-[-.03em] text-[#d96612]">{copy.name}</div>
                   </div>
                   <SpeciesStatus species={species} zh={zh} />

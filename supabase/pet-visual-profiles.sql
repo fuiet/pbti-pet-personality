@@ -1,7 +1,7 @@
 create table if not exists pet_visual_profiles (
   id uuid primary key default gen_random_uuid(),
-  pet_id uuid references pets(id) on delete cascade,
-  user_id uuid references auth.users(id) on delete cascade,
+  pet_id uuid not null references pets(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   species text check (species in ('cat','dog','unknown')),
   breed_candidates jsonb default '[]'::jsonb,
   coat jsonb default '{}'::jsonb,
@@ -30,7 +30,14 @@ using (auth.uid() = user_id);
 create policy "Users can insert own visual profiles"
 on public.pet_visual_profiles
 for insert to authenticated
-with check (auth.uid() = user_id);
+with check (
+  auth.uid() = user_id
+  and exists (
+    select 1 from public.pets
+    where pets.id = pet_visual_profiles.pet_id
+      and pets.user_id = auth.uid()
+  )
+);
 
 create policy "Users can update own visual profiles"
 on public.pet_visual_profiles

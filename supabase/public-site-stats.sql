@@ -1,15 +1,17 @@
 -- Public homepage counters. Run once in the Supabase SQL editor.
--- The launch baseline is 12,847 assessments; every new completed result increments it.
+-- Initialize from real saved results, then increment for each new completed result.
 
 create table if not exists public.public_site_stats (
   id boolean primary key default true check (id),
-  assessment_count bigint not null default 12847,
+  assessment_count bigint not null default 0,
   updated_at timestamptz not null default now()
 );
 
 insert into public.public_site_stats (id, assessment_count)
-values (true, 12847)
-on conflict (id) do nothing;
+values (true, (select count(*) from public.personality_results))
+on conflict (id) do update
+set assessment_count = excluded.assessment_count,
+    updated_at = now();
 
 alter table public.public_site_stats enable row level security;
 
@@ -20,7 +22,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select greatest(public_site_stats.assessment_count, 12847)
+  select public_site_stats.assessment_count
   from public_site_stats
   where id = true;
 $$;
@@ -46,4 +48,3 @@ drop trigger if exists increment_public_assessment_count_on_result on public.per
 create trigger increment_public_assessment_count_on_result
 after insert on public.personality_results
 for each row execute function public.increment_public_assessment_count();
-

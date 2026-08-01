@@ -7,6 +7,7 @@ export const runtime = "edge";
 const VISUAL_MODEL_PROVIDER = process.env.VISUAL_MODEL_PROVIDER || "qwen";
 const QWEN_MODEL = process.env.QWEN_MODEL || "qwen-vl-plus";
 const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+const MAX_REQUEST_BYTES = 50_000;
 
 const visualProfilePrompt = (species: "cat" | "dog" | "unknown") => `Analyze these reference photos of the same ${species} for PBTI Visual Model v1.
 
@@ -50,8 +51,12 @@ function parseJsonObject(text: string) {
   }
 }
 
-function extractQwenMessageText(data: any) {
-  const content = data?.choices?.[0]?.message?.content;
+function extractQwenMessageText(value: unknown) {
+  if (typeof value !== "object" || value === null) return "";
+  const data = value as {
+    choices?: Array<{ message?: { content?: string | Array<string | { text?: string }> } }>;
+  };
+  const content = data.choices?.[0]?.message?.content;
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
@@ -106,9 +111,15 @@ async function saveVisualProfile(supabase: Awaited<ReturnType<typeof createSupab
 
 export async function POST(request: Request) {
   try {
-    const { petId, imageUrl } = await request.json();
+    const declaredRequestLength = Number(request.headers.get("content-length") || 0);
+    if (declaredRequestLength > MAX_REQUEST_BYTES) {
+      return NextResponse.json({ error: "The analysis request is too large." }, { status: 413 });
+    }
 
-    if (!petId) {
+    const body = await request.json() as { petId?: unknown };
+    const petId = typeof body.petId === "string" ? body.petId.trim() : "";
+
+    if (!petId || petId.length > 100) {
       return NextResponse.json({ error: "petId is required." }, { status: 400 });
     }
 
@@ -119,7 +130,7 @@ export async function POST(request: Request) {
 
     const { data: pet, error: petError } = await supabase
       .from("pets")
-      .select("*")
+      .select("id,species,photo_url,photo_urls")
       .eq("id", petId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -136,10 +147,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unsupported visual model provider. Set VISUAL_MODEL_PROVIDER=qwen." }, { status: 500 });
     }
 
-const dashscopeKey = process.env.DASHSCOPE_API_KEY;
+    const dashscopeKey = process.env.DASHSCOPE_API_KEY;
     const species = pet.species === "dog" ? "dog" : pet.species === "cat" ? "cat" : "unknown";
     const savedPhotos = Array.isArray(pet.photo_urls) ? pet.photo_urls.filter(Boolean).slice(0, 3) : [];
-    const photoSources = typeof imageUrl === "string" && imageUrl ? [imageUrl] : savedPhotos.length ? savedPhotos : pet.photo_url ? [pet.photo_url] : [];
+    const photoSources = savedPhotos.length ? savedPhotos : pet.photo_url ? [pet.photo_url] : [];
 
     if (!photoSources.length) {
       return NextResponse.json({ error: "A pet photo is required before visual analysis." }, { status: 400 });

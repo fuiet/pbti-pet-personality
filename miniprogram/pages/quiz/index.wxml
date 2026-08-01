@@ -1,0 +1,24 @@
+<view class="screen stack">
+  <view class="card stack">
+    <view class="quiz-progress-head">
+      <text class="pill">{{progressText}}</text>
+      <text class="quiz-percent">{{progressPercent}}%</text>
+    </view>
+    <view class="quiz-progress-track">
+      <view class="quiz-progress-fill" style="width: {{progressPercent}}%;"></view>
+    </view>
+    <text class="title">{{currentQuestion.question}}</text>
+    <text class="subtitle">保持网站原有的 28 题结构，每题提供 3 个适合移动端快速作答的选项。</text>
+  </view>
+
+  <view class="stack quiz-stage {{transitionClass}}">
+    <button wx:for="{{currentQuestion.options}}" wx:key="text" class="button-secondary quiz-option" data-value="{{item.value}}" bindtap="chooseOption">
+      {{item.text}}
+    </button>
+  </view>
+
+  <view class="row">
+    <button class="button-ghost" bindtap="previousQuestion">上一题 / 返回修改</button>
+    <button class="button-ghost" bindtap="skipToUpload">回到上传页</button>
+  </view>
+</view>

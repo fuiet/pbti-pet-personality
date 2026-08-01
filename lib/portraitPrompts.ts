@@ -12,8 +12,8 @@ export type PortraitRequestContext = {
   petName: string;
   species: "cat" | "dog";
   gender?: "male" | "female" | null;
-  pbtiCode: string;
-  personalityName: string;
+  pbtiCode?: string;
+  personalityName?: string;
   visualProfile?: PetVisualProfile | null;
   ownerIncluded?: boolean;
   customPrompt?: string | null;
@@ -394,7 +394,9 @@ function templateExpressionDirection(templateId: string, species: "cat" | "dog")
   ].join(" ");
 }
 
-function personalityExpressionDirection(pbtiCode: string, personalityName: string) {
+function personalityExpressionDirection(pbtiCode?: string, personalityName?: string) {
+  if (!pbtiCode || !personalityName) return "";
+
   const tone = PERSONALITY_EXPRESSION[pbtiCode];
   if (tone) {
     return [
@@ -410,7 +412,7 @@ function personalityExpressionDirection(pbtiCode: string, personalityName: strin
   ].join(" ");
 }
 
-function expressionEnhancement(kind: PromptKind, templateId: string, species: "cat" | "dog", pbtiCode: string, personalityName: string, profile?: PetVisualProfile | null) {
+function expressionEnhancement(kind: PromptKind, templateId: string, species: "cat" | "dog", pbtiCode?: string, personalityName?: string, profile?: PetVisualProfile | null) {
   const profileHint = profile
     ? `Use the visible face cues from the references as the identity anchor: eyes ${profile.face.eyeExpression}, ears ${profile.face.earPosition}, muzzle ${profile.face.muzzleShape}.`
     : "Use the visible face cues from the uploaded photos as the identity anchor.";
@@ -421,7 +423,7 @@ function expressionEnhancement(kind: PromptKind, templateId: string, species: "c
     templateExpressionDirection(templateId, species),
     personalityExpressionDirection(pbtiCode, personalityName),
     profileHint,
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 }
 
 function pickTemplate(kind: PromptKind, gender?: "male" | "female" | null) {
@@ -484,7 +486,9 @@ export function buildPortraitPrompt(style: PortraitStyle, context: PortraitReque
   const kind = kindFromStyleId(style.id);
   const studioTemplate = findPortraitStudioTemplateByStyleId(style.id);
   const template = studioTemplate ? promptTemplateFromStudioTemplate(studioTemplate) : pickTemplate(kind, context.gender);
-  const personalityWardrobe = PERSONALITY_WARDROBE[context.pbtiCode] || "safe contemporary pet styling matched to the assigned personality while keeping the pet comfortable and recognizable.";
+  const personalityWardrobe = context.pbtiCode
+    ? PERSONALITY_WARDROBE[context.pbtiCode] || "safe contemporary pet styling matched to the assigned personality while keeping the pet comfortable and recognizable."
+    : "";
   const ownerIncluded = Boolean(context.ownerIncluded || studioTemplate?.mode === "duo");
   const customPrompt = typeof context.customPrompt === "string" ? context.customPrompt.trim() : "";
 
@@ -499,26 +503,15 @@ export function buildPortraitPrompt(style: PortraitStyle, context: PortraitReque
     studioTemplate
       ? `Use the selected built-in template as the direct generation target. Recreate its exact scene logic, camera distance, composition, wardrobe language, prop logic, and emotional mood, but replace the original example pet completely with the uploaded ${context.species}. ${template.direction}`
       : `Use this art direction exactly, replacing any generic pet with the uploaded ${context.species}: ${template.direction}`,
-    `Personality reference for styling: ${context.pbtiCode} / ${context.personalityName}. If the template allows wardrobe choice, prefer ${personalityWardrobe}`,
+    context.pbtiCode && context.personalityName
+      ? `Personality reference for styling: ${context.pbtiCode} / ${context.personalityName}. If the template allows wardrobe choice, prefer ${personalityWardrobe}`
+      : "",
     customPrompt ? `Additional user refinements to honor when they do not conflict with identity lock or template structure: ${customPrompt}` : "",
     compositionRules(kind),
     UNIVERSAL_NO_TEXT.replace("__PET_NAME__", context.petName),
     `Pet name for website typography only: ${context.petName}.`,
     ownerIncluded ? DUO_NEGATIVE_PROMPT : NEGATIVE_PROMPT,
-  ].join("\n\n");
-}
-
-export function choosePortraitStyles(count = 3, random = Math.random) {
-  const pool = [...PORTRAIT_STYLES];
-  const selected: PortraitStyle[] = [];
-
-  while (selected.length < Math.min(count, pool.length)) {
-    const index = Math.floor(random() * pool.length);
-    const [style] = pool.splice(index, 1);
-    if (style) selected.push(style);
-  }
-
-  return selected;
+  ].filter(Boolean).join("\n\n");
 }
 
 export function choosePortraitStylesForPet(petId: string, count = 3) {

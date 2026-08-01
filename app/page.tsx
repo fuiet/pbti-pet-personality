@@ -151,7 +151,7 @@ const PersonalityShowcaseCard = ({ species, code, name, desc, tint }: { species:
       />
     </div>
     <div className="p-5 text-center">
-      <div className="text-2xl font-black tracking-[.08em] text-[#171514]">{code}</div>
+      <div translate="no" className="notranslate text-2xl font-black tracking-[.08em] text-[#171514]">{code}</div>
       <div className="mt-1 text-sm font-black text-[#7a6d63]">{name}</div>
       <div className="mt-1 text-xs text-[#9a8a7d]">{desc}</div>
     </div>
@@ -219,16 +219,51 @@ const faqItems = [
   { q: "Can I create profiles for more than one pet?", qZh: "家里有多只宠物怎么办？", a: "Create a separate profile and answer the assessment independently for each pet. Do not combine the behavior of several animals into one result.", aZh: "请为每只宠物分别建立档案并独立作答，不要把多只宠物的表现混合在同一份测试中。" },
 ] as const;
 
+type HomeFeedback = {
+  name: string;
+  petName: string;
+  species: "cat" | "dog";
+  rating: number;
+  message: string;
+};
+
+const emptyFeedback: HomeFeedback = {
+  name: "",
+  petName: "",
+  species: "cat",
+  rating: 5,
+  message: "",
+};
+
+function parseSavedFeedback(value: string): HomeFeedback[] {
+  const parsed: unknown = JSON.parse(value);
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+    .map((item) => ({
+      name: typeof item.name === "string" ? item.name.slice(0, 40) : "",
+      petName: typeof item.petName === "string" ? item.petName.slice(0, 40) : "",
+      species: item.species === "dog" ? "dog" as const : "cat" as const,
+      rating: Number.isInteger(item.rating) && Number(item.rating) >= 1 && Number(item.rating) <= 5
+        ? Number(item.rating)
+        : 5,
+      message: typeof item.message === "string" ? item.message.slice(0, 500) : "",
+    }))
+    .filter((item) => item.name.length > 0 && item.petName.length > 0 && item.message.length >= 10)
+    .slice(0, 6);
+}
+
 function StoriesAndFaq({ zh }: { zh: boolean }) {
-  const [feedback, setFeedback] = useState({ name: "", petName: "", species: "cat", rating: 5, message: "" });
-  const [savedFeedback, setSavedFeedback] = useState<typeof feedback[]>([]);
+  const [feedback, setFeedback] = useState<HomeFeedback>(emptyFeedback);
+  const [savedFeedback, setSavedFeedback] = useState<HomeFeedback[]>([]);
   const [feedbackSent, setFeedbackSent] = useState(false);
-  const [assessmentCount, setAssessmentCount] = useState(12847);
+  const [assessmentCount, setAssessmentCount] = useState<number | null>(null);
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("pbti-home-feedback");
-      if (saved) setSavedFeedback(JSON.parse(saved));
+      if (saved) setSavedFeedback(parseSavedFeedback(saved));
     } catch {
       // A private browsing policy may disable local storage; the form still works for this visit.
     }
@@ -240,9 +275,9 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
         const { data } = await createSupabaseBrowserClient().rpc("get_public_pbti_stats");
         const stats = data as { assessment_count?: number | string }[] | { assessment_count?: number | string } | null;
         const count = Array.isArray(stats) ? Number(stats[0]?.assessment_count) : Number(stats?.assessment_count);
-        if (Number.isFinite(count) && count >= 12847) setAssessmentCount(count);
+        if (Number.isFinite(count) && count >= 0) setAssessmentCount(count);
       } catch {
-        // Keep the launch baseline when the public counter migration is not available yet.
+        // The counter is optional; do not invent a fallback metric when it is unavailable.
       }
     })();
   }, []);
@@ -252,7 +287,7 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
     const next = [feedback, ...savedFeedback].slice(0, 6);
     setSavedFeedback(next);
     setFeedbackSent(true);
-    setFeedback({ name: "", petName: "", species: "cat", rating: 5, message: "" });
+    setFeedback(emptyFeedback);
     try {
       window.localStorage.setItem("pbti-home-feedback", JSON.stringify(next));
     } catch {
@@ -284,12 +319,12 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
           </div>
           <div className="mt-8 grid overflow-hidden rounded-[1.8rem] border border-[#f0dfc8] bg-gradient-to-r from-[#fff7e8] to-[#f2fff8] sm:grid-cols-3">
             {[
-              [assessmentCount.toLocaleString(zh ? "zh-CN" : "en-US"), zh ? "累计完成评估" : "Assessments completed"],
-              ["98%", zh ? "满意度" : "Satisfaction"],
-              [(assessmentCount * 28).toLocaleString(zh ? "zh-CN" : "en-US"), zh ? "行为数据点" : "Behavior data points"],
+              [assessmentCount === null ? "—" : assessmentCount.toLocaleString(zh ? "zh-CN" : "en-US"), zh ? "累计完成评估" : "Assessments completed"],
+              ["28", zh ? "每份评估题数" : "Questions per assessment"],
+              [assessmentCount === null ? "—" : (assessmentCount * 28).toLocaleString(zh ? "zh-CN" : "en-US"), zh ? "行为数据点" : "Behavior data points"],
             ].map(([value, label]) => <div key={label} className="border-b border-[#f0dfc8] px-6 py-7 text-center last:border-0 sm:border-b-0 sm:border-r sm:last:border-r-0"><div className="text-3xl font-black tracking-tight text-[#ff6b00]">{value}</div><div className="mt-1 text-xs font-bold text-[#655a51]">{label}</div></div>)}
           </div>
-          <p className="mt-3 text-center text-[11px] text-[#aa9d93]">{zh ? "累计评估以 12,847 为上线基准，之后随新完成的真实测试自动增加。" : "Assessment totals start from the 12,847 launch baseline and increase with newly completed assessments."}</p>
+          <p className="mt-3 text-center text-[11px] text-[#aa9d93]">{zh ? "累计评估和行为数据点仅根据真实完成的测试自动统计。" : "Assessment totals and behavior data points are calculated only from completed assessments."}</p>
 
           <div className="mt-16 overflow-hidden rounded-[2rem] border border-[#eaded2] bg-[#171514] text-white shadow-[0_28px_80px_rgba(52,34,20,.14)]">
             <div className="grid lg:grid-cols-[.9fr_1.1fr]">
@@ -313,7 +348,7 @@ function StoriesAndFaq({ zh }: { zh: boolean }) {
               <form onSubmit={submitFeedback} className="grid gap-5 bg-[#fffaf5] p-8 text-[#2f2925] sm:grid-cols-2 lg:p-10">
                 <label className="text-sm font-bold">{zh ? "你的称呼" : "Your name"}<input required maxLength={40} value={feedback.name} onChange={(event) => setFeedback({ ...feedback, name: event.target.value })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none transition focus:border-[#ff7a1a] focus:ring-4 focus:ring-[#ff7a1a]/10" placeholder={zh ? "例如：林晴" : "e.g. Emma"} /></label>
                 <label className="text-sm font-bold">{zh ? "爱宠名字" : "Pet's name"}<input required maxLength={40} value={feedback.petName} onChange={(event) => setFeedback({ ...feedback, petName: event.target.value })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none transition focus:border-[#ff7a1a] focus:ring-4 focus:ring-[#ff7a1a]/10" placeholder={zh ? "例如：麻薯" : "e.g. Mochi"} /></label>
-                <label className="text-sm font-bold">{zh ? "物种" : "Species"}<select value={feedback.species} onChange={(event) => setFeedback({ ...feedback, species: event.target.value })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none focus:border-[#ff7a1a]"><option value="cat">{zh ? "猫" : "Cat"}</option><option value="dog">{zh ? "狗" : "Dog"}</option></select></label>
+                <label className="text-sm font-bold">{zh ? "物种" : "Species"}<select value={feedback.species} onChange={(event) => setFeedback({ ...feedback, species: event.target.value === "dog" ? "dog" : "cat" })} className="mt-2 w-full rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium outline-none focus:border-[#ff7a1a]"><option value="cat">{zh ? "猫" : "Cat"}</option><option value="dog">{zh ? "狗" : "Dog"}</option></select></label>
                 <fieldset><legend className="text-sm font-bold">{zh ? "评分" : "Rating"}</legend><div className="mt-2 flex h-[50px] items-center gap-1 rounded-2xl border border-[#e8d8ca] bg-white px-3">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" onClick={() => setFeedback({ ...feedback, rating })} className={`px-1 text-2xl transition hover:scale-110 ${rating <= feedback.rating ? "text-[#ffad00]" : "text-[#d9cec5]"}`} aria-label={`${rating} ${zh ? "星" : "stars"}`}>★</button>)}</div></fieldset>
                 <label className="text-sm font-bold sm:col-span-2">{zh ? "你的反馈" : "Your feedback"}<textarea required minLength={10} maxLength={500} rows={4} value={feedback.message} onChange={(event) => setFeedback({ ...feedback, message: event.target.value })} className="mt-2 w-full resize-none rounded-2xl border border-[#e8d8ca] bg-white px-4 py-3 font-medium leading-6 outline-none transition focus:border-[#ff7a1a] focus:ring-4 focus:ring-[#ff7a1a]/10" placeholder={zh ? "哪些内容让你更了解它？还有什么可以做得更好？" : "What helped you understand your pet, and what could be better?"} /></label>
                 <div className="flex items-center justify-between gap-4 sm:col-span-2"><span className="text-xs text-[#8a7c72]">{feedback.message.length}/500</span><button type="submit" className="rounded-full bg-[#ff6f12] px-7 py-3 text-sm font-black text-white shadow-[0_12px_30px_rgba(255,111,18,.25)] transition hover:-translate-y-0.5 hover:bg-[#e85e06]">{zh ? "提交评价" : "Submit review"}</button></div>
@@ -521,7 +556,7 @@ export default function Home() {
         </nav>
       </header>
 
-      <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-16 lg:min-h-[700px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-[minmax(720px,0.95fr)_minmax(360px,0.65fr)]">
+      <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-10 max-lg:gap-8 lg:min-h-[700px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-[minmax(720px,0.95fr)_minmax(360px,0.65fr)] lg:pt-16">
         <div className="relative z-10">
           <h1 className={`max-w-3xl font-black leading-[.92] text-[#171514] ${language === "zh-CN" ? "text-[48px] tracking-[-.055em] md:text-[64px]" : "text-[54px] tracking-[-.07em] md:text-[78px]"}`}>
             {t("home.hero.title")}
@@ -551,6 +586,7 @@ export default function Home() {
               {t("home.cta.types")}
             </Link>
           </div>
+          <p className="mt-3 text-xs font-bold text-[#9a8d83]">{language === "zh-CN" ? "无需登录，先完成测试；想保存完整报告时再登录。" : "No sign-in needed to start. Sign in only when you want to save the full report."}</p>
           <div className="mt-10 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
             {localizedHeroStats.map((item) => (
               <article key={item.title} className="group min-h-[136px] rounded-[1.65rem] border border-[#eaded2] bg-white/92 p-5 shadow-[0_16px_34px_rgba(52,34,20,.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(52,34,20,.1)]">
@@ -571,11 +607,11 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative flex min-h-[560px] items-center justify-center lg:min-h-[640px]">
+        <div className="relative flex min-h-[260px] items-start justify-center max-lg:-mt-3 lg:min-h-[640px] lg:items-center">
           <img
             src="/hero-pets.png?v=2"
             alt="A happy cat and dog together wearing PBTI tags"
-            className="relative z-10 h-auto w-[200%] max-w-[1320px] object-contain drop-shadow-[0_28px_58px_rgba(52,34,20,.18)] lg:w-[220%] lg:max-w-[1540px]"
+            className="relative z-10 h-auto w-[130%] max-w-[1320px] object-contain drop-shadow-[0_28px_58px_rgba(52,34,20,.18)] lg:w-[220%] lg:max-w-[1540px]"
           />
         </div>
       </section>
@@ -673,7 +709,7 @@ export default function Home() {
             <h2 className="text-4xl font-black tracking-[-.04em]">{language === "zh-CN" ? "性格类型" : "Personality types"}</h2>
             <p className="mt-3 text-[#655a51]">{language === "zh-CN" ? "猫咪和狗狗共享同一套 12 种性格名称与四字母代码，并会自动使用对应物种的素材。" : "The same 12 personality names and four-letter codes are shared by cats and dogs, with species-specific artwork used automatically."}</p>
           </div>
-          <Link href="/quiz" className="hidden text-sm font-black text-[#ff7a1a] sm:block">{language === "zh-CN" ? "开始测试" : "Try the quiz"}</Link>
+          <Link href="/create" className="hidden text-sm font-black text-[#ff7a1a] sm:block">{language === "zh-CN" ? "开始测试" : "Try the quiz"}</Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {catPersonalityTypes.map((personality) => {

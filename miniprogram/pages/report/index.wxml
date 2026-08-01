@@ -1,0 +1,23 @@
+<view class="screen stack" wx:if="{{payload}}">
+  <view class="card hero-card stack report-hero">
+    <image class="report-hero-image" src="{{heroImages.logoTransparent}}" mode="aspectFit" />
+    <text class="pill">{{payload.result.code}}</text>
+    <text class="title">{{payload.result.personality.name}} 的测试报告</text>
+    <text class="subtitle">{{payload.result.personality.title}}</text>
+    <text class="muted">{{payload.result.personality.description}}</text>
+    <view class="row">
+      <button class="button-secondary" open-type="share">分享报告</button>
+      <button class="button-ghost" bindtap="deleteReport">删除报告</button>
+    </view>
+  </view>
+
+  <view wx:for="{{chapters}}" wx:key="title" class="card stack">
+    <text class="section-title">{{item.title}}</text>
+    <text class="muted">{{item.body}}</text>
+  </view>
+
+  <view class="card stack report-warning">
+    <text class="section-title">重要说明</text>
+    <text class="muted">本服务提供参考性的宠物外观识别与性格观察总结，不替代兽医诊断，也不用作血统、交易或法律判断。</text>
+  </view>
+</view>

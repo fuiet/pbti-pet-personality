@@ -1,6 +1,6 @@
-export type CatTrait = "A" | "I" | "E" | "S" | "V" | "C" | "P" | "G";
+type CatTrait = "A" | "I" | "E" | "S" | "V" | "C" | "P" | "G";
 
-export interface Question {
+interface Question {
   id: number;
   dimension: string;
   question: string;

@@ -37,18 +37,18 @@ export interface PetReport {
   visualAnalysis?: PetVisualProfile | null;
 }
 
-export interface ReportSection {
+interface ReportSection {
   title: string;
   body: string;
 }
 
-export interface ReportRecommendation {
+interface ReportRecommendation {
   title: string;
   detail: string;
   basis?: string;
 }
 
-export const modelBoundary = [
+const modelBoundary = [
   "The four behavior dimensions and twelve personality prototypes are custom PBTI definitions informed by published research; they are not a reproduction of Feline Five or C-BARQ.",
   "Prototype Fit Index is a similarity score against a hand-defined prototype, not a statistical probability, clinical confidence, or diagnosis.",
   "Photo analysis describes visible appearance only. It cannot establish ancestry, health, intelligence, aggression, or real personality from a photo.",
@@ -221,5 +221,3 @@ export function generatePetReport(input: ReportInput): PetReport {
     visualAnalysis: input.visualProfile || null,
   };
 }
-
-export { researchBasis };

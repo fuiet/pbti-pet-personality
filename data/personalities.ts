@@ -9,11 +9,6 @@ export interface Personality {
   modelCue: string;
 }
 
-export interface PersonalityShowcaseItem {
-  name: string;
-  blurb: string;
-}
-
 export const defaultPersonalityCode = "ASVG";
 
 const twelvePersonalities: Record<string, Personality> = {
@@ -138,11 +133,6 @@ const twelvePersonalities: Record<string, Personality> = {
     modelCue: "High Independence and Composure.",
   },
 };
-
-export const personalityShowcase: PersonalityShowcaseItem[] = Object.values(twelvePersonalities).map((personality) => ({
-  name: personality.name,
-  blurb: personality.description,
-}));
 
 export const personalities: Record<string, Personality> = {
   ASVG: twelvePersonalities.GUARDIAN,

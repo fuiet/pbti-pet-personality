@@ -1,0 +1,69 @@
+<view class="screen stack" wx:if="{{payload}}">
+  <view class="card hero-card stack result-card">
+    <text class="pill">{{payload.result.code}}</text>
+    <text class="title">本次测试结果：{{payload.result.personality.name}}</text>
+    <text class="subtitle">{{payload.result.personality.title}}</text>
+    <text class="muted">{{payload.result.personality.description}}</text>
+
+    <button class="result-primary" bindtap="unlockReport">查看完整报告</button>
+
+    <view class="result-stats">
+      <view wx:for="{{scoreHighlights}}" wx:key="label" class="result-stat">
+        <text class="result-stat-value">{{item.label}}</text>
+        <text class="result-stat-text">{{item.text}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">结果摘要免费可见</text>
+    <text class="muted">完整 10 章节报告与 AI 写真入口保留在这里，后续可继续扩展成更完整的分享卡和内容页。</text>
+    <view class="stack">
+      <text wx:for="{{previewChapters}}" wx:key="*this" class="muted">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="share-card">
+    <view class="share-card-inner">
+      <view class="share-top">
+        <image class="share-hero" src="{{heroImages.logoTransparent}}" mode="aspectFit" />
+        <text class="share-tag">PBTI 宠物性格测试</text>
+      </view>
+      <view class="share-visual">
+        <view class="share-badge">
+          <text class="share-code">{{payload.result.code}}</text>
+        </view>
+        <text class="share-title">{{payload.result.personality.name}}</text>
+        <text class="share-desc">通过 28 个行为题识别性格类型，并生成 10 章节完整报告，适合直接转发分享。</text>
+      </view>
+      <view class="share-divider"></view>
+      <view class="share-footer">
+        <view>
+          <text class="share-brand">PBTI</text>
+          <text class="share-note">Read its personality, love better.</text>
+        </view>
+        <view class="share-mini">
+          <text class="share-mini-value">28</text>
+          <text class="share-mini-text">题测评</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">分享这次测试</text>
+    <text class="muted">{{shareSummary}}</text>
+    <view class="row">
+      <button class="button-secondary" open-type="share">分享给朋友</button>
+      <button class="button-ghost" bindtap="restartTest">重新测试</button>
+    </view>
+    <button class="button-ghost" bindtap="saveShareImage">保存分享海报</button>
+  </view>
+
+  <view class="card ad-shell">
+    <ad unit-id="adunit-banner-placeholder"></ad>
+  </view>
+
+  <button class="button-primary" bindtap="openPortraits">进入 AI 写真页</button>
+  <button class="button-ghost" bindtap="backToUpload">返回修改上传照片</button>
+</view>

@@ -40,7 +40,7 @@ export default function AccountPage() {
 
     let active = true;
 
-    Promise.all([listCurrentUserResults(), listCurrentUserPortraits()])
+    Promise.all([listCurrentUserResults(), listCurrentUserPortraits(6)])
       .then(([results, savedPortraits]) => {
         if (active) {
           setRecords(results);
@@ -219,16 +219,19 @@ export default function AccountPage() {
               </Link>
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
-              {portraits.slice(0, 6).map((portrait) => (
+              {portraits.map((portrait) => {
+                const portraitSpecies = portrait.subject_species || portrait.pet?.species;
+                return (
                 <a key={portrait.id} href={portrait.image_url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-2xl border border-white/10 bg-white/8 transition hover:bg-white/12">
                   <img src={portrait.image_url} alt={`${portrait.style_name} portrait`} className="aspect-[4/5] w-full object-cover transition group-hover:scale-[1.02]" />
                   <div className="p-3">
-                    <div className="text-sm font-black text-white">{portrait.pet?.name || (zh ? "已保存宠物" : "Saved pet")}</div>
-                    <div className="mt-1 text-xs font-bold text-white/58">{portrait.pet?.species === "dog" ? "Dog" : "Cat"} · {portrait.style_name}</div>
+                    <div className="text-sm font-black text-white">{portrait.subject_name || portrait.pet?.name || (zh ? "已保存作品" : "Saved work")}</div>
+                    <div className="mt-1 text-xs font-bold text-white/58">{portraitSpecies ? `${portraitSpecies === "dog" ? "Dog" : "Cat"} · ` : ""}{portrait.style_name}</div>
                   </div>
                 </a>
-              ))}
-              {portraits.length === 0 ? <div className="rounded-2xl border border-white/10 bg-white/8 p-4 text-sm text-white/64 sm:col-span-3 lg:col-span-2">{zh ? "还没有写真。打开一份报告后，系统会自动生成三张专属写真。" : "No generated portraits yet. Open a report to create your first three."}</div> : null}
+                );
+              })}
+              {portraits.length === 0 ? <div className="rounded-2xl border border-white/10 bg-white/8 p-4 text-sm text-white/64 sm:col-span-3 lg:col-span-2">{zh ? "还没有写真作品。你可以从写真工作台开始第一次创作。" : "No generated portraits yet. Open the studio to create your first work."}</div> : null}
             </div>
           </section>
 

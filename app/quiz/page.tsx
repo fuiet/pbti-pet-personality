@@ -7,7 +7,7 @@ import { getPersonalityAsset } from "@/data/personalityAssets";
 import { dogQuestions } from "@/data/dogQuestions";
 import { calculatePBTI, type Trait } from "@/lib/pbtiEngine";
 import { getLatestPetRecord, getPetRecord, savePersonalityResult, type PetRecord } from "@/lib/pbtiRecords";
-import { useRequireAuth } from "@/lib/useRequireAuth";
+import { readGuestTest, updateGuestAnswers } from "@/lib/guestTest";
 import { useLanguage } from "@/components/LanguageProvider";
 import { localizeQuestions } from "@/data/zhQuestions";
 
@@ -72,7 +72,6 @@ export default function QuizPage() {
     "V/C": "观察爱宠表达兴奋、需求和情绪能量的方式。",
     "P/G": "观察爱宠如何在玩耍互动与警觉守护之间取得平衡。",
   } : signalDescriptions;
-  const { loading: authLoading } = useRequireAuth();
   const [pet, setPet] = useState<PetRecord | null>(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Trait[]>([]);
@@ -82,14 +81,14 @@ export default function QuizPage() {
   const [quizError, setQuizError] = useState("");
 
   useEffect(() => {
-    if (authLoading) return;
-
     let active = true;
     const petId = getPetIdFromLocation();
+    const isGuest = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("guest") === "1";
 
     async function loadPet() {
       try {
-        const record = petId ? await getPetRecord(petId) : await getLatestPetRecord();
+        const guestState = isGuest ? readGuestTest() : null;
+        const record = isGuest ? guestState?.pet || null : petId ? await getPetRecord(petId) : await getLatestPetRecord();
 
         if (!active) return;
 
@@ -99,6 +98,7 @@ export default function QuizPage() {
         }
 
         setPet(record);
+        setAnswers(guestState?.answers || []);
       } catch {
         if (active) {
           router.replace("/create");
@@ -115,7 +115,7 @@ export default function QuizPage() {
     return () => {
       active = false;
     };
-  }, [authLoading, router]);
+  }, [router]);
 
   const questions = useMemo(
     () => localizeQuestions(pet?.species === "dog" ? dogQuestions : catQuestions, zh),
@@ -156,6 +156,9 @@ export default function QuizPage() {
         const next = [...answers];
         next[current] = value as Trait;
         setAnswers(next);
+        if (pet.id === "guest") {
+          updateGuestAnswers(next);
+        }
 
         if (current < questions.length - 1) {
           setCurrent(current + 1);
@@ -167,6 +170,10 @@ export default function QuizPage() {
 
         try {
           const result = calculatePBTI(next);
+          if (pet.id === "guest") {
+            router.push("/result?guest=1");
+            return;
+          }
           const saved = await savePersonalityResult(pet, result, next);
           router.push(`/report/${saved.pbti_id}/preparing`);
         } catch (error) {
@@ -194,7 +201,7 @@ export default function QuizPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [currentQuestion?.options, goBack, router, select]);
 
-  if (authLoading || loadingPet || !pet) {
+  if (loadingPet || !pet) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
@@ -381,7 +388,7 @@ export default function QuizPage() {
           <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-center shadow-[0_30px_90px_rgba(0,0,0,.22)]">
             <div className="mx-auto h-12 w-12 rounded-full border-4 border-[#fff0e4] border-t-[#ff7a1a] animate-spin" />
             <h2 className="mt-6 text-3xl font-black tracking-[-.05em] text-[#171514]">{zh ? "测试完成" : "Assessment complete"}</h2>
-            <p className="mt-3 text-sm leading-6 text-[#7a6d63]">{zh ? "正在生成并保存爱宠的 PBTI 报告…" : "Generating your PBTI result and saved report..."}</p>
+            <p className="mt-3 text-sm leading-6 text-[#7a6d63]">{pet.id === "guest" ? (zh ? "正在生成你的结果摘要…" : "Generating your result summary...") : (zh ? "正在生成并保存爱宠的 PBTI 报告…" : "Generating your PBTI result and saved report...")}</p>
           </div>
         </div>
       ) : null}

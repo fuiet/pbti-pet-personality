@@ -42,7 +42,9 @@ export interface PetProfileInput {
 }
 export interface PetPortraitRecord {
   id: string;
-  pet_id: string;
+  pet_id: string | null;
+  subject_name?: string | null;
+  subject_species?: "cat" | "dog" | null;
   style_id: string;
   style_name: string;
   image_url: string;
@@ -73,6 +75,10 @@ interface RawVisualProfileRecord {
   created_at: string;
 }
 
+interface QueryResponse {
+  data: unknown;
+  error: { message: string } | null;
+}
 
 const PET_COLUMNS_FULL = "id,user_id,name,species,breed,age,photo_url,photo_urls,created_at";
 const PET_COLUMNS_NO_AGE = "id,user_id,name,species,breed,photo_url,created_at";
@@ -140,7 +146,7 @@ function normalizePetRow(row: PetRecord): PetRecord {
     age: row.age ?? null,
     gender: row.gender ?? null,
     photo_url: row.photo_url ?? null,
-    photo_urls: Array.isArray((row as any).photo_urls) ? (row as any).photo_urls.filter(Boolean) : row.photo_url ? [row.photo_url] : [],
+    photo_urls: Array.isArray(row.photo_urls) ? row.photo_urls.filter(Boolean) : row.photo_url ? [row.photo_url] : [],
   };
 }
 
@@ -165,7 +171,7 @@ export async function createPetRecord(profile: PetProfileInput) {
     breed: profile.breed?.trim() || null,
   };
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("pets")
     .insert({
       ...insertPayload,
@@ -205,7 +211,7 @@ export async function getPetRecord(petId: string) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("pets")
     .select(PET_COLUMNS_FULL)
     .eq("id", petId)
@@ -241,7 +247,7 @@ export async function getLatestPetRecord() {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("pets")
     .select(PET_COLUMNS_FULL)
     .eq("user_id", user.id)
@@ -411,7 +417,7 @@ export async function savePersonalityResult(
     user_id: user.id,
   };
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("personality_results")
     .insert({
       ...insertPayload,
@@ -458,7 +464,7 @@ export async function getResultByRecordId(recordId: string) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("personality_results")
     .select(RESULT_COLUMNS_FULL)
     .eq("pbti_id", recordId)
@@ -533,7 +539,7 @@ export async function getLatestResultForCurrentUser() {
     return null;
   }
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("personality_results")
     .select(RESULT_COLUMNS_FULL)
     .in("pet_id", petIds)
@@ -618,7 +624,7 @@ export async function listCurrentUserResults() {
     return [];
   }
 
-  let response: any = await supabase
+  let response: QueryResponse = await supabase
     .from("personality_results")
     .select(RESULT_COLUMNS_FULL)
     .in("pet_id", petIds)
@@ -657,29 +663,52 @@ export async function listCurrentUserResults() {
     .filter((record) => record.pet?.user_id === user.id);
 }
 
-export async function listCurrentUserPortraits(limit?: number) {
+export async function listCurrentUserPortraits(limit?: number, offset = 0) {
   const user = await requireCurrentUser();
   const supabase = createSupabaseBrowserClient();
   let query = supabase
     .from("pet_portraits")
-    .select("id,pet_id,style_id,style_name,image_url,storage_path,created_at,pet:pets(id,name,species)")
+    .select("id,pet_id,subject_name,subject_species,style_id,style_name,image_url,storage_path,created_at,pet:pets(id,name,species)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (typeof limit === "number") {
-    query = query.limit(limit);
+    const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+    const safeOffset = Math.max(0, Math.floor(offset));
+    query = query.range(safeOffset, safeOffset + safeLimit - 1);
   }
 
-  const { data, error } = await query;
+  let { data, error } = await query;
 
   if (error) {
     const message = error.message?.toLowerCase() || "";
-    if (error.code === "42P01" || message.includes("pet_portraits") || message.includes("schema cache")) return [];
-    throw new Error(error.message);
+    if (message.includes("subject_name") || message.includes("subject_species")) {
+      let fallbackQuery = supabase
+        .from("pet_portraits")
+        .select("id,pet_id,style_id,style_name,image_url,storage_path,created_at,pet:pets(id,name,species)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (typeof limit === "number") {
+        const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+        const safeOffset = Math.max(0, Math.floor(offset));
+        fallbackQuery = fallbackQuery.range(safeOffset, safeOffset + safeLimit - 1);
+      }
+      const fallback = await fallbackQuery;
+      data = fallback.data as typeof data;
+      error = fallback.error;
+    } else if (error.code === "42P01" || (message.includes("pet_portraits") && message.includes("does not exist"))) {
+      return [];
+    }
+    if (error) throw new Error(error.message);
   }
 
-  return (data || []).map((row) => ({
-    ...row,
-    pet: Array.isArray(row.pet) ? row.pet[0] || null : row.pet || null,
-  })) as PetPortraitRecord[];
+  return (data || []).map((row) => {
+    const pet = (Array.isArray(row.pet) ? row.pet[0] : row.pet) as PetPortraitRecord["pet"];
+    return {
+      ...row,
+      subject_name: row.subject_name || pet?.name || null,
+      subject_species: row.subject_species || pet?.species || null,
+      pet: pet || null,
+    };
+  }) as PetPortraitRecord[];
 }

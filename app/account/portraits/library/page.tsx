@@ -6,6 +6,8 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { listCurrentUserPortraits, type PetPortraitRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
+const PAGE_SIZE = 24;
+
 type PortraitDeleteTarget = {
   id: string;
   title: string;
@@ -50,6 +52,9 @@ export default function AccountPortraitLibraryPage() {
   const { loading: authLoading } = useRequireAuth();
   const [portraits, setPortraits] = useState<PetPortraitRecord[]>([]);
   const [loadingPortraits, setLoadingPortraits] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<PortraitDeleteTarget | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [deleteNotice, setDeleteNotice] = useState("");
@@ -59,9 +64,13 @@ export default function AccountPortraitLibraryPage() {
     if (authLoading) return;
     let active = true;
 
-    listCurrentUserPortraits()
+    listCurrentUserPortraits(PAGE_SIZE)
       .then((items) => {
-        if (active) setPortraits(items);
+        if (active) {
+          setPortraits(items);
+          setNextOffset(items.length);
+          setHasMore(items.length === PAGE_SIZE);
+        }
       })
       .catch(() => {
         if (active) setPortraits([]);
@@ -74,6 +83,25 @@ export default function AccountPortraitLibraryPage() {
       active = false;
     };
   }, [authLoading]);
+
+  async function loadMorePortraits() {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const items = await listCurrentUserPortraits(PAGE_SIZE, nextOffset);
+      setPortraits((current) => {
+        const knownIds = new Set(current.map((portrait) => portrait.id));
+        return [...current, ...items.filter((portrait) => !knownIds.has(portrait.id))];
+      });
+      setNextOffset((current) => current + items.length);
+      setHasMore(items.length === PAGE_SIZE);
+    } catch {
+      setDeleteError(zh ? "暂时无法加载更多作品，请稍后重试。" : "Unable to load more portraits right now.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const groupedPortraits = useMemo<PortraitGroup[]>(() => {
     const avatar = portraits.filter((portrait) => classifyPortrait(portrait) === "avatar");
@@ -179,7 +207,7 @@ export default function AccountPortraitLibraryPage() {
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-base font-black text-[#171514]">{portrait.pet?.name || (zh ? "已保存作品" : "Saved work")}</h3>
+                            <h3 className="text-base font-black text-[#171514]">{portrait.subject_name || portrait.pet?.name || (zh ? "已保存作品" : "Saved work")}</h3>
                             <p className="mt-1 text-xs font-bold text-[#8c7d72]">{portrait.style_name}</p>
                           </div>
                           <span className="rounded-full bg-[#fff0e4] px-3 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[#d96612]">
@@ -196,7 +224,7 @@ export default function AccountPortraitLibraryPage() {
                               setDeleteError("");
                               setDeleteTarget({
                                 id: portrait.id,
-                                title: portrait.pet?.name || (zh ? "这张作品" : "This work"),
+                                title: portrait.subject_name || portrait.pet?.name || (zh ? "这张作品" : "This work"),
                                 styleName: portrait.style_name,
                               });
                             }}
@@ -212,6 +240,18 @@ export default function AccountPortraitLibraryPage() {
               )}
             </section>
           ))}
+          {hasMore ? (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={loadMorePortraits}
+                disabled={loadingMore}
+                className="rounded-full border border-[#eaded2] bg-white px-7 py-3 text-sm font-black text-[#4f463f] transition hover:bg-[#fff7ed] disabled:cursor-wait disabled:opacity-60"
+              >
+                {loadingMore ? (zh ? "正在加载..." : "Loading...") : (zh ? "加载更多作品" : "Load more portraits")}
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
 

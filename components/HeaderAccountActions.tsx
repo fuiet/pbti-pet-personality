@@ -33,9 +33,15 @@ export default function HeaderAccountActions() {
   }, [pathname]);
 
   async function handleSignOut() {
-    await signOut();
-    setUser(null);
-    router.push("/login");
+    try {
+      await signOut();
+    } catch {
+      // Local credentials are cleared even when the remote sign-out request fails.
+    } finally {
+      setUser(null);
+      router.push("/login");
+      router.refresh();
+    }
   }
 
   return (

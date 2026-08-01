@@ -1,0 +1,57 @@
+<view class="screen home-page">
+  <view class="hero-card">
+    <image class="hero-image" src="{{heroImages.heroPets}}" mode="aspectFit" />
+    <text class="hero-kicker">宠物行为性格测试</text>
+    <text class="hero-title">读懂它的性格，把爱给得更准确</text>
+    <text class="hero-desc">通过 28 个日常行为问题，发现猫咪或狗狗的 PBTI 性格类型，并获得专属相处建议。</text>
+    <button class="hero-button" bindtap="goUpload">开始免费测试</button>
+    <view class="hero-metrics">
+      <view class="metric">
+        <text class="metric-value">28</text>
+        <text class="metric-label">道行为题</text>
+      </view>
+      <view class="metric">
+        <text class="metric-value">12</text>
+        <text class="metric-label">种性格</text>
+      </view>
+      <view class="metric">
+        <text class="metric-value">10</text>
+        <text class="metric-label">章报告</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="feature-strip">
+    <view class="feature-card">
+      <text class="feature-title">1. 宠物性格测试</text>
+      <text class="feature-desc">28 题测出 PBTI 类型</text>
+    </view>
+    <view class="feature-card">
+      <text class="feature-title">2. 宠物鉴定</text>
+      <text class="feature-desc">三图识别宠物外观特征</text>
+    </view>
+    <view class="feature-card">
+      <text class="feature-title">3. AI 写真</text>
+      <text class="feature-desc">生成头像与海报级写真</text>
+    </view>
+  </view>
+
+  <view class="types-section">
+    <view class="section-head">
+      <text class="section-title">12 种宠物性格</text>
+      <text class="section-sub">统一图文排版，保证卡片整洁可读。</text>
+    </view>
+    <view class="types-grid">
+      <view wx:for="{{personalityCards}}" wx:key="code" class="type-card">
+        <view class="type-image-shell">
+          <image class="type-image" src="{{item.image}}" mode="aspectFit" />
+        </view>
+        <view class="type-meta">
+          <text class="type-index">{{item.index}}</text>
+          <text class="type-code">{{item.code}}</text>
+        </view>
+        <text class="type-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+</view>

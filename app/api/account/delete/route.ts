@@ -4,10 +4,23 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export const runtime = "edge";
 
 const PORTRAIT_BUCKET = process.env.PBTI_PORTRAIT_BUCKET || "pet-portraits";
+const MAX_REQUEST_BYTES = 10_000;
 
 export async function POST(request: Request) {
   try {
-    const { action, recordId, petId, portraitId } = await request.json();
+    const declaredRequestLength = Number(request.headers.get("content-length") || 0);
+    if (declaredRequestLength > MAX_REQUEST_BYTES) {
+      return NextResponse.json({ error: "The delete request is too large." }, { status: 413 });
+    }
+
+    const body = await request.json() as {
+      action?: unknown;
+      recordId?: unknown;
+      portraitId?: unknown;
+    };
+    const action = body.action;
+    const recordId = typeof body.recordId === "string" ? body.recordId.trim() : "";
+    const portraitId = typeof body.portraitId === "string" ? body.portraitId.trim() : "";
     const supabase = await createSupabaseServerClient();
     const { data: userResult } = await supabase.auth.getUser();
     const user = userResult.user;
@@ -30,53 +43,6 @@ export async function POST(request: Request) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       if (!data) return NextResponse.json({ error: "没有找到这份报告，或者你没有权限。" }, { status: 404 });
       return NextResponse.json({ deleted: "report", id: data.id });
-    }
-
-    if (action === "pet") {
-      if (!petId) return NextResponse.json({ error: "petId 不能为空。" }, { status: 400 });
-
-      const { data: pet, error: petError } = await supabase
-        .from("pets")
-        .select("id")
-        .eq("id", petId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (petError) return NextResponse.json({ error: petError.message }, { status: 500 });
-      if (!pet) return NextResponse.json({ error: "没有找到这只宠物，或者你没有权限。" }, { status: 404 });
-
-      const { data: portraitRows, error: portraitError } = await supabase
-        .from("pet_portraits")
-        .select("storage_path")
-        .eq("pet_id", petId)
-        .eq("user_id", user.id);
-
-      if (portraitError && portraitError.code !== "42P01") {
-        return NextResponse.json({ error: portraitError.message }, { status: 500 });
-      }
-
-      const { data: deletedPet, error: deleteError } = await supabase
-        .from("pets")
-        .delete()
-        .eq("id", petId)
-        .eq("user_id", user.id)
-        .select("id")
-        .maybeSingle();
-
-      if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
-      if (!deletedPet) return NextResponse.json({ error: "宠物档案删除失败。" }, { status: 404 });
-
-      const storagePaths = (portraitRows || [])
-        .map((row) => row.storage_path)
-        .filter((path): path is string => Boolean(path));
-      let storageWarning: string | undefined;
-
-      if (storagePaths.length) {
-        const { error: storageError } = await supabase.storage.from(PORTRAIT_BUCKET).remove(storagePaths);
-        if (storageError) storageWarning = "宠物已删除，但部分写真文件可能需要手动清理。";
-      }
-
-      return NextResponse.json({ deleted: "pet", id: deletedPet.id, storageWarning });
     }
 
     if (action === "portrait") {

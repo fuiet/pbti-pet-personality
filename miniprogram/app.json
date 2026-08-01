@@ -1,0 +1,41 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/upload/index",
+    "pages/quiz/index",
+    "pages/result/index",
+    "pages/report/index",
+    "pages/portraits/index",
+    "pages/account/index"
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#B08968",
+    "selectedColor": "#FF6A1A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/portraits/index",
+        "text": "AI写真"
+      },
+      {
+        "pagePath": "pages/account/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "window": {
+    "navigationBarTitleText": "PBTI Pet",
+    "navigationBarBackgroundColor": "#FFF7ED",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F6F1E8",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

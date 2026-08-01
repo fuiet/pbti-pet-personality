@@ -2,8 +2,10 @@ alter table public.pets add column if not exists photo_urls jsonb default '[]'::
 
 create table if not exists public.pet_portraits (
   id uuid primary key default gen_random_uuid(),
-  pet_id uuid not null references public.pets(id) on delete cascade,
+  pet_id uuid references public.pets(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
+  subject_name text,
+  subject_species text check (subject_species in ('cat', 'dog')),
   style_id text not null,
   style_name text not null,
   image_url text not null,
@@ -12,7 +14,21 @@ create table if not exists public.pet_portraits (
   prompt text not null,
   created_at timestamptz default now()
 );
-create unique index if not exists pet_portraits_pet_style_unique on public.pet_portraits (pet_id, style_id);
+alter table public.pet_portraits alter column pet_id drop not null;
+alter table public.pet_portraits add column if not exists subject_name text;
+alter table public.pet_portraits add column if not exists subject_species text;
+update public.pet_portraits as portrait
+set
+  subject_name = coalesce(portrait.subject_name, pet.name),
+  subject_species = coalesce(portrait.subject_species, pet.species)
+from public.pets as pet
+where portrait.pet_id = pet.id
+  and (portrait.subject_name is null or portrait.subject_species is null);
+
+drop index if exists public.pet_portraits_pet_style_unique;
+create unique index pet_portraits_pet_style_unique
+  on public.pet_portraits (pet_id, style_id)
+  where pet_id is not null;
 
 grant select, insert, update, delete on public.pet_portraits to authenticated;
 alter table public.pet_portraits enable row level security;
@@ -20,7 +36,17 @@ drop policy if exists "Users can view own pet portraits" on public.pet_portraits
 drop policy if exists "Users can insert own pet portraits" on public.pet_portraits;
 drop policy if exists "Users can delete own pet portraits" on public.pet_portraits;
 create policy "Users can view own pet portraits" on public.pet_portraits for select to authenticated using (auth.uid() = user_id);
-create policy "Users can insert own pet portraits" on public.pet_portraits for insert to authenticated with check (auth.uid() = user_id);
+create policy "Users can insert own pet portraits" on public.pet_portraits for insert to authenticated with check (
+  auth.uid() = user_id
+  and (
+    pet_id is null
+    or exists (
+      select 1 from public.pets
+      where pets.id = pet_portraits.pet_id
+        and pets.user_id = auth.uid()
+    )
+  )
+);
 create policy "Users can delete own pet portraits" on public.pet_portraits for delete to authenticated using (auth.uid() = user_id);
 
 insert into storage.buckets (id, name, public)

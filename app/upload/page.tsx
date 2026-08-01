@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { getLatestPetRecord, getPetRecord, updatePetPhotos, updatePetPhoto, type PetRecord } from "@/lib/pbtiRecords";
-import { useRequireAuth } from "@/lib/useRequireAuth";
+import { readGuestTest, updateGuestPhotos } from "@/lib/guestTest";
 import type { PetVisualProfile } from "@/lib/visualProfile";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -107,7 +107,6 @@ export default function UploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const analysisAttemptedKeyRef = useRef("");
   const analysisPromptTimerRef = useRef<number | null>(null);
-  const { loading: authLoading } = useRequireAuth();
   const [preview, setPreview] = useState<string>("");
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -120,16 +119,17 @@ export default function UploadPage() {
   const [visualFallback, setVisualFallback] = useState(false);
   const [analysisPromptVisible, setAnalysisPromptVisible] = useState(false);
   const [savedPhotoSetKey, setSavedPhotoSetKey] = useState("");
+  const [guestFlow, setGuestFlow] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-
     let active = true;
     const petId = getPetIdFromLocation();
+    const isGuest = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("guest") === "1";
+    setGuestFlow(isGuest);
 
     async function loadPet() {
       try {
-        const record = petId ? await getPetRecord(petId) : await getLatestPetRecord();
+        const record = isGuest ? readGuestTest()?.pet || null : petId ? await getPetRecord(petId) : await getLatestPetRecord();
 
         if (!active) return;
 
@@ -160,7 +160,7 @@ export default function UploadPage() {
     return () => {
       active = false;
     };
-  }, [authLoading, router]);
+  }, [router]);
 
   useEffect(() => {
     return () => {
@@ -181,7 +181,7 @@ export default function UploadPage() {
       const nextProgress = Math.min(74, Math.round((elapsed / duration) * 74));
       setAnalysisProgress(nextProgress);
 
-      if (nextProgress >= 92) {
+      if (nextProgress >= 74) {
         window.clearInterval(interval);
       }
     }, 120);
@@ -190,7 +190,7 @@ export default function UploadPage() {
   }, [analysisState]);
 
   function startBackgroundAnalysis(currentPet: PetRecord, photoSetKey: string) {
-    if (!photoSetKey || analysisAttemptedKeyRef.current === photoSetKey) return;
+    if (currentPet.id === "guest" || !photoSetKey || analysisAttemptedKeyRef.current === photoSetKey) return;
 
     analysisAttemptedKeyRef.current = photoSetKey;
     setAnalysisState("background");
@@ -281,12 +281,19 @@ export default function UploadPage() {
       setSavedPhotoSetKey("");
     }
 
-    try {
-      await updatePetPhotos(pet.id, usableUrls);
-    } catch {
-      setError("Unable to save the front photo right now. You can continue and try again later.");
-      analysisAttemptedKeyRef.current = nextPhotoSetKey;
-      return;
+    if (pet.id === "guest") {
+      if (!updateGuestPhotos(usableUrls)) {
+        setError("Unable to keep these photos in this browser. Please try again.");
+        return;
+      }
+    } else {
+      try {
+        await updatePetPhotos(pet.id, usableUrls);
+      } catch {
+        setError("Unable to save the front photo right now. You can continue and try again later.");
+        analysisAttemptedKeyRef.current = nextPhotoSetKey;
+        return;
+      }
     }
 
     if (hasFullPhotoSet) {
@@ -323,7 +330,9 @@ export default function UploadPage() {
     setVisualFallback(false);
     if (inputRef.current) inputRef.current.value = "";
 
-    if (pet) {
+    if (pet?.id === "guest") {
+      updateGuestPhotos([]);
+    } else if (pet) {
       try {
         await updatePetPhoto(pet.id, null);
       } catch {
@@ -343,14 +352,16 @@ export default function UploadPage() {
   const canStartQuiz = Boolean(pet);
 
   useEffect(() => {
-    if (!pet || analysisState !== "idle" || !hasFullPhotoSet || !photoSetKey || savedPhotoSetKey !== photoSetKey) {
+    if (!pet || pet.id === "guest" || analysisState !== "idle" || !hasFullPhotoSet || !photoSetKey || savedPhotoSetKey !== photoSetKey) {
       return;
     }
 
     startBackgroundAnalysis(pet, photoSetKey);
   }, [analysisState, hasFullPhotoSet, pet, photoSetKey, savedPhotoSetKey]);
 
-  if (authLoading || loadingPet) {
+  const quizHref = guestFlow ? "/quiz?guest=1" : `/quiz?petId=${pet?.id || ""}`;
+
+  if (loadingPet) {
     return <div className="flex min-h-[60vh] items-center justify-center text-3xl font-black">{zh ? "正在加载…" : "Loading..."}</div>;
   }
 
@@ -634,7 +645,7 @@ export default function UploadPage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push(`/quiz?petId=${pet?.id || ""}`)}
+                onClick={() => router.push(quizHref)}
                 className="flex-1 rounded-full bg-[#ff7a1a] px-5 py-3 text-sm font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.24)] transition hover:bg-[#ee6b10]"
               >
                 {zh ? "进入行为测试" : "Continue to behavior test"}
@@ -651,7 +662,7 @@ export default function UploadPage() {
           {zh ? "返回上一步" : "Back to setup"}
         </button>
         <button
-          onClick={() => router.push(`/quiz?petId=${pet?.id || ""}`)}
+          onClick={() => router.push(quizHref)}
           disabled={!canStartQuiz}
           className="flex-1 rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_16px_35px_rgba(255,122,26,.32)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10] disabled:cursor-not-allowed disabled:bg-[#ffc397] disabled:shadow-none disabled:hover:translate-y-0"
         >

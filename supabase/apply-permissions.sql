@@ -45,7 +45,8 @@ drop policy if exists "Users can update own results" on public.personality_resul
 drop policy if exists "Users can delete own results" on public.personality_results;
 create policy "Users can view own results" on public.personality_results
 for select to authenticated using (
-  exists (
+  auth.uid() = user_id
+  and exists (
     select 1 from public.pets
     where pets.id = personality_results.pet_id
     and pets.user_id = auth.uid()
@@ -53,7 +54,8 @@ for select to authenticated using (
 );
 create policy "Users can insert own results" on public.personality_results
 for insert to authenticated with check (
-  exists (
+  auth.uid() = user_id
+  and exists (
     select 1 from public.pets
     where pets.id = personality_results.pet_id
     and pets.user_id = auth.uid()
@@ -61,13 +63,15 @@ for insert to authenticated with check (
 );
 create policy "Users can update own results" on public.personality_results
 for update to authenticated using (
-  exists (
+  auth.uid() = user_id
+  and exists (
     select 1 from public.pets
     where pets.id = personality_results.pet_id
     and pets.user_id = auth.uid()
   )
 ) with check (
-  exists (
+  auth.uid() = user_id
+  and exists (
     select 1 from public.pets
     where pets.id = personality_results.pet_id
     and pets.user_id = auth.uid()
@@ -75,7 +79,8 @@ for update to authenticated using (
 );
 create policy "Users can delete own results" on public.personality_results
 for delete to authenticated using (
-  exists (
+  auth.uid() = user_id
+  and exists (
     select 1 from public.pets
     where pets.id = personality_results.pet_id
     and pets.user_id = auth.uid()

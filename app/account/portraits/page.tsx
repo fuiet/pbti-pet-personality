@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
-import { PORTRAIT_STUDIO_TEMPLATES, type PortraitStudioMode } from "@/lib/portraitStudioTemplates";
+import { PORTRAIT_STUDIO_TEMPLATES } from "@/lib/portraitStudioTemplates";
 import { listCurrentUserPortraits, type PetPortraitRecord } from "@/lib/pbtiRecords";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
@@ -11,11 +11,11 @@ const MAX_UPLOAD_IMAGE_EDGE = 1280;
 const MAX_UPLOAD_DATA_URL_BYTES = 800_000;
 const IMAGE_QUALITY_STEPS = [0.78, 0.68, 0.58, 0.5];
 
-type StudioTab = PortraitStudioMode | "history";
-type PetSpecies = "cat" | "dog";
+type StudioTab = "create" | "free" | "duo" | "history";
+type SubjectSpecies = "cat" | "dog";
 
 const MODE_TABS: Array<{ id: StudioTab; en: string; zh: string }> = [
-  { id: "free", en: "Create", zh: "创作" },
+  { id: "create", en: "Create", zh: "创作" },
   { id: "free", en: "Free", zh: "自由" },
   { id: "duo", en: "Duo", zh: "合照" },
   { id: "history", en: "History", zh: "历史" },
@@ -109,10 +109,10 @@ function FreeIcon() {
   );
 }
 
-function modeIcon(tab: StudioTab, index: number) {
+function modeIcon(tab: StudioTab) {
   if (tab === "duo") return <DuoIcon />;
   if (tab === "history") return <HistoryIcon />;
-  return index === 0 ? <SparkIcon /> : <FreeIcon />;
+  return tab === "create" ? <SparkIcon /> : <FreeIcon />;
 }
 
 function classifyPortrait(portrait: PetPortraitRecord) {
@@ -189,13 +189,12 @@ export default function AccountPortraitStudioPage() {
   const { loading: authLoading } = useRequireAuth();
   const [portraits, setPortraits] = useState<PetPortraitRecord[]>([]);
   const [loadingPortraits, setLoadingPortraits] = useState(true);
-  const [activeTab, setActiveTab] = useState<StudioTab>("free");
+  const [activeTab, setActiveTab] = useState<StudioTab>("create");
   const [promptText, setPromptText] = useState("");
-  const [petSpecies, setPetSpecies] = useState<PetSpecies>("cat");
-  const [petPhotos, setPetPhotos] = useState<string[]>([]);
+  const [subjectSpecies, setSubjectSpecies] = useState<SubjectSpecies>("cat");
+  const [subjectPhotos, setSubjectPhotos] = useState<string[]>([]);
   const [ownerPhotos, setOwnerPhotos] = useState<string[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState(PORTRAIT_STUDIO_TEMPLATES.find((item) => item.mode === "free")?.id || PORTRAIT_STUDIO_TEMPLATES[0]?.id || "");
-  const [stylePickerOpen, setStylePickerOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
   const [generationNotice, setGenerationNotice] = useState("");
@@ -225,9 +224,9 @@ export default function AccountPortraitStudioPage() {
 
   const activeStudioLabel = useMemo(() => {
     if (activeTab === "duo") return zh ? "合照" : "Duo";
-    if (stylePickerOpen) return zh ? "模板创作" : "Template Create";
+    if (activeTab === "create") return zh ? "模板创作" : "Template Create";
     return zh ? "自由生成" : "Free Create";
-  }, [activeTab, stylePickerOpen, zh]);
+  }, [activeTab, zh]);
 
   const portraitCounts = useMemo(() => {
     const avatar = portraits.filter((portrait) => classifyPortrait(portrait) === "avatar").length;
@@ -236,12 +235,12 @@ export default function AccountPortraitStudioPage() {
     return { avatar, vertical, landscape };
   }, [portraits]);
 
-  async function handlePhotoFiles(fileList: FileList | File[], target: "pet" | "owner") {
+  async function handlePhotoFiles(fileList: FileList | File[], target: "subject" | "owner") {
     const files = Array.from(fileList).filter((file) => file.type.startsWith("image/")).slice(0, 3);
     if (!files.length) return;
     try {
       const dataUrls = await Promise.all(files.map((file) => compressImageFile(file)));
-      if (target === "pet") setPetPhotos(dataUrls.filter(Boolean).slice(0, 3));
+      if (target === "subject") setSubjectPhotos(dataUrls.filter(Boolean).slice(0, 3));
       else setOwnerPhotos(dataUrls.filter(Boolean).slice(0, 3));
       setGenerationError("");
     } catch {
@@ -250,7 +249,7 @@ export default function AccountPortraitStudioPage() {
   }
 
   async function generatePortrait() {
-    if (!petPhotos.length) {
+    if (!subjectPhotos.length) {
       setGenerationError(zh ? "请先上传主体照片。" : "Upload a subject photo first.");
       return;
     }
@@ -268,12 +267,12 @@ export default function AccountPortraitStudioPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          petPhotos,
-          petSpecies,
-          petName: `${petSpecies === "dog" ? "Dog" : "Cat"} Portrait`,
+          subjectPhotos,
+          subjectSpecies,
+          subjectName: `${subjectSpecies === "dog" ? "Dog" : "Cat"} Portrait`,
           ownerPhotos: activeTab === "duo" ? ownerPhotos : [],
-          templateId: activeTab === "free" && stylePickerOpen ? selectedTemplate?.id : activeTab === "duo" ? duoTemplate?.id : undefined,
-          styleId: activeTab === "free" && !stylePickerOpen ? "vertical-campaign" : undefined,
+          templateId: activeTab === "create" ? selectedTemplate?.id : activeTab === "duo" ? duoTemplate?.id : undefined,
+          styleId: activeTab === "free" ? "vertical-campaign" : undefined,
           customPrompt: promptText.trim(),
         }),
       });
@@ -302,28 +301,16 @@ export default function AccountPortraitStudioPage() {
       <section className="rounded-[2.25rem] border border-[#ece6de] bg-white px-6 py-7 shadow-[0_18px_45px_rgba(31,35,44,.06)] sm:px-10 sm:py-8">
         <div className="mx-auto flex justify-center">
           <div className="inline-flex rounded-full bg-[#f2f3f7] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.92)]">
-            {MODE_TABS.map((tab, index) => {
-              const active = activeTab === tab.id && (tab.id !== "free" || (index === 0 ? stylePickerOpen : !stylePickerOpen || activeTab !== "free"));
+            {MODE_TABS.map((tab) => {
+              const active = activeTab === tab.id;
               return (
                 <button
-                  key={`${tab.id}-${index}`}
+                  key={tab.id}
                   type="button"
-                  onClick={() => {
-                    if (tab.id === "free" && index === 0) {
-                      setActiveTab("free");
-                      setStylePickerOpen(true);
-                      return;
-                    }
-                    if (tab.id === "free" && index === 1) {
-                      setActiveTab("free");
-                      setStylePickerOpen(false);
-                      return;
-                    }
-                    setActiveTab(tab.id);
-                  }}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-black transition ${active ? "bg-white text-[#ff4c78] shadow-[0_10px_24px_rgba(255,76,120,.14)]" : "text-[#5e6674] hover:text-[#111111]"}`}
                 >
-                  {modeIcon(tab.id, index)}
+                  {modeIcon(tab.id)}
                   <span>{zh ? tab.zh : tab.en}</span>
                 </button>
               );
@@ -385,7 +372,7 @@ export default function AccountPortraitStudioPage() {
                 <p className="text-sm leading-6 text-[#8d96a6]">
                   {activeTab === "duo"
                     ? (zh ? "上传主体和主人的照片，一次生成一张合照。" : "Upload both the subject and owner photos to create one duo image.")
-                    : stylePickerOpen
+                    : activeTab === "create"
                       ? (zh ? "上传主体照片，选一个模板，然后生成成片。" : "Upload a subject photo, choose a template, and generate one finished shot.")
                       : (zh ? "上传主体照片，写一句想法，直接开始自由生成。" : "Upload a subject photo, add one prompt, and start a free generation run.")}
                 </p>
@@ -394,12 +381,12 @@ export default function AccountPortraitStudioPage() {
               <div className="flex items-center justify-between rounded-[1.35rem] border border-[#ebeff4] bg-[#fafbfd] px-4 py-3">
                 <div className="text-sm font-black text-[#50576a]">{zh ? "创作对象" : "Subject type"}</div>
                 <div className="inline-flex rounded-full bg-[#f2f3f7] p-1">
-                  {(["cat", "dog"] as PetSpecies[]).map((species) => (
+                  {(["cat", "dog"] as SubjectSpecies[]).map((species) => (
                     <button
                       key={species}
                       type="button"
-                      onClick={() => setPetSpecies(species)}
-                      className={`rounded-full px-4 py-2 text-sm font-black transition ${petSpecies === species ? "bg-white text-[#ff4c78] shadow-sm" : "text-[#6c7483]"}`}
+                      onClick={() => setSubjectSpecies(species)}
+                      className={`rounded-full px-4 py-2 text-sm font-black transition ${subjectSpecies === species ? "bg-white text-[#ff4c78] shadow-sm" : "text-[#6c7483]"}`}
                     >
                       {zh ? (species === "cat" ? "猫" : "狗") : species === "cat" ? "Cat" : "Dog"}
                     </button>
@@ -410,8 +397,8 @@ export default function AccountPortraitStudioPage() {
               <UploadBox
                 title={zh ? "上传主体照片" : "Upload subject photo"}
                 hint={zh ? "点击或拖拽你的主体照片到这里" : "Click or drop your subject photo here"}
-                photos={petPhotos}
-                onPick={(files) => void handlePhotoFiles(files, "pet")}
+                photos={subjectPhotos}
+                onPick={(files) => void handlePhotoFiles(files, "subject")}
               />
 
               {activeTab === "duo" ? (
@@ -424,26 +411,10 @@ export default function AccountPortraitStudioPage() {
                 />
               ) : null}
 
-              {stylePickerOpen ? (
+              {activeTab === "create" ? (
                 <div>
                   <div className="mb-3 text-sm font-bold text-[#50576a]">{zh ? "选择模板风格" : "Choose a style"}</div>
-                  <button
-                    type="button"
-                    onClick={() => setStylePickerOpen((current) => !current)}
-                    className="flex w-full items-center justify-between rounded-[1.35rem] border border-[#dfe4ee] bg-white px-4 py-4 text-left shadow-sm transition hover:border-[#ff6a74]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[#f3f5f8] text-[#a2aab8]">
-                        <SparkIcon />
-                      </div>
-                      <div>
-                        <div className="text-base font-black text-[#111111]">{zh ? selectedTemplate.title.zh : selectedTemplate.title.en}</div>
-                        <div className="mt-1 text-sm text-[#8d96a6]">{zh ? selectedTemplate.subtitle.zh : selectedTemplate.subtitle.en}</div>
-                      </div>
-                    </div>
-                    <span className="text-sm font-black text-[#ff4c78]">{zh ? "更换" : "Change"}</span>
-                  </button>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {createTemplates.map((template) => (
                       <button
                         key={template.id}
@@ -463,7 +434,7 @@ export default function AccountPortraitStudioPage() {
               ) : null}
 
               <div>
-                <div className="mb-3 text-sm font-bold text-[#50576a]">{zh ? (stylePickerOpen ? "还有补充细节吗？（可选）" : "自定义指令") : (stylePickerOpen ? "Any extra detail? (Optional)" : "Custom prompt")}</div>
+                <div className="mb-3 text-sm font-bold text-[#50576a]">{zh ? (activeTab === "create" ? "还有补充细节吗？（可选）" : "自定义指令") : (activeTab === "create" ? "Any extra detail? (Optional)" : "Custom prompt")}</div>
                 <textarea
                   value={promptText}
                   onChange={(event) => setPromptText(event.target.value)}
@@ -475,7 +446,7 @@ export default function AccountPortraitStudioPage() {
               <button
                 type="button"
                 onClick={generatePortrait}
-                disabled={generating || !petPhotos.length || (activeTab === "duo" && !ownerPhotos.length)}
+                disabled={generating || !subjectPhotos.length || (activeTab === "duo" && !ownerPhotos.length)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-[1.35rem] bg-[#111111] px-6 py-5 text-lg font-black text-white transition disabled:bg-[#d9dde5] disabled:text-white"
               >
                 <SparkIcon />
@@ -483,21 +454,7 @@ export default function AccountPortraitStudioPage() {
               </button>
 
               <p className="text-center text-sm text-[#666f7d]">
-                {zh ? (
-                  <>
-                    想保存这张作品？
-                    <Link href="/login" className="ml-2 font-black text-[#3159ff]">
-                      先登录！
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    Want to save this creation?
-                    <Link href="/login" className="ml-2 font-black text-[#3159ff]">
-                      Sign in first!
-                    </Link>
-                  </>
-                )}
+                {zh ? "每次生成一张，完成后会自动保存到写真图片库。" : "Each run creates one image and saves it to your portrait gallery automatically."}
               </p>
             </div>
 

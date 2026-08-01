@@ -1,13 +1,13 @@
 export type PetSpecies = "cat" | "dog";
 
-export type PersonalityAsset = {
+type PersonalityAsset = {
   code: string;
   name: string;
   cat: string;
   dog: string;
 };
 
-export const personalityAssets: PersonalityAsset[] = [
+const personalityAssets: PersonalityAsset[] = [
   { code: "IEVP", name: "Explorer", cat: "/assets/personalities/cats/01-explorer-cat.webp", dog: "/assets/personalities/dogs/01-explorer-dog.png" },
   { code: "ASVG", name: "Guardian", cat: "/assets/personalities/cats/02-guardian-cat.webp", dog: "/assets/personalities/dogs/02-guardian-dog.png" },
   { code: "ISCP", name: "Dreamer", cat: "/assets/personalities/cats/03-dreamer-cat.webp", dog: "/assets/personalities/dogs/03-dreamer-dog.png" },

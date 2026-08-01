@@ -14,7 +14,7 @@ export interface DimensionScore {
   evidence: string;
 }
 
-export interface PersonalityPrototype {
+interface PersonalityPrototype {
   code: string;
   name: string;
   vector: Record<DimensionKey, number>;
@@ -80,7 +80,7 @@ export const dimensionDefinitions: Omit<DimensionScore, "value">[] = [
   },
 ];
 
-export const personalityPrototypes: PersonalityPrototype[] = [
+const personalityPrototypes: PersonalityPrototype[] = [
   { code: "IEVP", name: "Explorer", vector: { attachment: 48, exploration: 88, vitality: 62, playfulness: 72 }, rationale: "High novelty-seeking with playful investigation." },
   { code: "ASVG", name: "Guardian", vector: { attachment: 72, exploration: 34, vitality: 42, playfulness: 18 }, rationale: "Bonded, stable, and protective of familiar routines." },
   { code: "ISCP", name: "Dreamer", vector: { attachment: 44, exploration: 28, vitality: 24, playfulness: 46 }, rationale: "Calm, comfort-oriented, and low-pressure in social contact." },

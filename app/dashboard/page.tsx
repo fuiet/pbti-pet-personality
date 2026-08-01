@@ -55,18 +55,18 @@ export default function Dashboard() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "我的爱宠" : "My Pets"}</h1>
+          <h1 className="text-3xl font-black tracking-[-.04em] text-[#171514]">{zh ? "性格报告" : "Personality Reports"}</h1>
           <p className="mt-1 text-sm text-[#7a6d63]">
             {entries.length > 0
-              ? (zh ? `已完成 ${entries.length} 只爱宠的分析` : `You have ${entries.length} pet${entries.length > 1 ? "s" : ""} analyzed`)
-              : (zh ? "还没有完成分析的爱宠" : "No pets analyzed yet")}
+              ? (zh ? `已保存 ${entries.length} 份性格报告` : `${entries.length} personality report${entries.length > 1 ? "s" : ""} saved`)
+              : (zh ? "还没有保存的性格报告" : "No personality reports yet")}
           </p>
         </div>
         <button
           onClick={() => router.push("/create")}
           className="rounded-full bg-[#ff7a1a] px-6 py-3 text-sm font-black text-white shadow-[0_8px_24px_rgba(255,122,26,.3)] transition hover:-translate-y-0.5 hover:bg-[#ee6b10]"
         >
-          {zh ? "+ 添加爱宠" : "+ New Pet"}
+          {zh ? "+ 新测试" : "+ New Test"}
         </button>
       </div>
 

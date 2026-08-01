@@ -1,0 +1,41 @@
+<view class="screen stack">
+  <view class="card account-hero">
+    <image class="account-avatar" src="{{userAvatar}}" mode="aspectFill" />
+    <view class="account-meta">
+      <text class="account-name">{{userName}}</text>
+      <text class="account-summary">
+        {{latestResult ? '最近一次测试：' + latestResult.result.personality.name + ' · ' + latestResult.result.code : '还没有测试记录'}}
+      </text>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">我的写真库</text>
+    <text class="muted">这里会保存你生成过的所有 AI 写真。</text>
+
+    <view wx:if="{{portraitAssets.length}}" class="portrait-grid">
+      <view
+        wx:for="{{portraitAssets}}"
+        wx:key="_id"
+        class="portrait-item"
+        data-url="{{item.imageUrl}}"
+        bindtap="previewPortrait"
+      >
+        <image class="portrait-item-image" src="{{item.imageUrl}}" mode="aspectFill" />
+        <text class="portrait-item-title">{{item.templateName || 'AI 写真'}}</text>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <text class="muted">暂时还没有作品，生成完成后会自动出现在这里。</text>
+    </view>
+
+    <button class="button-secondary" bindtap="refreshPortraitAssets">刷新写真库</button>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">我的测试报告</text>
+    <text class="muted">{{latestResult ? latestResult.result.personality.name + ' · ' + latestResult.result.code : '暂无可查看的报告'}}</text>
+    <button class="button-primary" bindtap="openReport">查看测试报告</button>
+  </view>
+</view>

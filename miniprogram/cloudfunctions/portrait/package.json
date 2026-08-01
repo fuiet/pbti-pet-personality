@@ -1,0 +1,9 @@
+﻿{
+  "name": "portrait",
+  "version": "1.0.0",
+  "description": "AI portrait generation via Alibaba Model Studio",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

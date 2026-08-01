@@ -1,0 +1,82 @@
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 22rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(180deg, #fff7ef 0%, #fff2e4 100%);
+  border: 1rpx solid rgba(242, 204, 171, 0.58);
+}
+
+.account-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.account-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-name {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #2f251d;
+  line-height: 1.1;
+}
+
+.account-summary {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  color: #7d695b;
+  line-height: 1.45;
+}
+
+.portrait-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+  margin-top: 10rpx;
+}
+
+.portrait-item {
+  width: calc(50% - 9rpx);
+  border-radius: 24rpx;
+  overflow: hidden;
+  background: #fff8f0;
+  border: 1rpx solid rgba(242, 204, 171, 0.4);
+}
+
+.portrait-item-image {
+  width: 100%;
+  height: 220rpx;
+  display: block;
+}
+
+.portrait-item-title {
+  display: block;
+  padding: 12rpx 14rpx 14rpx;
+  font-size: 24rpx;
+  color: #4a3c31;
+}
+
+.empty-state {
+  padding: 22rpx 0 8rpx;
+}
+
+.portrait-task-meta {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8a705f;
+}
+
+.card .button-primary,
+.card .button-secondary {
+  margin-top: 10rpx;
+}
