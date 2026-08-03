@@ -1,7 +1,7 @@
 <view class="screen stack">
   <view class="card stack">
     <text class="section-title">写真库</text>
-    <text class="muted">这里会保存你生成过的所有 AI 写真。</text>
+    <text class="muted">这里保存已经生成完成的 AI 写真，点击图片可以预览大图。</text>
 
     <view wx:if="{{portraitAssets.length}}" class="portrait-grid">
       <view
@@ -17,7 +17,12 @@
     </view>
 
     <view wx:else class="empty-state">
-      <text class="muted">暂时还没有作品，生成完成后会自动出现在这里。</text>
+      <text class="muted">还没有生成作品，可以先去写真工作台创建第一张。</text>
+    </view>
+
+    <view class="row">
+      <button class="button-secondary" bindtap="loadAssets">刷新写真库</button>
+      <button class="button-primary" bindtap="openPortraitStudio">去生成新写真</button>
     </view>
   </view>
 </view>

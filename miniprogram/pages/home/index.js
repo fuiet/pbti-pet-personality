@@ -18,11 +18,13 @@ Page({
       { index: "12", name: "贵族", code: "ISVG", image: personalityImages.ISVG },
     ],
   },
+
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar) tabBar.setData({ selected: 0 });
   },
-  goUpload() {
-    wx.navigateTo({ url: "/pages/upload/index" });
+
+  goCreate() {
+    wx.navigateTo({ url: "/pages/create/index" });
   },
 });

@@ -9,47 +9,6 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { getPersonalityAsset, type PetSpecies } from "@/data/personalityAssets";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-
-const premiumFreeUntil = new Date("2026-08-15T23:59:59+08:00").getTime();
-
-function getCountdownParts() {
-  const distance = Math.max(0, premiumFreeUntil - Date.now());
-  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((distance / (1000 * 60)) % 60);
-  const seconds = Math.floor((distance / 1000) % 60);
-
-  return { days, hours, minutes, seconds };
-}
-
-function PremiumCountdown() {
-  const { t } = useLanguage();
-  const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getCountdownParts> | null>(null);
-
-  useEffect(() => {
-    setTimeLeft(getCountdownParts());
-    const timer = window.setInterval(() => setTimeLeft(getCountdownParts()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const parts = [
-    { label: t("home.countdown.days"), value: timeLeft?.days ?? 0 },
-    { label: t("home.countdown.hours"), value: timeLeft?.hours ?? 0 },
-    { label: t("home.countdown.minutes"), value: timeLeft?.minutes ?? 0 },
-    { label: t("home.countdown.seconds"), value: timeLeft?.seconds ?? 0 },
-  ];
-
-  return (
-    <div className="grid grid-cols-4 gap-2 sm:min-w-[300px]">
-      {parts.map((part) => (
-        <div key={part.label} className="rounded-2xl border border-white/10 bg-white/[.08] px-3 py-3 text-center">
-          <div className="text-2xl font-black leading-none tracking-[-.04em] text-white">{String(part.value).padStart(2, "0")}</div>
-          <div className="mt-1 text-[10px] font-black uppercase tracking-[.12em] text-white/52">{part.label}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
 const methodSteps = [
   {
     index: "01",
@@ -565,19 +524,6 @@ export default function Home() {
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#655a51]">
             {t("home.hero.body")}
           </p>
-          <div className="mt-6 max-w-3xl rounded-[1.5rem] border border-[#ff7a1a]/35 bg-[#171514] p-5 text-white shadow-[0_22px_55px_rgba(52,34,20,.14)]">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <div className="inline-flex rounded-full bg-[#ff7a1a] px-3 py-1 text-xs font-black uppercase tracking-[.14em] text-white">{t("home.premium.label")}</div>
-                <h2 className="mt-3 text-2xl font-black tracking-[-.04em]">{t("home.premium.title")}</h2>
-                <p className="mt-2 text-sm leading-6 text-white/72">{t("home.premium.body")}</p>
-                <Link href="/create" className="mt-4 inline-flex rounded-full bg-white px-5 py-3 text-center text-sm font-black text-[#171514] transition hover:-translate-y-0.5 hover:bg-[#fff7ed]">
-                  {t("home.premium.cta")}
-                </Link>
-              </div>
-              <PremiumCountdown />
-            </div>
-          </div>
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
             <Link href="/create" className="rounded-full bg-[#ff7a1a] px-8 py-4 text-center font-black text-white shadow-[0_22px_50px_rgba(255,122,26,.34)] transition hover:-translate-y-1 hover:bg-[#ee6b10]">
               {t("home.cta.start")}

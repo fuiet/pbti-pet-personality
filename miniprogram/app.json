@@ -1,10 +1,12 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/create/index",
     "pages/upload/index",
     "pages/quiz/index",
     "pages/result/index",
     "pages/report/index",
+    "pages/library/index",
     "pages/portraits/index",
     "pages/account/index"
   ],

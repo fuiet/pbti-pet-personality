@@ -1,4 +1,4 @@
-﻿const { APP_CONFIG } = require("../../utils/constants");
+const { APP_CONFIG } = require("../../utils/constants");
 const { heroImages } = require("../../utils/imageAssets");
 const { saveTestContext, loadTestContext } = require("../../utils/storage");
 const { uploadToCloud, saveFileRecord } = require("../../utils/cloud");
@@ -18,8 +18,7 @@ Page({
   },
 
   onShow() {
-    const testContext = getApp().globalData.currentTestContext || loadTestContext();
-    if (!testContext) return;
+    const testContext = getApp().globalData.currentTestContext || loadTestContext() || { species: "cat" };
 
     const mergedSlots = (testContext.photoSlots || this.data.photoSlots).map((slot, index) => (
       slot.path ? slot : this.data.photoSlots[index]
@@ -43,9 +42,17 @@ Page({
 
   selectSpecies(event) {
     const species = event.currentTarget.dataset.value;
+    const nextContext = {
+      ...(this.data.testContext || {}),
+      species,
+    };
+
     this.setData({
-      "testContext.species": species,
+      testContext: nextContext,
     });
+
+    saveTestContext(nextContext);
+    getApp().globalData.currentTestContext = nextContext;
   },
 
   pickImage(event) {
@@ -130,5 +137,9 @@ Page({
     saveTestContext(testContext);
     getApp().globalData.currentTestContext = testContext;
     wx.navigateTo({ url: "/pages/quiz/index" });
+  },
+
+  editProfile() {
+    wx.navigateTo({ url: "/pages/create/index" });
   },
 });

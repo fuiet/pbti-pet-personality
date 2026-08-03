@@ -29,4 +29,8 @@ Page({
       urls: this.data.portraitAssets.map((item) => item.imageUrl).filter(Boolean),
     });
   },
+
+  openPortraitStudio() {
+    wx.switchTab({ url: "/pages/portraits/index" });
+  },
 });

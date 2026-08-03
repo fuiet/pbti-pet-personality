@@ -1,0 +1,97 @@
+<view class="screen stack create-page">
+  <view class="card hero-card stack create-hero">
+    <image class="create-hero-image" src="{{heroImages.heroPets}}" mode="aspectFit" />
+    <text class="pill">Step 1 / 4</text>
+    <text class="title">先创建宠物档案</text>
+    <text class="subtitle">填写名字、物种和基础信息，再进入三视图上传与 28 题测评。小程序优先保留中文体验，不展示语言切换。</text>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">宠物名字</text>
+    <input
+      class="text-input"
+      placeholder="例如：奶油 / Lucky / Mochi"
+      value="{{profile.name}}"
+      maxlength="24"
+      bindinput="onNameInput"
+    />
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">物种</text>
+    <view class="species-row">
+      <view
+        wx:for="{{speciesOptions}}"
+        wx:key="value"
+        class="species-card {{profile.species === item.value ? 'active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="selectSpecies"
+      >
+        <text class="species-card-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card stack">
+    <text class="section-title">基础信息</text>
+
+    <view class="stack compact-stack">
+      <view>
+        <text class="field-label">品种</text>
+        <picker range="{{breedOptions}}" bindchange="onBreedChange">
+          <view class="picker-field {{profile.breed ? 'has-value' : ''}}">
+            <text>{{profile.breed || '选择宠物品种（可选）'}}</text>
+          </view>
+        </picker>
+      </view>
+
+      <view>
+        <text class="field-label">年龄</text>
+        <picker range="{{ageOptions}}" bindchange="onAgeChange">
+          <view class="picker-field {{profile.age ? 'has-value' : ''}}">
+            <text>{{profile.age || '选择年龄阶段（可选）'}}</text>
+          </view>
+        </picker>
+      </view>
+
+      <view>
+        <text class="field-label">性别</text>
+        <view class="gender-row">
+          <view
+            wx:for="{{genderOptions}}"
+            wx:key="value"
+            class="gender-chip {{profile.gender === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="selectGender"
+          >
+            <text>{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card stack summary-card">
+    <text class="section-title">当前档案摘要</text>
+    <view class="summary-grid">
+      <view class="summary-item">
+        <text class="summary-label">名字</text>
+        <text class="summary-value">{{profile.name || '待填写'}}</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">物种</text>
+        <text class="summary-value">{{profile.species === 'dog' ? '狗狗' : '猫咪'}}</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">品种</text>
+        <text class="summary-value">{{profile.breed || '未填写'}}</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">年龄</text>
+        <text class="summary-value">{{profile.age || '未填写'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <button class="button-primary" bindtap="goNext" disabled="{{submitDisabled}}">继续上传三视图照片</button>
+</view>

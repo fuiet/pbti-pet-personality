@@ -73,4 +73,12 @@ Page({
   openReport() {
     wx.navigateTo({ url: "/pages/report/index" });
   },
+
+  openPortraitStudio() {
+    wx.switchTab({ url: "/pages/portraits/index" });
+  },
+
+  openPortraitLibrary() {
+    wx.navigateTo({ url: "/pages/library/index" });
+  },
 });

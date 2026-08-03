@@ -10,8 +10,8 @@
   </view>
 
   <view class="card stack">
-    <text class="section-title">我的写真库</text>
-    <text class="muted">这里会保存你生成过的所有 AI 写真。</text>
+    <text class="section-title">我的 AI 写真</text>
+    <text class="muted">写真工作台负责生成新作品，写真库负责查看已经保存的作品。</text>
 
     <view wx:if="{{portraitAssets.length}}" class="portrait-grid">
       <view
@@ -30,12 +30,15 @@
       <text class="muted">暂时还没有作品，生成完成后会自动出现在这里。</text>
     </view>
 
-    <button class="button-secondary" bindtap="refreshPortraitAssets">刷新写真库</button>
+    <view class="row">
+      <button class="button-primary" bindtap="openPortraitStudio">去写真工作台</button>
+      <button class="button-secondary" bindtap="openPortraitLibrary">打开写真库</button>
+    </view>
   </view>
 
   <view class="card stack">
     <text class="section-title">我的测试报告</text>
-    <text class="muted">{{latestResult ? latestResult.result.personality.name + ' · ' + latestResult.result.code : '暂无可查看的报告'}}</text>
-    <button class="button-primary" bindtap="openReport">查看测试报告</button>
+    <text class="muted">{{latestResult ? latestResult.result.personality.name + ' · ' + latestResult.result.code : '暂时没有可查看的报告'}}</text>
+    <button class="button-primary" bindtap="openReport">查看最近一次测试报告</button>
   </view>
 </view>

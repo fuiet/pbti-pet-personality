@@ -3,8 +3,8 @@
     <image class="hero-image" src="{{heroImages.heroPets}}" mode="aspectFit" />
     <text class="hero-kicker">宠物行为性格测试</text>
     <text class="hero-title">读懂它的性格，把爱给得更准确</text>
-    <text class="hero-desc">通过 28 个日常行为问题，发现猫咪或狗狗的 PBTI 性格类型，并获得专属相处建议。</text>
-    <button class="hero-button" bindtap="goUpload">开始免费测试</button>
+    <text class="hero-desc">通过 28 个日常行为问题，识别猫咪或狗狗的 PBTI 性格类型，并获得专属相处建议。</text>
+    <button class="hero-button" bindtap="goCreate">先创建宠物档案</button>
     <view class="hero-metrics">
       <view class="metric">
         <text class="metric-value">28</text>
@@ -28,7 +28,7 @@
     </view>
     <view class="feature-card">
       <text class="feature-title">2. 宠物鉴定</text>
-      <text class="feature-desc">三图识别宠物外观特征</text>
+      <text class="feature-desc">三视图识别宠物外观特征</text>
     </view>
     <view class="feature-card">
       <text class="feature-title">3. AI 写真</text>

@@ -1,10 +1,38 @@
 <view class="screen stack upload-page">
+  <view class="card stack profile-summary-card">
+    <view class="profile-summary-head">
+      <view>
+        <text class="section-title">宠物档案</text>
+        <text class="muted">先确认基础信息，再上传正面、左侧、右侧三张引导照片。</text>
+      </view>
+      <view class="mini-link" bindtap="editProfile">修改</view>
+    </view>
+    <view class="profile-summary-grid">
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">名字</text>
+        <text class="profile-summary-value">{{testContext.name || '未填写'}}</text>
+      </view>
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">物种</text>
+        <text class="profile-summary-value">{{testContext.species === 'dog' ? '狗狗' : '猫咪'}}</text>
+      </view>
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">品种</text>
+        <text class="profile-summary-value">{{testContext.breed || '未填写'}}</text>
+      </view>
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">年龄</text>
+        <text class="profile-summary-value">{{testContext.age || '未填写'}}</text>
+      </view>
+    </view>
+  </view>
+
   <view class="card stack upload-intro">
     <view class="species-illustration-shell">
       <image class="species-illustration" src="{{testContext.species === 'dog' ? heroImages.dog : heroImages.cat}}" mode="aspectFit" />
     </view>
     <text class="title">上传三张识别照片</text>
-    <text class="subtitle">上传正脸、左侧、右侧三张图后继续测评。后续接入云开发时，这里会先上传到云存储，再交给云函数处理。</text>
+    <text class="subtitle">上传正脸、左侧、右侧三张照片后再进入 28 题测评。后续接入云端分析时，这里会先上传到云存储，再交给云函数处理。</text>
     <view class="progress-shell">
       <view class="progress-track">
         <view class="progress-fill" style="width: {{uploadProgress}}%;"></view>
@@ -16,8 +44,8 @@
   <view class="card stack">
     <text class="section-title">宠物类型</text>
     <view class="species-row">
-      <view class="species-chip {{testContext.species === 'cat' ? 'active' : ''}}" data-value="cat" bindtap="selectSpecies">猫</view>
-      <view class="species-chip {{testContext.species === 'dog' ? 'active' : ''}}" data-value="dog" bindtap="selectSpecies">狗</view>
+      <view class="species-chip {{testContext.species === 'cat' ? 'active' : ''}}" data-value="cat" bindtap="selectSpecies">猫咪</view>
+      <view class="species-chip {{testContext.species === 'dog' ? 'active' : ''}}" data-value="dog" bindtap="selectSpecies">狗狗</view>
     </view>
   </view>
 

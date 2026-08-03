@@ -2,6 +2,53 @@
   padding-bottom: 170rpx;
 }
 
+.profile-summary-card {
+  background: linear-gradient(180deg, rgba(255, 247, 237, 0.96) 0%, rgba(255, 255, 255, 0.96) 100%);
+}
+
+.profile-summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.mini-link {
+  color: #f97316;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.profile-summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.profile-summary-item {
+  width: calc(50% - 8rpx);
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1rpx solid rgba(239, 217, 199, 0.85);
+  box-sizing: border-box;
+}
+
+.profile-summary-label {
+  display: block;
+  font-size: 22rpx;
+  color: #9a7b65;
+}
+
+.profile-summary-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  line-height: 1.35;
+  color: #2f251d;
+  font-weight: 700;
+}
+
 .upload-intro {
   align-items: center;
   text-align: center;
