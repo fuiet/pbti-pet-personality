@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { createApiRequestTracker } from "@/lib/apiRequestMetrics";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeVisualProfile, type RawVisualProfileInput } from "@/lib/visualProfile";
 
@@ -62,7 +62,7 @@ function extractQwenMessageText(value: unknown) {
     return content
       .map((item) => (typeof item === "string" ? item : item?.text || ""))
       .filter(Boolean)
-      .join("\\n");
+      .join("\n");
   }
   return "";
 }
@@ -91,7 +91,13 @@ function makeFallbackProfile(species: "cat" | "dog" | "unknown") {
   );
 }
 
-async function saveVisualProfile(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, userId: string, petId: string, profile: ReturnType<typeof normalizeVisualProfile>, rawAnalysis: unknown) {
+async function saveVisualProfile(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  petId: string,
+  profile: ReturnType<typeof normalizeVisualProfile>,
+  rawAnalysis: unknown
+) {
   const { error } = await supabase.from("pet_visual_profiles").insert({
     pet_id: petId,
     user_id: userId,
@@ -110,23 +116,31 @@ async function saveVisualProfile(supabase: Awaited<ReturnType<typeof createSupab
 }
 
 export async function POST(request: Request) {
+  const tracker = createApiRequestTracker({ request, route: "/api/visual-profile" });
+  const fail = (message: string, status: number) => {
+    tracker.setError(message);
+    return tracker.json({ error: message }, { status });
+  };
+
   try {
     const declaredRequestLength = Number(request.headers.get("content-length") || 0);
     if (declaredRequestLength > MAX_REQUEST_BYTES) {
-      return NextResponse.json({ error: "The analysis request is too large." }, { status: 413 });
+      return fail("The analysis request is too large.", 413);
     }
 
     const body = await request.json() as { petId?: unknown };
     const petId = typeof body.petId === "string" ? body.petId.trim() : "";
 
     if (!petId || petId.length > 100) {
-      return NextResponse.json({ error: "petId is required." }, { status: 400 });
+      return fail("petId is required.", 400);
     }
 
     const supabase = await createSupabaseServerClient();
     const { data: userResult, error: userError } = await supabase.auth.getUser();
     const userId = userResult.user?.id || "";
-    if (userError || !userId) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    if (userError || !userId) return fail("Please sign in to continue.", 401);
+
+    tracker.setUserId(userId);
 
     const { data: pet, error: petError } = await supabase
       .from("pets")
@@ -136,15 +150,15 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (petError) {
-      return NextResponse.json({ error: petError.message }, { status: 500 });
+      return fail(petError.message, 500);
     }
 
     if (!pet) {
-      return NextResponse.json({ error: "Pet profile was not found." }, { status: 404 });
+      return fail("Pet profile was not found.", 404);
     }
 
     if (VISUAL_MODEL_PROVIDER !== "qwen") {
-      return NextResponse.json({ error: "Unsupported visual model provider. Set VISUAL_MODEL_PROVIDER=qwen." }, { status: 500 });
+      return fail("Unsupported visual model provider. Set VISUAL_MODEL_PROVIDER=qwen.", 500);
     }
 
     const dashscopeKey = process.env.DASHSCOPE_API_KEY;
@@ -153,13 +167,13 @@ export async function POST(request: Request) {
     const photoSources = savedPhotos.length ? savedPhotos : pet.photo_url ? [pet.photo_url] : [];
 
     if (!photoSources.length) {
-      return NextResponse.json({ error: "A pet photo is required before visual analysis." }, { status: 400 });
+      return fail("A pet photo is required before visual analysis.", 400);
     }
 
     if (!dashscopeKey) {
       const profile = makeFallbackProfile(species);
       const saveError = await saveVisualProfile(supabase, userId, petId, profile, { fallback: true });
-      return NextResponse.json({ profile, fallback: true, saveError });
+      return tracker.json({ profile, fallback: true, saveError });
     }
 
     const response = await fetch(QWEN_BASE_URL, {
@@ -188,16 +202,24 @@ export async function POST(request: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      return NextResponse.json({ error: data?.error?.message || "Qwen-VL visual analysis failed." }, { status: 502 });
+      return fail(data?.error?.message || "Qwen-VL visual analysis failed.", 502);
     }
 
     const outputText = extractQwenMessageText(data);
     const raw = parseJsonObject(outputText);
     const profile = normalizeVisualProfile(raw, QWEN_MODEL);
-    const saveError = await saveVisualProfile(supabase, userId, petId, profile, { provider: VISUAL_MODEL_PROVIDER, model: QWEN_MODEL, raw });
+    const saveError = await saveVisualProfile(supabase, userId, petId, profile, {
+      provider: VISUAL_MODEL_PROVIDER,
+      model: QWEN_MODEL,
+      raw,
+    });
 
-    return NextResponse.json({ profile, fallback: false, saveError });
+    return tracker.json({ profile, fallback: false, saveError });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to analyze pet photo." }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unable to analyze pet photo.";
+    tracker.setError(message);
+    return tracker.json({ error: message }, { status: 500 });
+  } finally {
+    await tracker.flush();
   }
 }

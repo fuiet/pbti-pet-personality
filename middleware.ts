@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-const protectedPaths = ["/account", "/dashboard", "/report"];
+const protectedPaths = ["/account", "/admin", "/dashboard", "/report"];
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);
@@ -18,5 +18,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/dashboard/:path*", "/report/:path*"],
+  matcher: ["/account/:path*", "/admin/:path*", "/dashboard/:path*", "/report/:path*"],
 };

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { defaultPersonalityCode, personalities } from "@/data/personalities";
+import { createApiRequestTracker } from "@/lib/apiRequestMetrics";
 import { buildPortraitPrompt, PORTRAIT_PROMPT_VERSION, PORTRAIT_STYLES, type PortraitStyle } from "@/lib/portraitPrompts";
 import { buildTemplateStyleId, findPortraitStudioTemplate } from "@/lib/portraitStudioTemplates";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -239,24 +239,31 @@ async function savePortraitAsset(
 }
 
 export async function POST(request: Request) {
+  const tracker = createApiRequestTracker({ request, route: "/api/portraits" });
+  const fail = (message: string, status: number) => {
+    tracker.setError(message);
+    return tracker.json({ error: message }, { status });
+  };
+
   try {
     const declaredRequestLength = Number(request.headers.get("content-length") || 0);
     if (declaredRequestLength > MAX_REQUEST_BYTES) {
-      return NextResponse.json({ error: "The upload request is too large." }, { status: 413 });
+      return fail("The upload request is too large.", 413);
     }
 
     const body = asRecord(await request.json());
-    if (!body) return NextResponse.json({ error: "A valid JSON request is required." }, { status: 400 });
+    if (!body) return fail("A valid JSON request is required.", 400);
 
     const supabase = await createSupabaseServerClient();
     const { data: userResult, error: userError } = await supabase.auth.getUser();
     const userId = userResult.user?.id || "";
-    if (userError || !userId) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    if (userError || !userId) return fail("Please sign in to continue.", 401);
+    tracker.setUserId(userId);
 
     const rawTemplateId = normalizeText(body.templateId, 120);
     const selectedTemplate = rawTemplateId ? findPortraitStudioTemplate(rawTemplateId) : null;
     if (rawTemplateId && !selectedTemplate) {
-      return NextResponse.json({ error: "The selected portrait template is not available." }, { status: 400 });
+      return fail("The selected portrait template is not available.", 400);
     }
 
     const uploadedSubjectPhotos = normalizeImageReferences(body.subjectPhotos ?? body.petPhotos);
@@ -281,8 +288,8 @@ export async function POST(request: Request) {
         .maybeSingle();
       const pet = data as StoredPet | null;
 
-      if (error) return NextResponse.json({ error: "Unable to load the report subject." }, { status: 500 });
-      if (!pet) return NextResponse.json({ error: "The report subject was not found." }, { status: 404 });
+      if (error) return fail("Unable to load the report subject.", 500);
+      if (!pet) return fail("The report subject was not found.", 404);
 
       species = normalizeSpecies(pet.species);
       subjectName = pet.name;
@@ -291,25 +298,25 @@ export async function POST(request: Request) {
       photos = savedPhotos.length ? savedPhotos : pet.photo_url && isAllowedInputImage(pet.photo_url) ? [pet.photo_url] : [];
     } else {
       if (!species) {
-        return NextResponse.json({ error: "Choose whether the uploaded subject is a cat or dog." }, { status: 400 });
+        return fail("Choose whether the uploaded subject is a cat or dog.", 400);
       }
       if (!photos.length) {
-        return NextResponse.json({ error: "Upload at least one subject photo before generating." }, { status: 400 });
+        return fail("Upload at least one subject photo before generating.", 400);
       }
       subjectName ||= `${species === "dog" ? "Dog" : "Cat"} Portrait`;
     }
 
-    if (!species) return NextResponse.json({ error: "A cat or dog subject is required." }, { status: 400 });
-    if (!photos.length) return NextResponse.json({ error: "Upload at least one subject photo before generating." }, { status: 400 });
+    if (!species) return fail("A cat or dog subject is required.", 400);
+    if (!photos.length) return fail("Upload at least one subject photo before generating.", 400);
     if (selectedTemplate?.mode === "duo" && ownerPhotoList.length === 0) {
-      return NextResponse.json({ error: "Upload at least one owner photo before generating a duo portrait." }, { status: 400 });
+      return fail("Upload at least one owner photo before generating a duo portrait.", 400);
     }
 
     const resolvedStyleId = selectedTemplate
       ? buildTemplateStyleId(selectedTemplate, PORTRAIT_PROMPT_VERSION)
       : requestedStyleId;
     if (resolvedStyleId && !/^[a-z0-9-]+(?:--[a-z0-9-]+)*$/i.test(resolvedStyleId)) {
-      return NextResponse.json({ error: "The selected portrait style is invalid." }, { status: 400 });
+      return fail("The selected portrait style is invalid.", 400);
     }
 
     if (resolvedStyleId && selectedTemplate?.mode !== "duo" && petId && uploadedSubjectPhotos.length === 0) {
@@ -322,11 +329,11 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (existingError && isMissingPortraitTable(existingError)) {
-        return NextResponse.json({ error: "Portrait persistence is not configured. Run the portrait migrations before generating." }, { status: 503 });
+        return fail("Portrait persistence is not configured. Run the portrait migrations before generating.", 503);
       }
-      if (existingError) return NextResponse.json({ error: "Unable to check saved portraits." }, { status: 500 });
+      if (existingError) return fail("Unable to check saved portraits.", 500);
       if (existing) {
-        return NextResponse.json({
+        return tracker.json({
           portrait: existing,
           style: { id: existing.style_id, name: existing.style_name },
           subjectName,
@@ -360,7 +367,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (visualError && !isMissingVisualProfileTable(visualError)) {
-        return NextResponse.json({ error: "Unable to load visual identity data." }, { status: 500 });
+        return fail("Unable to load visual identity data.", 500);
       }
       if (visualRow) {
         visualProfile = normalizeVisualProfile({
@@ -382,7 +389,7 @@ export async function POST(request: Request) {
       || PORTRAIT_STYLES[Math.floor(Math.random() * PORTRAIT_STYLES.length)]
       || PORTRAIT_STYLES[0];
     if (!selectedBaseStyle) {
-      return NextResponse.json({ error: "No portrait styles are configured." }, { status: 503 });
+      return fail("No portrait styles are configured.", 503);
     }
 
     const coverPersonality = personality || personalities[defaultPersonalityCode];
@@ -416,7 +423,7 @@ export async function POST(request: Request) {
     });
 
     const apiKey = process.env.DASHSCOPE_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "Portrait generation is not configured." }, { status: 503 });
+    if (!apiKey) return fail("Portrait generation is not configured.", 503);
 
     const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
     const templateReferenceImage = selectedTemplate
@@ -451,11 +458,11 @@ export async function POST(request: Request) {
         : typeof responseError?.message === "string"
           ? responseError.message
           : "Portrait generation failed.";
-      return NextResponse.json({ error: message }, { status: 502 });
+      return fail(message, 502);
     }
 
     const imageUrl = extractImageUrl(responseData);
-    if (!imageUrl) return NextResponse.json({ error: "The image model returned no portrait." }, { status: 502 });
+    if (!imageUrl) return fail("The image model returned no portrait.", 502);
 
     const asset = await savePortraitAsset(
       supabase,
@@ -468,7 +475,7 @@ export async function POST(request: Request) {
       imageUrl,
       IMAGE_MODEL,
     );
-    return NextResponse.json({
+    return tracker.json({
       portrait: asset,
       style: { id: style.id, name: style.name },
       subjectName,
@@ -476,19 +483,29 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to generate portrait.";
     const status = message.includes("too large") ? 413 : 500;
-    return NextResponse.json({ error: message }, { status });
+    tracker.setError(message);
+    return tracker.json({ error: message }, { status });
+  } finally {
+    await tracker.flush();
   }
 }
 
 export async function GET(request: Request) {
+  const tracker = createApiRequestTracker({ request, route: "/api/portraits" });
+  const fail = (message: string, status: number) => {
+    tracker.setError(message);
+    return tracker.json({ error: message }, { status });
+  };
+
   try {
     const petId = new URL(request.url).searchParams.get("petId");
-    if (!petId) return NextResponse.json({ error: "petId is required." }, { status: 400 });
+    if (!petId) return fail("petId is required.", 400);
 
     const supabase = await createSupabaseServerClient();
     const { data: userResult, error: userError } = await supabase.auth.getUser();
     const userId = userResult.user?.id || "";
-    if (userError || !userId) return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
+    if (userError || !userId) return fail("Please sign in to continue.", 401);
+    tracker.setUserId(userId);
 
     const { data: pet } = await supabase
       .from("pets")
@@ -496,7 +513,7 @@ export async function GET(request: Request) {
       .eq("id", petId)
       .eq("user_id", userId)
       .maybeSingle();
-    if (!pet) return NextResponse.json({ error: "The report subject was not found." }, { status: 404 });
+    if (!pet) return fail("The report subject was not found.", 404);
 
     const { data, error } = await supabase
       .from("pet_portraits")
@@ -507,9 +524,9 @@ export async function GET(request: Request) {
       .limit(12);
 
     if (error && isMissingPortraitTable(error)) {
-      return NextResponse.json({ error: "Portrait persistence is not configured. Run the portrait migrations before opening reports." }, { status: 503 });
+      return fail("Portrait persistence is not configured. Run the portrait migrations before opening reports.", 503);
     }
-    if (error) return NextResponse.json({ error: "Unable to load saved portraits." }, { status: 500 });
+    if (error) return fail("Unable to load saved portraits.", 500);
 
     const durablePortraits = (data || []).filter((portrait) => Boolean(portrait.storage_path));
     const temporaryPortraitIds = (data || [])
@@ -519,10 +536,12 @@ export async function GET(request: Request) {
       await supabase.from("pet_portraits").delete().in("id", temporaryPortraitIds).eq("user_id", userId);
     }
 
-    return NextResponse.json({ portraits: durablePortraits, subjectName: pet.name });
+    return tracker.json({ portraits: durablePortraits, subjectName: pet.name });
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "Unable to load portraits.",
-    }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unable to load portraits.";
+    tracker.setError(message);
+    return tracker.json({ error: message }, { status: 500 });
+  } finally {
+    await tracker.flush();
   }
 }
